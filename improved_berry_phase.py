@@ -572,35 +572,143 @@ plt.tight_layout()
 plt.savefig(f'{output_dir}/analytical_berry_connection.png')
 plt.close()
 
-# Plot the R_theta vectors in 3D
-fig = plt.figure(figsize=(10, 8))
+# Calculate the scale for better zoom
+max_coord = np.max(np.abs(r_theta_vectors)) * 1.2  # 20% margin
+marker_indices = np.linspace(0, len(r_theta_vectors)-1, 100, dtype=int)
+line_length = max_coord
+line_points = np.array([[-line_length, -line_length, -line_length], [line_length, line_length, line_length]])
+
+# First create the zoomed 3D plot
+fig = plt.figure(figsize=(12, 10))
 ax = fig.add_subplot(111, projection='3d')
 
 # Plot the path traced by R_theta
-ax.plot(r_theta_vectors[:, 0], r_theta_vectors[:, 1], r_theta_vectors[:, 2], 'b-', label='R_theta path')
+ax.plot(r_theta_vectors[:, 0], r_theta_vectors[:, 1], r_theta_vectors[:, 2], 'b-', label='R_theta path', linewidth=2)
 
-# Add markers for a few points to show the direction of the path
-marker_indices = np.linspace(0, len(r_theta_vectors)-1, 10, dtype=int)
+# Add markers for more points to show the direction of the path
 ax.scatter(r_theta_vectors[marker_indices, 0], r_theta_vectors[marker_indices, 1], r_theta_vectors[marker_indices, 2], 
-           c='r', s=50, label='Markers')
+           c='r', s=30, label='Markers')
 
 # Plot the origin
 ax.scatter([0], [0], [0], c='k', s=100, label='Origin')
+
+# Plot the x=y=z line
+ax.plot(line_points[:, 0], line_points[:, 1], line_points[:, 2], 'g-', linewidth=2, label='x=y=z line')
 
 # Set labels and title
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
-ax.set_title('R_theta Vector in 3D Space')
+ax.set_title('R_theta Vector in 3D Space (Zoomed)')
 
-# Set equal aspect ratio
+# Set equal aspect ratio and zoom in
 ax.set_box_aspect([1, 1, 1])
+ax.set_xlim(-max_coord, max_coord)
+ax.set_ylim(-max_coord, max_coord)
+ax.set_zlim(-max_coord, max_coord)
 
 # Add a legend
 ax.legend()
 
 # Save the figure
-plt.savefig(f'{output_dir}/r_theta_3d.png')
+plt.tight_layout()
+plt.savefig(f'{output_dir}/r_theta_3d.png', dpi=300)
+plt.close()
+
+# Now create the 2x2 subplot with projections
+fig = plt.figure(figsize=(16, 14))
+
+# XY Projection (top-left)
+ax1 = fig.add_subplot(2, 2, 1)
+ax1.plot(r_theta_vectors[:, 0], r_theta_vectors[:, 1], 'b-', linewidth=2, label='R_theta path')
+ax1.scatter(r_theta_vectors[marker_indices, 0], r_theta_vectors[marker_indices, 1], c='r', s=30, label='Markers')
+ax1.scatter(0, 0, c='k', s=100, label='Origin')
+ax1.plot(line_points[:, 0], line_points[:, 1], 'g-', linewidth=2, label='x=y=z line')
+ax1.set_xlabel('X')
+ax1.set_ylabel('Y')
+ax1.set_title('XY Projection')
+ax1.set_xlim(-max_coord, max_coord)
+ax1.set_ylim(-max_coord, max_coord)
+ax1.grid(True)
+ax1.set_aspect('equal')
+ax1.legend()
+
+# Create a projection onto the plane perpendicular to x=y=z (top-right)
+ax2 = fig.add_subplot(2, 2, 2)
+
+# Define basis vectors for the plane perpendicular to x=y=z
+# The x=y=z direction is (1,1,1)/sqrt(3)
+# We need two orthogonal vectors to this direction
+basis_xyz = np.array([1, 1, 1]) / np.sqrt(3)  # Normalized x=y=z direction
+
+# Create two orthogonal vectors to basis_xyz
+# First orthogonal vector: (1,-1,0)/sqrt(2)
+basis1 = np.array([1, -1, 0]) / np.sqrt(2)
+
+# Second orthogonal vector: cross product of basis_xyz and basis1
+basis2 = np.cross(basis_xyz, basis1)
+basis2 = basis2 / np.linalg.norm(basis2)  # Normalize
+
+# Project the R_theta vectors onto the plane perpendicular to x=y=z
+projected_points = np.zeros((len(r_theta_vectors), 2))
+for i, vec in enumerate(r_theta_vectors):
+    # Project onto the two basis vectors
+    projected_points[i, 0] = np.dot(vec, basis1)
+    projected_points[i, 1] = np.dot(vec, basis2)
+
+# Plot the projected circle
+ax2.plot(projected_points[:, 0], projected_points[:, 1], 'b-', linewidth=2)
+ax2.scatter(projected_points[marker_indices, 0], projected_points[marker_indices, 1], c='r', s=30)
+ax2.scatter(0, 0, c='k', s=100)
+
+# The x=y=z line projects to a point at the origin in this view
+ax2.plot(0, 0, 'go', markersize=10)
+
+# Set labels and title
+ax2.set_xlabel('Basis Vector 1')
+ax2.set_ylabel('Basis Vector 2')
+ax2.set_title('Projection onto Plane ⊥ to x=y=z Line')
+
+# Set equal aspect ratio and limits
+max_proj = np.max(np.abs(projected_points)) * 1.2
+ax2.set_xlim(-max_proj, max_proj)
+ax2.set_ylim(-max_proj, max_proj)
+ax2.grid(True)
+ax2.set_aspect('equal')
+
+# XZ Projection (bottom-left)
+ax3 = fig.add_subplot(2, 2, 3)
+ax3.plot(r_theta_vectors[:, 0], r_theta_vectors[:, 2], 'b-', linewidth=2)
+ax3.scatter(r_theta_vectors[marker_indices, 0], r_theta_vectors[marker_indices, 2], c='r', s=30)
+ax3.scatter(0, 0, c='k', s=100)
+ax3.plot(line_points[:, 0], line_points[:, 2], 'g-', linewidth=2)
+ax3.set_xlabel('X')
+ax3.set_ylabel('Z')
+ax3.set_title('XZ Projection')
+ax3.set_xlim(-max_coord, max_coord)
+ax3.set_ylim(-max_coord, max_coord)
+ax3.grid(True)
+ax3.set_aspect('equal')
+
+# YZ Projection (bottom-right)
+ax4 = fig.add_subplot(2, 2, 4)
+ax4.plot(r_theta_vectors[:, 1], r_theta_vectors[:, 2], 'b-', linewidth=2)
+ax4.scatter(r_theta_vectors[marker_indices, 1], r_theta_vectors[marker_indices, 2], c='r', s=30)
+ax4.scatter(0, 0, c='k', s=100)
+ax4.plot(line_points[:, 1], line_points[:, 2], 'g-', linewidth=2)
+ax4.set_xlabel('Y')
+ax4.set_ylabel('Z')
+ax4.set_title('YZ Projection')
+ax4.set_xlim(-max_coord, max_coord)
+ax4.set_ylim(-max_coord, max_coord)
+ax4.grid(True)
+ax4.set_aspect('equal')
+
+# Adjust layout
+plt.tight_layout()
+
+# Save the figure
+plt.savefig(f'{output_dir}/r_theta_3d_with_projections.png', dpi=300)
 plt.close()
 
 # Plot the potential components
@@ -638,7 +746,8 @@ with open(summary_file, 'w') as f:
     f.write(f"  - Eigenvalue Evolution: eigenvalue_evolution.png\n")
     f.write(f"  - Normalized Eigenvalue Evolution: normalized_eigenvalue_evolution.png\n")
     f.write(f"  - Analytical Berry Connection: analytical_berry_connection.png\n")
-    f.write(f"  - R_theta 3D Visualization: r_theta_3d.png\n")
+    f.write(f"  - R_theta 3D Visualization (Zoomed): r_theta_3d.png\n")
+    f.write(f"  - R_theta Projections (XY, x=y=z plane, XZ, YZ): r_theta_3d_with_projections.png\n")
     f.write(f"  - Potential Components: potential_components.png\n\n")
     f.write("Normalized Data Files:\n")
     for i in range(eigenvalues.shape[1]):
