@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
 # Define physical constants
-hbar = 1.0  # Simplified value for demonstration
+hbar = 1.0  # Using natural units where ħ = 1 (common in quantum mechanics)
 
 # Import the perfect orthogonal circle generation function from the Arrowhead/generalized package
 import sys
