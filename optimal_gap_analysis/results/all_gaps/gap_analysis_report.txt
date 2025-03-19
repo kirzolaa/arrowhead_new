@@ -1,0 +1,72 @@
+Energy Gap Analysis Report
+==========================
+
+Gap Statistics:
+--------------
+Gap 0-1:
+  Minimum: 0.000437
+  Maximum: 0.000437
+  Mean: 0.000437
+  Standard Deviation: 0.000000
+  Range: 0.000000
+  Median: 0.000437
+
+Gap 0-2:
+  Minimum: 0.000437
+  Maximum: 0.000437
+  Mean: 0.000437
+  Standard Deviation: 0.000000
+  Range: 0.000000
+  Median: 0.000437
+
+Gap 0-3:
+  Minimum: 274.291986
+  Maximum: 274.291986
+  Mean: 274.291986
+  Standard Deviation: 0.000000
+  Range: 0.000000
+  Median: 274.291986
+
+Gap 1-2:
+  Minimum: 0.000000
+  Maximum: 0.000000
+  Mean: 0.000000
+  Standard Deviation: 0.000000
+  Range: 0.000000
+  Median: 0.000000
+
+Gap 1-3:
+  Minimum: 274.291549
+  Maximum: 274.291549
+  Mean: 274.291549
+  Standard Deviation: 0.000000
+  Range: 0.000000
+  Median: 274.291549
+
+Gap 2-3:
+  Minimum: 274.291549
+  Maximum: 274.291549
+  Mean: 274.291549
+  Standard Deviation: 0.000000
+  Range: 0.000000
+  Median: 274.291549
+
+Minimum Gap Analysis:
+--------------------
+Gap 0-1:
+  Global Minimum: 0.000437 at θ = 0.3175
+
+Gap 0-2:
+  Global Minimum: 0.000437 at θ = 0.0409
+
+Gap 0-3:
+  Global Minimum: 274.291986 at θ = 0.0126
+
+Gap 1-2:
+  Global Minimum: 0.000000 at θ = 0.0126
+
+Gap 1-3:
+  Global Minimum: 274.291549 at θ = 0.0031
+
+Gap 2-3:
+  Global Minimum: 274.291549 at θ = 0.0251

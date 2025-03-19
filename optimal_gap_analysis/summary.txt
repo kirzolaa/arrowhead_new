@@ -1,0 +1,58 @@
+Optimal Gap Analysis Summary
+===========================
+
+Parameters:
+  x_shift: 22.5
+  y_shift: 547.7222222222222
+  d_param: 0.005
+  omega: 0.025
+  a_vx: 0.018
+  a_va: 0.42
+  c: 0.2
+  num_points: 2000
+
+Adjacent Gap Statistics Summary:
+------------------------------
+Gap       Min            Max            Mean           Std Dev        Min Theta      
+----------------------------------------------------------------------
+0-1    0.000437       0.000437       0.000437       0.000000       0.3175         
+1-2    0.000000       0.000000       0.000000       0.000000       0.0126         
+2-3    274.291549     274.291549     274.291549     0.000000       0.0251         
+
+Adjacent Minimum Gap Analysis:
+-----------------------------
+Gap 0-1:
+  Global Minimum: 0.000437 at θ = 0.3175
+Gap 1-2:
+  Global Minimum: 0.000000 at θ = 0.0126
+Gap 2-3:
+  Global Minimum: 274.291549 at θ = 0.0251
+
+All Gaps Analysis (Including Non-Adjacent):
+----------------------------------------
+Gap 0-2:
+  Global Minimum: 0.000437 at θ = 0.0409
+
+Gap 0-3:
+  Global Minimum: 274.291986 at θ = 0.0126
+
+Gap 1-3:
+  Global Minimum: 274.291549 at θ = 0.0031
+
+
+
+
+Implications for Berry Phase:
+----------------------------
+Small energy gaps between eigenstates can lead to:
+1. Increased sensitivity to perturbations
+2. Potential for diabatic transitions between states
+3. Challenges in maintaining adiabaticity during parameter evolution
+4. Possible topological phase transitions at gap closing points
+
+Recommendations:
+--------------
+1. For robust Berry phase measurements, avoid parameter regions with small gaps
+2. Consider increasing the sweep rate in regions with large gaps
+3. For studying topological transitions, focus on parameter regions where gaps approach zero
+4. Monitor the relationship between gap size and Berry phase accumulation rate

@@ -1,0 +1,29 @@
+Gap-Topology Analysis Summary Report
+===================================
+
+2D Parameter Scan:
+  c: 0.1 to 0.3
+  a_vx: 0.01 to 0.03
+
+Adjacent Minimum Gap Analysis:
+  Smallest Gap 0-1: 232.180349 at c=0.1000, a_vx=0.0100
+  Smallest Gap 1-2: 0.010096 at c=0.1000, a_vx=0.0100
+  Smallest Gap 2-3: 0.000086 at c=0.1000, a_vx=0.0100
+
+Non-Adjacent Minimum Gap Analysis:
+  Smallest Gap 0-2: 232.277299 at c=0.1000, a_vx=0.0100
+  Smallest Gap 0-3: 232.455960 at c=0.1000, a_vx=0.0100
+  Smallest Gap 1-3: 0.275611 at c=0.1000, a_vx=0.0100
+
+Berry Phase Analysis:
+  Largest Berry Phase Difference (1-2): 3.141593 at c=0.1000, a_vx=0.0100
+  Largest Berry Phase Difference (0-2): 1.570796 at c=0.1000, a_vx=0.0100
+
+Gap-Topology Correlation Analysis:
+  Detailed correlation analysis for 2D scans is not implemented.
+  Please refer to the 2D heatmaps for visual correlation analysis.
+
+General Observations:
+  The relationship between energy gaps and Berry phases provides insight into the topological properties of the system.
+  Small energy gaps often coincide with rapid changes in Berry phase, indicating potential topological transitions.
+  Regions with both small gaps and large Berry phase differences are of particular interest for further study.

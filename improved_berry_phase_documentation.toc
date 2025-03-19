@@ -1,0 +1,26 @@
+\contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
+\contentsline {section}{\numberline {2}Theoretical Background}{2}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Berry Phase}{2}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Arrowhead Hamiltonians}{3}{subsection.2.2}%
+\contentsline {section}{\numberline {3}Implementation Details}{3}{section.3}%
+\contentsline {subsection}{\numberline {3.1}Parameter Space and Path}{3}{subsection.3.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Perfect Orthogonal Circle}{3}{subsubsection.3.1.1}%
+\contentsline {subsection}{\numberline {3.2}Hamiltonian Construction}{4}{subsection.3.2}%
+\contentsline {subsection}{\numberline {3.3}Analytical Berry Connection and Phase}{5}{subsection.3.3}%
+\contentsline {section}{\numberline {4}Code Implementation}{5}{section.4}%
+\contentsline {subsection}{\numberline {4.1}Numerical Berry Phase Calculation}{5}{subsection.4.1}%
+\contentsline {subsection}{\numberline {4.2}Analytical Berry Connection and Phase Calculation}{7}{subsection.4.2}%
+\contentsline {subsection}{\numberline {4.3}Enhanced Analysis Features}{8}{subsection.4.3}%
+\contentsline {subsubsection}{\numberline {4.3.1}Eigenstate Degeneracy Analysis}{8}{subsubsection.4.3.1}%
+\contentsline {subsubsection}{\numberline {4.3.2}Parity Flip Detection}{10}{subsubsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.4}Parameter Space Vector}{11}{subsection.4.4}%
+\contentsline {subsection}{\numberline {4.5}Potential Functions}{12}{subsection.4.5}%
+\contentsline {subsection}{\numberline {4.6}Hamiltonian Construction}{12}{subsection.4.6}%
+\contentsline {subsection}{\numberline {4.7}Analytical Berry Connection and Phase}{14}{subsection.4.7}%
+\contentsline {section}{\numberline {5}Results and Physical Interpretation}{15}{section.5}%
+\contentsline {section}{\numberline {6}Enhanced Analysis Features}{16}{section.6}%
+\contentsline {subsection}{\numberline {6.1}Eigenstate Degeneracy Analysis}{16}{subsection.6.1}%
+\contentsline {subsection}{\numberline {6.2}Parity Flip Detection}{17}{subsection.6.2}%
+\contentsline {subsection}{\numberline {6.3}Comprehensive Reporting}{17}{subsection.6.3}%
+\contentsline {section}{\numberline {7}Conclusion}{17}{section.7}%
+\contentsline {section}{\numberline {8}Future Work}{18}{section.8}%
