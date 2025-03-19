@@ -26,10 +26,6 @@ Arrowhead/
 .DS_Store
 Thumbs.db
 
-# Generated output that can be recreated
-*.png
-*.pdf
-
 # Keep the directory structure but not all generated files
 improved_berry_phase_results/*
 !improved_berry_phase_results/.gitkeep
