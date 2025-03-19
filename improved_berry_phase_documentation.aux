@@ -18,12 +18,12 @@
 \providecommand\HyField@AuxAddToCoFields[2]{}
 \citation{berry1984}
 \@writefile{toc}{\contentsline {section}{\numberline {1}Introduction}{2}{section.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {section}{\numberline {2}Theoretical Background}{2}{section.2}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Berry Phase}{2}{subsection.2.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {2}Theoretical Background}{3}{section.2}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsection}{\numberline {2.1}Berry Phase}{3}{subsection.2.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {2.2}Arrowhead Hamiltonians}{3}{subsection.2.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {3}Implementation Details}{3}{section.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.1}Parameter Space and Path}{3}{subsection.3.1}\protected@file@percent }
-\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Perfect Orthogonal Circle}{3}{subsubsection.3.1.1}\protected@file@percent }
+\@writefile{toc}{\contentsline {subsubsection}{\numberline {3.1.1}Perfect Orthogonal Circle}{4}{subsubsection.3.1.1}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.2}Hamiltonian Construction}{4}{subsection.3.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {3.3}Analytical Berry Connection and Phase}{5}{subsection.3.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {4}Code Implementation}{5}{section.4}\protected@file@percent }
@@ -50,17 +50,37 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.2}Parity Flip Detection}{17}{subsection.6.2}\protected@file@percent }
 \@writefile{toc}{\contentsline {subsection}{\numberline {6.3}Comprehensive Reporting}{17}{subsection.6.3}\protected@file@percent }
 \@writefile{toc}{\contentsline {section}{\numberline {7}Conclusion}{17}{section.7}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {8}Future Work}{18}{section.8}\protected@file@percent }
+\@writefile{toc}{\contentsline {section}{\numberline {A}Visualization and Data Files}{18}{appendix.A}\protected@file@percent }
+\newlabel{appendix:viz}{{A}{18}{Visualization and Data Files}{appendix.A}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.1}Eigenvalue Evolution}{19}{subsection.A.1}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {1}{\ignorespaces Evolution of eigenvalues as a function of the parameter $\theta $. This plot shows how the energy levels change as the system is transported around a closed loop in parameter space.\relax }}{19}{figure.caption.2}\protected@file@percent }
+\providecommand*\caption@xref[2]{\@setref\relax\@undefined{#1}}
+\newlabel{fig:eigenvalue_evolution}{{1}{19}{Evolution of eigenvalues as a function of the parameter $\theta $. This plot shows how the energy levels change as the system is transported around a closed loop in parameter space.\relax }{figure.caption.2}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {2}{\ignorespaces Normalized eigenvalue evolution. The eigenvalues are normalized to better visualize the relative changes and potential degeneracies.\relax }}{19}{figure.caption.3}\protected@file@percent }
+\newlabel{fig:normalized_eigenvalue_evolution}{{2}{19}{Normalized eigenvalue evolution. The eigenvalues are normalized to better visualize the relative changes and potential degeneracies.\relax }{figure.caption.3}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.2}Berry Connection}{20}{subsection.A.2}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {3}{\ignorespaces Analytical Berry connection as a function of $\theta $. The Berry connection is the vector potential that gives rise to the Berry phase when integrated around a closed loop.\relax }}{20}{figure.caption.4}\protected@file@percent }
+\newlabel{fig:analytical_berry_connection}{{3}{20}{Analytical Berry connection as a function of $\theta $. The Berry connection is the vector potential that gives rise to the Berry phase when integrated around a closed loop.\relax }{figure.caption.4}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.3}R\_theta Vector Visualizations}{21}{subsection.A.3}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {4}{\ignorespaces 3D visualization of the R\_theta vectors. This plot shows the path traced by the R\_theta vector in 3D space as $\theta $ varies from 0 to $2\pi $. The green line represents the $x=y=z$ direction.\relax }}{21}{figure.caption.5}\protected@file@percent }
+\newlabel{fig:r_theta_3d}{{4}{21}{3D visualization of the R\_theta vectors. This plot shows the path traced by the R\_theta vector in 3D space as $\theta $ varies from 0 to $2\pi $. The green line represents the $x=y=z$ direction.\relax }{figure.caption.5}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {5}{\ignorespaces Projections of the R\_theta vectors. Top-left: XY projection. Top-right: Projection onto the plane perpendicular to the $x=y=z$ line. Bottom-left: XZ projection. Bottom-right: YZ projection. These projections help visualize how the R\_theta vectors form a perfect circle orthogonal to the $x=y=z$ direction.\relax }}{22}{figure.caption.6}\protected@file@percent }
+\newlabel{fig:r_theta_projections}{{5}{22}{Projections of the R\_theta vectors. Top-left: XY projection. Top-right: Projection onto the plane perpendicular to the $x=y=z$ line. Bottom-left: XZ projection. Bottom-right: YZ projection. These projections help visualize how the R\_theta vectors form a perfect circle orthogonal to the $x=y=z$ direction.\relax }{figure.caption.6}{}}
 \bibcite{berry1984}{1}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.4}Potential Components}{23}{subsection.A.4}\protected@file@percent }
+\@writefile{lof}{\contentsline {figure}{\numberline {6}{\ignorespaces Components of the potential functions $V_x$ and $V_a$ as functions of $\theta $. These potential functions determine the structure of the Hamiltonian.\relax }}{23}{figure.caption.7}\protected@file@percent }
+\newlabel{fig:potential_components}{{6}{23}{Components of the potential functions $V_x$ and $V_a$ as functions of $\theta $. These potential functions determine the structure of the Hamiltonian.\relax }{figure.caption.7}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {A.5}Data Files}{23}{subsection.A.5}\protected@file@percent }
 \bibcite{wilczek1989}{2}
 \bibcite{xiao2010}{3}
 \bibcite{resta2000}{4}
 \bibcite{thouless1982}{5}
 \bibcite{hasan2010}{6}
-\@writefile{toc}{\contentsline {section}{\numberline {8}Future Work}{18}{section.8}\protected@file@percent }
 \bibcite{zak1989}{7}
 \bibcite{vanderbilt2018}{8}
 \bibcite{fukui2005}{9}
 \bibcite{yu2011}{10}
 \bibcite{wilson1974}{11}
 \bibcite{ryu2010}{12}
-\gdef \@abspage@last{19}
+\gdef \@abspage@last{24}

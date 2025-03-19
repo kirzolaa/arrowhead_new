@@ -1,10 +1,10 @@
 \contentsline {section}{\numberline {1}Introduction}{2}{section.1}%
-\contentsline {section}{\numberline {2}Theoretical Background}{2}{section.2}%
-\contentsline {subsection}{\numberline {2.1}Berry Phase}{2}{subsection.2.1}%
+\contentsline {section}{\numberline {2}Theoretical Background}{3}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Berry Phase}{3}{subsection.2.1}%
 \contentsline {subsection}{\numberline {2.2}Arrowhead Hamiltonians}{3}{subsection.2.2}%
 \contentsline {section}{\numberline {3}Implementation Details}{3}{section.3}%
 \contentsline {subsection}{\numberline {3.1}Parameter Space and Path}{3}{subsection.3.1}%
-\contentsline {subsubsection}{\numberline {3.1.1}Perfect Orthogonal Circle}{3}{subsubsection.3.1.1}%
+\contentsline {subsubsection}{\numberline {3.1.1}Perfect Orthogonal Circle}{4}{subsubsection.3.1.1}%
 \contentsline {subsection}{\numberline {3.2}Hamiltonian Construction}{4}{subsection.3.2}%
 \contentsline {subsection}{\numberline {3.3}Analytical Berry Connection and Phase}{5}{subsection.3.3}%
 \contentsline {section}{\numberline {4}Code Implementation}{5}{section.4}%
@@ -24,3 +24,9 @@
 \contentsline {subsection}{\numberline {6.3}Comprehensive Reporting}{17}{subsection.6.3}%
 \contentsline {section}{\numberline {7}Conclusion}{17}{section.7}%
 \contentsline {section}{\numberline {8}Future Work}{18}{section.8}%
+\contentsline {section}{\numberline {A}Visualization and Data Files}{18}{appendix.A}%
+\contentsline {subsection}{\numberline {A.1}Eigenvalue Evolution}{19}{subsection.A.1}%
+\contentsline {subsection}{\numberline {A.2}Berry Connection}{20}{subsection.A.2}%
+\contentsline {subsection}{\numberline {A.3}R\_theta Vector Visualizations}{21}{subsection.A.3}%
+\contentsline {subsection}{\numberline {A.4}Potential Components}{23}{subsection.A.4}%
+\contentsline {subsection}{\numberline {A.5}Data Files}{23}{subsection.A.5}%
