@@ -1,4 +1,4 @@
-# License
+# License - written by Copilot, so this is just for displaying purposes only:) - TerminalThor
 
 This repository is licensed under the auspices of the University of Debrecen, Theoretical Physics Department.
 
