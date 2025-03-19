@@ -25,7 +25,3 @@ Arrowhead/
 # OS specific files
 .DS_Store
 Thumbs.db
-
-# Keep the directory structure but not all generated files
-improved_berry_phase_results/*
-!improved_berry_phase_results/.gitkeep

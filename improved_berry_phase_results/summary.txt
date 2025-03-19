@@ -1,0 +1,17 @@
+Berry Phase Analysis Summary
+=========================
+
+Detailed Report: improved_berry_phase_summary_x0.2_y0.2_d1.0_w1.0_a1.0_b0.5.txt
+
+Generated Plots:
+  - Eigenvalue Evolution: eigenvalue_evolution.png
+  - Normalized Eigenvalue Evolution: normalized_eigenvalue_evolution.png
+  - Analytical Berry Connection: analytical_berry_connection.png
+  - R_theta 3D Visualization: r_theta_3d.png
+  - Potential Components: potential_components.png
+
+Normalized Data Files:
+  - State 0: eigenstate0_vs_theta_normalized.txt
+  - State 1: eigenstate1_vs_theta_normalized.txt
+  - State 2: eigenstate2_vs_theta_normalized.txt
+  - State 3: eigenstate3_vs_theta_normalized.txt
