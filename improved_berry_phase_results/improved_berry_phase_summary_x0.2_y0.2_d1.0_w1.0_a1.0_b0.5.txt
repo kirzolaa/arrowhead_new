@@ -41,7 +41,7 @@ Eigenstate Degeneracy Analysis:
     Min Difference: 0.049091
     Max Difference: 0.293568
     Std Deviation: 0.080657
-    Degeneracy Status: GOOD - Mean difference is large (> 0.5 (normalized scale)
+    Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
     Points with difference < 0.0002: 0/1000 (0.00%)
     Strongest Degeneracy: At theta = 240.0° (diff = 0.049091)
     Weakest Degeneracy: At theta = 179.8° (diff = 0.293568)
@@ -52,31 +52,31 @@ Eigenstate Degeneracy Analysis:
       Min Difference: 0.043093
       Max Difference: 0.292692
       Std Deviation: 0.082184
-      Degeneracy Status: GOOD - Mean difference is large (> 0.5 (normalized scale)
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
     Eigenstates 0-2:
       Mean Difference: 0.355698
       Min Difference: 0.336661
       Max Difference: 0.368038
       Std Deviation: 0.010030
-      Degeneracy Status: GOOD - Mean difference is large (> 0.5 (normalized scale)
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
     Eigenstates 0-3:
       Mean Difference: 0.966025
       Min Difference: 0.915341
       Max Difference: 0.999257
       Std Deviation: 0.027949
-      Degeneracy Status: GOOD - Mean difference is large (> 0.5 (normalized scale)
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
     Eigenstates 1-3:
       Mean Difference: 0.788426
       Min Difference: 0.706565
       Max Difference: 0.872247
       Std Deviation: 0.054530
-      Degeneracy Status: GOOD - Mean difference is large (> 0.5 (normalized scale)
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
     Eigenstates 2-3:
       Mean Difference: 0.610327
       Min Difference: 0.578679
       Max Difference: 0.657474
       Std Deviation: 0.026443
-      Degeneracy Status: GOOD - Mean difference is large (> 0.5 (normalized scale)
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
 
 Parameters:
   c: 0.2

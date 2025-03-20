@@ -385,7 +385,7 @@ def generate_summary_report(berry_phases_analytical, numerical_berry_phases, eig
         report.append(f"    Min Difference: {pair_info['min_diff']:.6f}")
         report.append(f"    Max Difference: {pair_info['max_diff']:.6f}")
         report.append(f"    Std Deviation: {pair_info['std_diff']:.6f}")
-        report.append(f"    Degeneracy Status: {pair_info['status']} - Mean difference is {'less than 0.0005' if pair_info['status'] == 'EXCELLENT' else 'small (< 0.1' if pair_info['status'] == 'CONCERN' else 'large (> 0.5'} (normalized scale)")
+        report.append(f"    Degeneracy Status: {pair_info['status']} - Mean difference is {'less than 0.0005' if pair_info['status'] == 'EXCELLENT' else 'small (< 0.1)' if pair_info['status'] == 'CONCERN' else 'greater than 0.1'} (normalized scale)")
         report.append(f"    Points with difference < 0.0002: {pair_info['small_diff_count']}/{len(theta_vals)} ({pair_info['small_diff_percentage']:.2f}%)")
         report.append(f"    Strongest Degeneracy: At theta = {pair_info['strongest_degeneracy']:.1f}° (diff = {pair_info['strongest_diff']:.6f})")
         report.append(f"    Weakest Degeneracy: At theta = {pair_info['weakest_degeneracy']:.1f}° (diff = {pair_info['weakest_diff']:.6f})")
@@ -400,7 +400,7 @@ def generate_summary_report(berry_phases_analytical, numerical_berry_phases, eig
             report.append(f"      Min Difference: {pair_info['min_diff']:.6f}")
             report.append(f"      Max Difference: {pair_info['max_diff']:.6f}")
             report.append(f"      Std Deviation: {pair_info['std_diff']:.6f}")
-            report.append(f"      Degeneracy Status: {pair_info['status']} - Mean difference is {'less than 0.0005' if pair_info['status'] == 'EXCELLENT' else 'small (< 0.1' if pair_info['status'] == 'CONCERN' else 'large (> 0.5'} (normalized scale)")
+            report.append(f"      Degeneracy Status: {pair_info['status']} - Mean difference is {'less than 0.0005' if pair_info['status'] == 'EXCELLENT' else 'small (< 0.1)' if pair_info['status'] == 'CONCERN' else 'greater than 0.1'} (normalized scale)")
     
     # Add parameter information
     report.append("\nParameters:")
