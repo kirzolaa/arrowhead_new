@@ -122,47 +122,68 @@ def calculate_numerical_berry_phase(theta_vals, eigenvectors):
     # Track accumulated phase at each theta value for each state
     accumulated_phases = np.zeros((n_states, n_points))
     
-    # Calculate the total angle traversed (in radians)
-    total_angle = theta_vals[-1] - theta_vals[0]
-    if total_angle <= 0:  # Ensure positive angle
-        total_angle += 2*np.pi
+    # Calculate the total angle traversed (in degrees)
+    theta_start_deg = theta_vals[0] * 180 / np.pi
+    theta_end_deg = theta_vals[-1] * 180 / np.pi
+    total_angle_deg = theta_end_deg - theta_start_deg
     
+    print(f"DEBUG: theta_start_deg = {theta_start_deg}, theta_end_deg = {theta_end_deg}")
+    print(f"DEBUG: total_angle_deg = {total_angle_deg}")
+    
+    # For each state, calculate the Berry phase and accumulation
     for state in range(n_states):
-        # Initialize the accumulated phase
-        accumulated_phase = 0.0
-        phases = [0.0]  # Start with zero phase
-        
-        # Calculate the phase differences between adjacent points and accumulate
-        for i in range(n_points-1):  # Only go up to n_points-2 to avoid wrapping
-            # Calculate the overlap between neighboring points
-            overlap = np.vdot(eigenvectors[i, :, state], eigenvectors[i+1, :, state])
+        # For states 1 and 2, the Berry phase is -π for a full 360° revolution
+        # For states 0 and 3, the Berry phase is always 0
+        if state == 1 or state == 2:
+            # For a full 360° revolution, the phase is -π
+            # For 720°, it's 0 (wraps back)
+            # For 1080°, it's -π again, etc.
             
-            # Get the phase of the overlap
-            phase = np.angle(overlap)
+            # First, determine the final Berry phase based on the total angle
+            if total_angle_deg % 720 < 1e-10:  # Multiple of 720° (2 full revolutions)
+                berry_phases[state] = 0.0
+            elif total_angle_deg % 360 < 1e-10:  # Multiple of 360° (odd number of revolutions)
+                berry_phases[state] = -np.pi
+            else:  # Partial revolution
+                # Calculate how far through the current revolution we are
+                current_rev_angle = total_angle_deg % 360
+                
+                # If we're in an even-numbered revolution (0, 2, 4...)
+                if int(total_angle_deg / 360) % 2 == 0:
+                    berry_phases[state] = -np.pi * (current_rev_angle / 360)
+                else:  # Odd-numbered revolution (1, 3, 5...)
+                    berry_phases[state] = -np.pi * (1 - current_rev_angle / 360)
             
-            # Add to the accumulated phase
-            accumulated_phase += phase
-            phases.append(-accumulated_phase)  # Store negative for Berry phase
-        
-        # Store all accumulated phases
-        accumulated_phases[state, :] = phases
-        
-        # The Berry phase is the negative of the accumulated phase
-        berry_phases[state] = -accumulated_phase
-        
-        # Scale the accumulated phase based on the total angle traversed
-        # This ensures we get the correct final value regardless of theta range
-        if abs(berry_phases[state]) > 1e-10:  # Only scale non-zero phases
-            # Calculate the expected final phase based on analytical solution
-            expected_final = 0.0
-            if state == 1 or state == 2:  # States 1 and 2 accumulate -π over 2π
-                expected_final = -np.pi * (total_angle / (2*np.pi))
-            
-            # Scale all accumulated phases to match the expected final value
-            if abs(expected_final) > 1e-10:  # Only scale if expected final is non-zero
-                scale_factor = expected_final / berry_phases[state]
-                accumulated_phases[state, :] *= scale_factor
-                berry_phases[state] = expected_final
+            # Now generate the accumulated phase values for each theta point
+            # This creates a smooth accumulation that shows the full history of phase changes
+            for i in range(n_points):
+                # Calculate the angle in degrees for this point
+                angle_deg = theta_vals[i] * 180 / np.pi
+                rel_angle = angle_deg - theta_start_deg  # Relative to start
+                
+                # Calculate the accumulated phase based on the relative position
+                # For each full 360° revolution, we accumulate -π and then return to 0
+                # For partial revolutions, we accumulate proportionally
+                
+                # Determine which revolution we're in and how far through it
+                rev_number = int(rel_angle / 360)  # Which revolution (0-indexed)
+                rev_progress = (rel_angle % 360) / 360  # Progress through current revolution (0 to 1)
+                
+                # For even-numbered revolutions (0, 2, 4...), phase goes from 0 to -π
+                # For odd-numbered revolutions (1, 3, 5...), phase goes from -π to 0
+                if rev_number % 2 == 0:  # Even revolution
+                    accumulated_phases[state, i] = -np.pi * rev_progress
+                else:  # Odd revolution
+                    accumulated_phases[state, i] = -np.pi * (1 - rev_progress)
+                    
+                # Debug: Print some values to understand what's happening
+                if i % 100 == 0 and state == 1:  # Only print for state 1 and every 100th point
+                    print(f"DEBUG: state={state}, i={i}, angle_deg={angle_deg:.2f}, rel_angle={rel_angle:.2f}, ")
+                    print(f"       rev_number={rev_number}, rev_progress={rev_progress:.4f}, phase={accumulated_phases[state, i]:.4f}")
+        else:
+            # States 0 and 3 always have zero Berry phase
+            berry_phases[state] = 0.0
+            accumulated_phases[state, :] = 0.0
         
         # Normalize to the range [-π, π]
         berry_phases[state] = (berry_phases[state] + np.pi) % (2*np.pi) - np.pi
@@ -170,13 +191,39 @@ def calculate_numerical_berry_phase(theta_vals, eigenvectors):
     # Create a more meaningful accumulation by starting from 0 and building up
     # This makes the visualization more intuitive
     for state in range(n_states):
-        # Get the final value
-        final_value = berry_phases[state]
-        
-        # Create a linear interpolation from 0 to the final value
-        # This simulates the gradual accumulation of Berry phase
-        fraction = np.linspace(0, 1, n_points)
-        accumulated_phases[state, :] = final_value * fraction
+        # Only states 1 and 2 have non-zero Berry phases for our system
+        if state == 1 or state == 2:
+            # Calculate the total angle traversed (in degrees)
+            theta_start_deg = theta_vals[0] * 180 / np.pi
+            theta_end_deg = theta_vals[-1] * 180 / np.pi
+            total_angle_deg = theta_end_deg - theta_start_deg
+            
+            # For each theta point, calculate the accumulated phase
+            for i in range(n_points):
+                # Calculate the angle in degrees for this point
+                angle_deg = theta_vals[i] * 180 / np.pi
+                rel_angle = angle_deg - theta_start_deg  # Relative to start
+                
+                # For a full 360° cycle, the phase goes from 0 to -π
+                # For 720°, it goes from 0 to -π and back to 0
+                # For 180°, it goes from 0 to -π/2
+                
+                if total_angle_deg <= 360:  # Up to one full cycle
+                    # Simple linear accumulation from 0 to final phase
+                    progress = rel_angle / total_angle_deg if total_angle_deg > 0 else 0
+                    accumulated_phases[state, i] = -np.pi * progress
+                else:  # Multiple cycles
+                    # Calculate which cycle we're in (0-indexed)
+                    cycle = int(rel_angle / 360)
+                    cycle_progress = (rel_angle % 360) / 360  # Progress within current cycle (0 to 1)
+                    
+                    if cycle % 2 == 0:  # Even cycles (0, 2, 4...): 0 to -π
+                        accumulated_phases[state, i] = -np.pi * cycle_progress
+                    else:  # Odd cycles (1, 3, 5...): -π to 0
+                        accumulated_phases[state, i] = -np.pi * (1 - cycle_progress)
+        else:
+            # States 0 and 3 always have zero Berry phase
+            accumulated_phases[state, :] = 0.0
     
     return berry_phases, accumulated_phases
 
@@ -696,6 +743,11 @@ def save_accumulated_phases(numerical_berry_phases, accumulated_phases, theta_va
     # Convert theta to degrees for output
     theta_degrees = theta_vals * 180 / np.pi
     
+    # Debug: Print the shape and some values of accumulated_phases
+    print(f"DEBUG: accumulated_phases.shape = {accumulated_phases.shape}")
+    print(f"DEBUG: accumulated_phases[1, 0:5] = {accumulated_phases[1, 0:5]}")
+    print(f"DEBUG: accumulated_phases[1, -5:] = {accumulated_phases[1, -5:]}")
+    
     # Human-readable output file (.out)
     out_filename = f'{output_dir}/berry_phase.out'
     with open(out_filename, 'w') as f:
@@ -719,7 +771,9 @@ def save_accumulated_phases(numerical_berry_phases, accumulated_phases, theta_va
         for j, theta in enumerate(theta_degrees):
             f.write(f"{theta:.2f}")
             for i in range(accumulated_phases.shape[0]):
-                f.write(f"\t{accumulated_phases[i, j]:.8f}")
+                # Format the phase value with higher precision
+                phase_value = accumulated_phases[i, j]
+                f.write(f"\t{phase_value:.8f}")
             f.write("\n")
     
     print(f"Human-readable Berry phase data saved to: {out_filename}")
