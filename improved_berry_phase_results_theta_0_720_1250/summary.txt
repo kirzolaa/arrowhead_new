@@ -2,8 +2,8 @@ Berry Phase Analysis Summary
 =========================
 
 Command Line Arguments:
-  - Theta range: [0, 360] degrees
-  - Number of points: 1000
+  - Theta range: [0.0, 720.0] degrees
+  - Number of points: 1250
   - Include endpoint: True
 
 Detailed Report: improved_berry_phase_summary_x0.2_y0.2_d1.0_w1.0_a1.0_b0.5.txt
