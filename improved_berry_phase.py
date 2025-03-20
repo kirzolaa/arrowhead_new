@@ -572,6 +572,28 @@ plt.tight_layout()
 plt.savefig(f'{output_dir}/analytical_berry_connection.png')
 plt.close()
 
+# Plot the numerical Berry phase vs theta
+plt.figure(figsize=(10, 6))
+
+# Plot each state's Berry phase
+for i in range(len(numerical_berry_phases)):
+    plt.plot(theta_vals * 180 / np.pi, np.ones_like(theta_vals) * numerical_berry_phases[i], 
+             label=f'State {i}: {numerical_berry_phases[i]:.4f}')
+
+# Add reference lines for important values
+plt.axhline(y=np.pi, color='r', linestyle='--', label='π')
+plt.axhline(y=-np.pi, color='r', linestyle='--', label='-π')
+plt.axhline(y=0, color='k', linestyle='--')
+
+plt.xlabel('Theta (degrees)')
+plt.ylabel('Berry Phase')
+plt.title('Numerical Berry Phase vs Theta')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig(f'{output_dir}/berry_phase_vs_theta.png')
+plt.close()
+
 # Calculate the scale for better zoom
 max_coord = np.max(np.abs(r_theta_vectors)) * 1.2  # 20% margin
 marker_indices = np.linspace(0, len(r_theta_vectors)-1, 100, dtype=int)
@@ -746,6 +768,7 @@ with open(summary_file, 'w') as f:
     f.write(f"  - Eigenvalue Evolution: eigenvalue_evolution.png\n")
     f.write(f"  - Normalized Eigenvalue Evolution: normalized_eigenvalue_evolution.png\n")
     f.write(f"  - Analytical Berry Connection: analytical_berry_connection.png\n")
+    f.write(f"  - Numerical Berry Phase vs Theta: berry_phase_vs_theta.png\n")
     f.write(f"  - R_theta 3D Visualization (Zoomed): r_theta_3d.png\n")
     f.write(f"  - R_theta Projections (XY, x=y=z plane, XZ, YZ): r_theta_3d_with_projections.png\n")
     f.write(f"  - Potential Components: potential_components.png\n\n")

@@ -1,7 +1,7 @@
 Berry Phase Analysis Summary
 =========================
 
-Detailed Report: improved_berry_phase_summary_x0.2_y0.2_d1.0_w1.0_a1.0_b0.5.txt
+Detailed Report: improved_berry_phase_summary_x0.2_y0.2_d1.0_w1.0_a1.0_b0.5_theta1440.txt
 
 Generated Plots:
   - Eigenvalue Evolution: eigenvalue_evolution.png

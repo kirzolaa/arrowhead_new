@@ -1,0 +1,90 @@
+Berry Phases:
+----------------------------------------------------------------------------------------------------
+Eigenstate Raw Phase (rad) Winding Number  Normalized      Quantized       Error      Full Cycle     
+----------------------------------------------------------------------------------------------------
+0          0.000000        0.0             0.000000        0.000000        0.000000   True           
+1          -3.141593       0.5             3.141593        3.141593        0.000000   False          
+2          -3.141593       0.5             3.141593        3.141593        0.000000   False          
+3          0.000000        0.0             0.000000        0.000000        0.000000   True           
+
+
+Parity Flip Summary:
+--------------------------------------------------
+Eigenstate 0: 12 parity flips
+Eigenstate 1: 33 parity flips
+Eigenstate 2: 33 parity flips
+Eigenstate 3: 0 parity flips
+
+Total Parity Flips: 78
+Eigenstate 3 Parity Flips: 0 (Target: 0)
+
+Winding Number Analysis for Eigenstate 2:
+--------------------------------------------------
+Eigenstate 2 shows an interesting behavior where the raw Berry phase is -3.141593 radians with a
+normalized phase of 3.141593 radians. This corresponds to a winding number
+of 0.5, which is consistent with the theoretical expectation.
+
+The high number of parity flips (33) for eigenstate 2 supports this
+interpretation, indicating that this state undergoes significant phase changes during the cycle.
+
+Eigenvalue Normalization:
+  Global Minimum: 0.581776
+  Global Maximum: 2.107665
+  Global Range: 1.525889
+  Normalization Formula: normalized = (original - 0.581776) / 1.525889
+
+  Note: All eigenstate plots and degeneracy analyses use normalized (0-1 range) values.
+
+Eigenstate Degeneracy Analysis:
+  Eigenstates 1-2 (Should be degenerate):
+    Mean Difference: 0.178164
+    Min Difference: 0.049091
+    Max Difference: 0.293577
+    Std Deviation: 0.080626
+    Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
+    Points with difference < 0.0002: 0/2000 (0.00%)
+    Strongest Degeneracy: At theta = 0.0° (diff = 0.049091)
+    Weakest Degeneracy: At theta = 60.0° (diff = 0.293577)
+
+  Other Eigenstate Pairs (Should NOT be degenerate):
+    Eigenstates 0-1:
+      Mean Difference: 0.177541
+      Min Difference: 0.043079
+      Max Difference: 0.292692
+      Std Deviation: 0.082165
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
+    Eigenstates 0-2:
+      Mean Difference: 0.355705
+      Min Difference: 0.336656
+      Max Difference: 0.368038
+      Std Deviation: 0.010028
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
+    Eigenstates 0-3:
+      Mean Difference: 0.966008
+      Min Difference: 0.915334
+      Max Difference: 0.999257
+      Std Deviation: 0.027946
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
+    Eigenstates 1-3:
+      Mean Difference: 0.788467
+      Min Difference: 0.706565
+      Max Difference: 0.872255
+      Std Deviation: 0.054513
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
+    Eigenstates 2-3:
+      Mean Difference: 0.610303
+      Min Difference: 0.578678
+      Max Difference: 0.657474
+      Std Deviation: 0.026429
+      Degeneracy Status: GOOD - Mean difference is greater than 0.1 (normalized scale)
+
+Parameters:
+  x_shift: 0.2
+  y_shift: 0.2
+  d: 1.0
+  omega: 1.0
+  a: 1.0
+  b: 0.5
+  c: 0.2
+  theta_max_degrees: 1080
+  num_points: 2000
