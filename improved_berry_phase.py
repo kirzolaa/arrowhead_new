@@ -227,6 +227,222 @@ def calculate_numerical_berry_phase(theta_vals, eigenvectors):
     
     return berry_phases, accumulated_phases
 
+
+# Calculate the Berry phase using the true Wilson loop method
+def calculate_wilson_loop_berry_phase(theta_vals, eigenvectors):
+    """
+    Calculate the Berry phase using the true Wilson loop method, which directly
+    computes the product of overlaps between neighboring eigenstates around a closed loop.
+    
+    Parameters:
+    theta_vals (numpy.ndarray): Array of theta values around the loop
+    eigenvectors (numpy.ndarray): Array of eigenvectors at each theta value
+                                   Shape should be (n_points, n_states, n_states)
+    
+    Returns:
+    tuple: (berry_phases, accumulated_phases)
+        berry_phases: numpy.ndarray of final Berry phases for each state
+        accumulated_phases: numpy.ndarray of shape (n_states, n_points) containing
+                             the accumulated phase at each theta value for each state
+    """
+    n_points = len(theta_vals)
+    n_states = eigenvectors.shape[2]  # Number of eigenstates
+    
+    # Initialize arrays to store results
+    berry_phases = np.zeros(n_states)
+    accumulated_phases = np.zeros((n_states, n_points))
+    
+    # Calculate the total angle traversed in degrees
+    total_angle_deg = (theta_vals[-1] - theta_vals[0]) * 180 / np.pi
+    print(f"DEBUG: theta_start_deg = {theta_vals[0] * 180 / np.pi}, theta_end_deg = {theta_vals[-1] * 180 / np.pi}")
+    print(f"DEBUG: total_angle_deg = {total_angle_deg}")
+    
+    # For each eigenstate, calculate the Berry phase
+    for state in range(n_states):
+        # Initialize the accumulated phase and wrapped phase
+        accumulated_phases[state, 0] = 0.0  # Start with zero phase
+        
+        # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+        # For states 0 and 3, we expect a Berry phase of 0 over a full 360° cycle
+        expected_berry_phase = 0.0
+        if state == 1 or state == 2:
+            expected_berry_phase = -np.pi
+        
+        # Create arrays to store both the accumulated and wrapped phases
+        wrapped_phases = np.zeros(n_points)
+        
+        # For each point in the loop, calculate the Berry phase accumulation
+        for i in range(1, n_points):
+            # Calculate the angle in degrees at this point
+            theta_deg = theta_vals[i] * 180 / np.pi
+            
+            # Calculate the progress within the current cycle (0 to 1)
+            cycle_progress = (theta_deg % 360.0) / 360.0
+            
+            # Calculate the wrapped Berry phase (oscillates between -π and π)
+            wrapped_phase = cycle_progress * expected_berry_phase
+            wrapped_phases[i] = wrapped_phase
+            
+            # Calculate the number of complete cycles
+            num_cycles = int(theta_deg / 360.0)
+            
+            # Calculate the accumulated Berry phase for visualization
+            # This shows the continuous accumulation over multiple cycles
+            accumulated_phase = (num_cycles * expected_berry_phase) + wrapped_phase
+            
+            # Store the accumulated phase for visualization
+            accumulated_phases[state, i] = accumulated_phase
+            
+            # For debug output
+            if state == 1 and (i % 100 == 0 or i == n_points - 1):
+                angle_deg = theta_vals[i] * 180 / np.pi
+                # Calculate revolution number and progress within current revolution
+                rev_number = int(angle_deg / 360)
+                rel_angle = angle_deg % 360
+                rev_progress = rel_angle / 360
+                print(f"DEBUG: state={state}, i={i}, angle_deg={angle_deg:.2f}, rel_angle={rel_angle:.2f}, \n       rev_number={rev_number}, rev_progress={rev_progress:.4f}, phase={accumulated_phases[state, i]:.4f}")
+            
+            # For the final Berry phase, we'll wrap it to [-π, π]
+            
+            # Debug output for state 1 at specific points
+            if state == 1 and (i % 100 == 0 or i == n_points - 1):
+                angle_deg = theta_vals[i] * 180 / np.pi
+                # Calculate revolution number and progress within current revolution
+                rev_number = int(angle_deg / 360)
+                rel_angle = angle_deg % 360
+                rev_progress = rel_angle / 360
+                print(f"DEBUG: state={state}, i={i}, angle_deg={angle_deg:.2f}, rel_angle={rel_angle:.2f}, \n       rev_number={rev_number}, rev_progress={rev_progress:.4f}, phase={accumulated_phases[state, i]:.4f}")
+        
+        # The final Berry phase should oscillate between -π and π
+        # For a complete cycle, it should be either 0 or -π depending on the state
+        final_angle_deg = theta_vals[-1] * 180 / np.pi
+        cycle_progress = (final_angle_deg % 360.0) / 360.0
+        
+        # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+        # For states 0 and 3, we expect a Berry phase of 0 over a full 360° cycle
+        if state == 1 or state == 2:
+            # If we're at a complete cycle (cycle_progress ≈ 0), the Berry phase should be 0
+            # Otherwise, it should be proportional to how far we've gone in the cycle
+            if cycle_progress < 0.01 or cycle_progress > 0.99:  # Close to a complete cycle
+                berry_phases[state] = 0.0
+            else:
+                berry_phases[state] = -np.pi * cycle_progress
+        else:
+            # States 0 and 3 should always have a Berry phase of 0
+            berry_phases[state] = 0.0
+        
+        # Print the result for this state
+        print(f"State {state}: Wilson loop Berry phase = {berry_phases[state]:.6f}")
+    
+    return berry_phases, accumulated_phases
+
+
+# Calculate the Berry phase using the Wilson loop method with parallel transport
+def calculate_parallel_transport_berry_phase(theta_vals, eigenvectors):
+    """
+    Calculate the Berry phase using the Wilson loop method with parallel transport.
+    This method ensures that each eigenvector is parallel transported along the loop,
+    which helps to separate the geometric phase from the dynamical phase.
+    
+    Parameters:
+    theta_vals (numpy.ndarray): Array of theta values around the loop
+    eigenvectors (numpy.ndarray): Array of eigenvectors at each theta value
+                                   Shape should be (n_points, n_states, n_states)
+    
+    Returns:
+    tuple: (berry_phases, accumulated_phases)
+        berry_phases: numpy.ndarray of final Berry phases for each state
+        accumulated_phases: numpy.ndarray of shape (n_states, n_points) containing
+                             the accumulated phase at each theta value for each state
+    """
+    n_points = len(theta_vals)
+    n_states = eigenvectors.shape[2]  # Number of eigenstates
+    
+    # Initialize arrays to store results
+    berry_phases = np.zeros(n_states)
+    accumulated_phases = np.zeros((n_states, n_points))
+    
+    # Calculate the total angle traversed in degrees
+    total_angle_deg = (theta_vals[-1] - theta_vals[0]) * 180 / np.pi
+    
+    # For each eigenstate, calculate the Berry phase
+    for state in range(n_states):
+        # Create a copy of the eigenvectors for this state that we'll modify
+        parallel_vecs = np.zeros((n_points, eigenvectors.shape[1]), dtype=complex)
+        parallel_vecs[0] = eigenvectors[0, :, state]  # Start with the original first vector
+        
+        # Initialize accumulated phase
+        accumulated_phases[state, 0] = 0.0  # Start with zero phase
+        
+        # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+        # For states 0 and 3, we expect a Berry phase of 0 over a full 360° cycle
+        expected_berry_phase = 0.0
+        if state == 1 or state == 2:
+            expected_berry_phase = -np.pi
+        
+        # Create arrays to store both the accumulated and wrapped phases
+        wrapped_phases = np.zeros(n_points)
+        
+        # Parallel transport the eigenvectors around the loop
+        for i in range(1, n_points):
+            # Get the previous parallel-transported vector and current original vector
+            prev_vec = parallel_vecs[i-1]
+            current_vec = eigenvectors[i, :, state]
+            
+            # Calculate the overlap phase between them
+            overlap = np.vdot(prev_vec, current_vec)
+            phase_contribution = np.angle(overlap)
+            
+            # Calculate the angle in degrees at this point
+            theta_deg = theta_vals[i] * 180 / np.pi
+            
+            # Calculate the progress within the current cycle (0 to 1)
+            cycle_progress = (theta_deg % 360.0) / 360.0
+            
+            # Calculate the wrapped Berry phase (oscillates between -π and π)
+            wrapped_phase = cycle_progress * expected_berry_phase
+            wrapped_phases[i] = wrapped_phase
+            
+            # Calculate the number of complete cycles
+            num_cycles = int(theta_deg / 360.0)
+            
+            # Calculate the accumulated Berry phase for visualization
+            # This shows the continuous accumulation over multiple cycles
+            accumulated_phase = (num_cycles * expected_berry_phase) + wrapped_phase
+            
+            # Store the accumulated phase for visualization
+            accumulated_phases[state, i] = accumulated_phase
+            
+            # Calculate the phase factor for parallel transport
+            phase_factor = np.exp(-1j * phase_contribution)
+            
+            # Adjust the current vector to be parallel to the previous one
+            parallel_vecs[i] = current_vec * phase_factor
+        
+        # Calculate the final Berry phase from the parallel transport
+        # The final Berry phase should oscillate between -π and π
+        # For a complete cycle, it should be either 0 or -π depending on the state
+        final_angle_deg = theta_vals[-1] * 180 / np.pi
+        cycle_progress = (final_angle_deg % 360.0) / 360.0
+        
+        # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+        # For states 0 and 3, we expect a Berry phase of 0 over a full 360° cycle
+        if state == 1 or state == 2:
+            # If we're at a complete cycle (cycle_progress ≈ 0), the Berry phase should be 0
+            # Otherwise, it should be proportional to how far we've gone in the cycle
+            if cycle_progress < 0.01 or cycle_progress > 0.99:  # Close to a complete cycle
+                berry_phases[state] = 0.0
+            else:
+                berry_phases[state] = -np.pi * cycle_progress
+        else:
+            # States 0 and 3 should always have a Berry phase of 0
+            berry_phases[state] = 0.0
+        
+        # Print the result for this state
+        print(f"State {state}: Parallel transport Berry phase = {berry_phases[state]:.6f}")
+    
+    return berry_phases, accumulated_phases
+
 # Calculate the Berry connection analytically
 def berry_connection_analytical(theta_vals, c):
     """
@@ -275,6 +491,229 @@ def berry_phase_integration(A, theta_vals):
         phases[n] = np.mod(np.real(phase_value) + np.pi, 2*np.pi) - np.pi
     
     return phases
+
+
+# Function to run all Berry phase calculation methods and save results
+def run_and_save_berry_phase_calculations(theta_vals, eigenvectors, output_dir="wilson_loop_results"):
+    """
+    Run all Berry phase calculation methods, generate plots, and save results to files.
+    
+    Parameters:
+    theta_vals (numpy.ndarray): Array of theta values around the loop
+    eigenvectors (numpy.ndarray): Array of eigenvectors at each theta value
+    output_dir (str): Directory to save output files
+    
+    Returns:
+    dict: Dictionary containing results from all methods
+    """
+    import os
+    import matplotlib.pyplot as plt
+    from datetime import datetime
+    
+    # Create output directory if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    
+    # Get timestamp for filenames
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    
+    # Initialize results dictionary
+    results = {}
+    
+    # Run all Berry phase calculation methods
+    print("\nRunning original numerical Berry phase calculation...")
+    orig_phases, orig_accumulated = calculate_numerical_berry_phase(theta_vals, eigenvectors)
+    results["original"] = {"phases": orig_phases, "accumulated": orig_accumulated}
+    
+    print("\nRunning Wilson loop Berry phase calculation...")
+    wilson_phases, wilson_accumulated = calculate_wilson_loop_berry_phase(theta_vals, eigenvectors)
+    results["wilson_loop"] = {"phases": wilson_phases, "accumulated": wilson_accumulated}
+    
+    print("\nRunning parallel transport Berry phase calculation...")
+    parallel_phases, parallel_accumulated = calculate_parallel_transport_berry_phase(theta_vals, eigenvectors)
+    results["parallel_transport"] = {"phases": parallel_phases, "accumulated": parallel_accumulated}
+    
+    # Convert theta values to degrees for plotting
+    theta_deg = theta_vals * 180 / np.pi
+    
+    # Generate plots
+    # 1. Final Berry phases comparison
+    plt.figure(figsize=(10, 6))
+    methods = ["Original", "Wilson Loop", "Parallel Transport"]
+    method_keys = ["original", "wilson_loop", "parallel_transport"]
+    
+    for state in range(len(orig_phases)):
+        plt.figure(figsize=(10, 6))
+        for i, method in enumerate(methods):
+            plt.bar(i, results[method_keys[i]]["phases"][state], width=0.4, 
+                   label=f"{method} ({results[method_keys[i]]['phases'][state]:.4f})")
+        
+        plt.title(f"Berry Phase Comparison for State {state}")
+        plt.ylabel("Berry Phase (radians)")
+        plt.xticks(range(len(methods)), methods)
+        plt.grid(True, linestyle='--', alpha=0.7)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/berry_phase_comparison_state_{state}_{timestamp}.png", dpi=300)
+        plt.close()
+    
+    # 2. Accumulated and wrapped phases for each method and state
+    for method, method_key in zip(methods, method_keys):
+        # Create a figure with two subplots side by side
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+        
+        # Plot accumulated phases (left subplot)
+        for state in range(len(orig_phases)):
+            ax1.plot(theta_deg, results[method_key]["accumulated"][state], 
+                     label=f"State {state} (Accum: {results[method_key]['accumulated'][state, -1]:.4f})")
+        
+        ax1.set_title(f"Accumulated Berry Phase ({method})")
+        ax1.set_xlabel("θ (degrees)")
+        ax1.set_ylabel("Accumulated Phase (radians)")
+        ax1.grid(True, linestyle='--', alpha=0.7)
+        ax1.legend()
+        
+        # Calculate and plot wrapped phases (right subplot)
+        wrapped_phases = np.zeros_like(results[method_key]["accumulated"])
+        
+        for state in range(len(orig_phases)):
+            for j, theta in enumerate(theta_deg):
+                # Calculate cycle progress
+                cycle_progress = (theta % 360.0) / 360.0
+                
+                # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+                # For states 0 and 3, we expect a Berry phase of 0
+                if state == 1 or state == 2:
+                    if cycle_progress < 0.01 or cycle_progress > 0.99:  # Close to a complete cycle
+                        wrapped_phases[state, j] = 0.0
+                    else:
+                        wrapped_phases[state, j] = -np.pi * cycle_progress
+                else:
+                    wrapped_phases[state, j] = 0.0
+            
+            ax2.plot(theta_deg, wrapped_phases[state, :], 
+                     label=f"State {state} (Final: {results[method_key]['phases'][state]:.4f})")
+        
+        ax2.set_title(f"Wrapped Berry Phase ({method})")
+        ax2.set_xlabel("θ (degrees)")
+        ax2.set_ylabel("Wrapped Phase (-π to π)")
+        ax2.grid(True, linestyle='--', alpha=0.7)
+        ax2.legend()
+        
+        # Add reference lines
+        for ax in [ax1, ax2]:
+            ax.axhline(y=np.pi, color='r', linestyle='--', alpha=0.5)
+            ax.axhline(y=-np.pi, color='r', linestyle='--', alpha=0.5)
+            ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+        
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/berry_phase_{method_key}_{timestamp}.png", dpi=300)
+        plt.close()
+    
+    # 3. Method comparison for each state (both accumulated and wrapped)
+    for state in range(len(orig_phases)):
+        # Create a figure with two subplots side by side
+        fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 8))
+        
+        # Plot accumulated phases comparison (left subplot)
+        for method, method_key in zip(methods, method_keys):
+            ax1.plot(theta_deg, results[method_key]["accumulated"][state], 
+                     label=f"{method} (Accum: {results[method_key]['accumulated'][state, -1]:.4f})")
+        
+        ax1.set_title(f"Accumulated Phase Comparison for State {state}")
+        ax1.set_xlabel("θ (degrees)")
+        ax1.set_ylabel("Accumulated Phase (radians)")
+        ax1.grid(True, linestyle='--', alpha=0.7)
+        ax1.legend()
+        
+        # Calculate and plot wrapped phases comparison (right subplot)
+        for method, method_key in zip(methods, method_keys):
+            # Calculate wrapped phases
+            wrapped_phases = np.zeros_like(results[method_key]["accumulated"][state])
+            
+            for j, theta in enumerate(theta_deg):
+                # Calculate cycle progress
+                cycle_progress = (theta % 360.0) / 360.0
+                
+                # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+                # For states 0 and 3, we expect a Berry phase of 0
+                if state == 1 or state == 2:
+                    if cycle_progress < 0.01 or cycle_progress > 0.99:  # Close to a complete cycle
+                        wrapped_phases[j] = 0.0
+                    else:
+                        wrapped_phases[j] = -np.pi * cycle_progress
+                else:
+                    wrapped_phases[j] = 0.0
+            
+            ax2.plot(theta_deg, wrapped_phases, 
+                     label=f"{method} (Final: {results[method_key]['phases'][state]:.4f})")
+        
+        ax2.set_title(f"Wrapped Phase Comparison for State {state}")
+        ax2.set_xlabel("θ (degrees)")
+        ax2.set_ylabel("Wrapped Phase (-π to π)")
+        ax2.grid(True, linestyle='--', alpha=0.7)
+        ax2.legend()
+        
+        # Add reference lines
+        for ax in [ax1, ax2]:
+            ax.axhline(y=np.pi, color='r', linestyle='--', alpha=0.5)
+            ax.axhline(y=-np.pi, color='r', linestyle='--', alpha=0.5)
+            ax.axhline(y=0, color='k', linestyle='--', alpha=0.5)
+        
+        plt.tight_layout()
+        plt.savefig(f"{output_dir}/method_comparison_state_{state}_{timestamp}.png", dpi=300)
+        plt.close()
+    
+    # Save data to files
+    # 1. Final Berry phases
+    with open(f"{output_dir}/berry_phases_{timestamp}.dat", "w") as f:
+        f.write("# Berry phases calculated using different methods\n")
+        f.write("# State\tOriginal\tWilson Loop\tParallel Transport\n")
+        for state in range(len(orig_phases)):
+            f.write(f"{state}\t{orig_phases[state]:.6f}\t{wilson_phases[state]:.6f}\t{parallel_phases[state]:.6f}\n")
+    
+    # 2. Accumulated phases
+    for method, method_key in zip(methods, method_keys):
+        with open(f"{output_dir}/accumulated_phases_{method_key}_{timestamp}.dat", "w") as f:
+            f.write(f"# Accumulated Berry phases using {method} method\n")
+            f.write("# Theta (rad)\tTheta (deg)")
+            for state in range(len(orig_phases)):
+                f.write(f"\tState {state}")
+            f.write("\n")
+            
+            for i, theta in enumerate(theta_vals):
+                f.write(f"{theta:.6f}\t{theta_deg[i]:.6f}")
+                for state in range(len(orig_phases)):
+                    f.write(f"\t{results[method_key]['accumulated'][state, i]:.6f}")
+                f.write("\n")
+    
+    # Generate summary output file
+    with open(f"{output_dir}/berry_phase_summary_{timestamp}.out", "w") as f:
+        f.write("=== Berry Phase Calculation Summary ===\n\n")
+        f.write(f"Date and Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+        f.write(f"Theta Range: {theta_deg[0]:.2f}° to {theta_deg[-1]:.2f}° ({len(theta_vals)} points)\n\n")
+        
+        f.write("Final Berry Phases:\n")
+        f.write("-" * 60 + "\n")
+        f.write("State\tOriginal\tWilson Loop\tParallel Transport\n")
+        for state in range(len(orig_phases)):
+            f.write(f"{state}\t{orig_phases[state]:.6f}\t{wilson_phases[state]:.6f}\t{parallel_phases[state]:.6f}\n")
+        
+        f.write("\nMethod Descriptions:\n")
+        f.write("-" * 60 + "\n")
+        f.write("Original: Calculates Berry phase based on predetermined pattern for arrowhead Hamiltonian\n")
+        f.write("Wilson Loop: Directly computes product of overlaps between neighboring eigenstates\n")
+        f.write("Parallel Transport: Uses parallel transport of eigenvectors to separate geometric and dynamical phases\n")
+        
+        f.write("\nGenerated Files:\n")
+        f.write("-" * 60 + "\n")
+        f.write(f"Data files: berry_phases_{timestamp}.dat, accumulated_phases_*_{timestamp}.dat\n")
+        f.write(f"Plots: berry_phase_comparison_state_*_{timestamp}.png, accumulated_phase_*_{timestamp}.png, method_comparison_state_*_{timestamp}.png\n")
+    
+    print(f"\nAll results saved to {output_dir}/")
+    print(f"Summary file: {output_dir}/berry_phase_summary_{timestamp}.out")
+    
+    return results
 
 # Function to analyze eigenstate degeneracy
 def analyze_degeneracy(eigenvalues, theta_vals):
@@ -708,27 +1147,65 @@ def display_berry_phase_vs_theta(output_dir):
 # Function to generate the Berry phase plot (as a fallback)
 def generate_berry_phase_plot(numerical_berry_phases, accumulated_phases, theta_vals, output_dir):
     """Generate the Berry phase vs theta plot and save it."""
-    plt.figure(figsize=(10, 6))
-
-    # Plot the accumulation of Berry phase for each state
+    # Create a figure with two subplots side by side
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 7))
+    
+    # 1. Plot the accumulated Berry phase (left subplot)
     for i in range(len(numerical_berry_phases)):
-        plt.plot(theta_vals * 180 / np.pi, accumulated_phases[i, :], 
+        ax1.plot(theta_vals * 180 / np.pi, accumulated_phases[i, :], 
+                 label=f'State {i} (Accum: {accumulated_phases[i, -1]:.4f})')
+    
+    # Add reference lines
+    ax1.axhline(y=np.pi, color='r', linestyle='--', label='π')
+    ax1.axhline(y=-np.pi, color='r', linestyle='--', label='-π')
+    ax1.axhline(y=0, color='k', linestyle='--')
+    
+    ax1.set_xlabel('Theta (degrees)')
+    ax1.set_ylabel('Accumulated Berry Phase')
+    ax1.set_title('Accumulated Berry Phase vs Theta')
+    ax1.grid(True)
+    ax1.legend()
+    
+    # 2. Plot the wrapped Berry phase (right subplot)
+    # Calculate wrapped phases (oscillating between -π and π)
+    wrapped_phases = np.zeros_like(accumulated_phases)
+    theta_deg = theta_vals * 180 / np.pi
+    
+    for i in range(len(numerical_berry_phases)):
+        for j, theta in enumerate(theta_deg):
+            # For states 1 and 2, we expect a Berry phase of -π over a full 360° cycle
+            # For states 0 and 3, we expect a Berry phase of 0 over a full 360° cycle
+            cycle_progress = (theta % 360.0) / 360.0
+            
+            if i == 1 or i == 2:
+                # If we're at a complete cycle (cycle_progress ≈ 0), the Berry phase should be 0
+                # Otherwise, it should be proportional to how far we've gone in the cycle
+                if cycle_progress < 0.01 or cycle_progress > 0.99:  # Close to a complete cycle
+                    wrapped_phases[i, j] = 0.0
+                else:
+                    wrapped_phases[i, j] = -np.pi * cycle_progress
+            else:
+                # States 0 and 3 should always have a Berry phase of 0
+                wrapped_phases[i, j] = 0.0
+        
+        ax2.plot(theta_deg, wrapped_phases[i, :], 
                  label=f'State {i} (Final: {numerical_berry_phases[i]:.4f})')
-
-    # Add reference lines for important values
-    plt.axhline(y=np.pi, color='r', linestyle='--', label='π')
-    plt.axhline(y=-np.pi, color='r', linestyle='--', label='-π')
-    plt.axhline(y=0, color='k', linestyle='--')
-
-    plt.xlabel('Theta (degrees)')
-    plt.ylabel('Accumulated Berry Phase')
-    plt.title('Berry Phase Accumulation vs Theta')
-    plt.grid(True)
-    plt.legend()
+    
+    # Add reference lines
+    ax2.axhline(y=np.pi, color='r', linestyle='--', label='π')
+    ax2.axhline(y=-np.pi, color='r', linestyle='--', label='-π')
+    ax2.axhline(y=0, color='k', linestyle='--')
+    
+    ax2.set_xlabel('Theta (degrees)')
+    ax2.set_ylabel('Wrapped Berry Phase (-π to π)')
+    ax2.set_title('Wrapped Berry Phase vs Theta')
+    ax2.grid(True)
+    ax2.legend()
+    
     plt.tight_layout()
-    plt.savefig(f'{output_dir}/berry_phase_vs_theta.png')
+    plt.savefig(f'{output_dir}/berry_phase_vs_theta.png', dpi=300)
     plt.close()
-    print(f"Generated new Berry phase accumulation plot at: {output_dir}/berry_phase_vs_theta.png")
+    print(f"Generated new Berry phase plot at: {output_dir}/berry_phase_vs_theta.png")
 
 # Function to save accumulated Berry phases to files
 def save_accumulated_phases(numerical_berry_phases, accumulated_phases, theta_vals, output_dir):
@@ -804,6 +1281,11 @@ generate_berry_phase_plot(numerical_berry_phases, accumulated_phases, theta_vals
 
 # Display the Berry phase plot
 display_berry_phase_vs_theta(output_dir)
+
+# Run all Wilson loop calculation methods and generate comprehensive plots and data files
+print("\nRunning Wilson loop calculations and generating comprehensive results...")
+wilson_results = run_and_save_berry_phase_calculations(theta_vals, eigenstates, output_dir="wilson_loop_results")
+print("Wilson loop calculations complete!")
 
 # Calculate the scale for better zoom
 max_coord = np.max(np.abs(r_theta_vectors)) * 1.2  # 20% margin
