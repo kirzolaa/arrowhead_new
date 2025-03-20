@@ -1,0 +1,23 @@
+Berry Phase Analysis Report
+Generated: 2025-03-20 23:31:36
+
+Parameters:
+  c = 1.0
+  omega = 1.0
+  a = 1.0
+  b = 0.5
+  c_const = 1.0
+  x_shift = 0.2
+  y_shift = 0.2
+  d = 1.0
+
+Calculation Parameters:
+  Theta range: [0, 6.283185307179586]
+  Number of points: 1000
+  Number of states: 4
+
+Results:
+  State 0: Berry phase = 0.000000
+  State 1: Berry phase = 3.141593
+  State 2: Berry phase = 3.141593
+  State 3: Berry phase = 0.000000

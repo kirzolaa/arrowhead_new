@@ -1,0 +1,23 @@
+=== Berry Phase Calculation Summary ===
+
+Date and Time: 2025-03-20 22:30:17
+Theta Range: 0.00° to 360.00° (1000 points)
+
+Final Berry Phases:
+------------------------------------------------------------
+State	Original	Wilson Loop	Parallel Transport
+0	0.000000	0.000000	0.000000
+1	-3.141593	0.000000	0.000000
+2	-3.141593	0.000000	0.000000
+3	0.000000	0.000000	0.000000
+
+Method Descriptions:
+------------------------------------------------------------
+Original: Calculates Berry phase based on predetermined pattern for arrowhead Hamiltonian
+Wilson Loop: Directly computes product of overlaps between neighboring eigenstates
+Parallel Transport: Uses parallel transport of eigenvectors to separate geometric and dynamical phases
+
+Generated Files:
+------------------------------------------------------------
+Data files: berry_phases_20250320_223014.dat, accumulated_phases_*_20250320_223014.dat
+Plots: berry_phase_comparison_state_*_20250320_223014.png, accumulated_phase_*_20250320_223014.png, method_comparison_state_*_20250320_223014.png
