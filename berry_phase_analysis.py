@@ -58,18 +58,18 @@ def R_theta(d, theta):
     return create_perfect_orthogonal_vectors(R_0, d, theta)
 
 # Define the potential functions V_x and V_a based on R_theta
-def V_x(R_theta, a, b, c):
+def V_x(R_theta, a):
     # Calculate individual V_x components for each R_theta component
-    Vx0 = a * R_theta[0]**2 + b * R_theta[0] + c
-    Vx1 = a * R_theta[1]**2 + b * R_theta[1] + c
-    Vx2 = a * R_theta[2]**2 + b * R_theta[2] + c
+    Vx0 = a * R_theta[0]**2
+    Vx1 = a * R_theta[1]**2
+    Vx2 = a * R_theta[2]**2
     return [Vx0, Vx1, Vx2]
 
 def V_a(R_theta, a, b, c, x_shift, y_shift):
     # Calculate individual V_a components with shifts applied for each R_theta component
-    Va0 = a * (R_theta[0] - x_shift)**2 + b * (R_theta[0] - y_shift) + c
-    Va1 = a * (R_theta[1] - x_shift)**2 + b * (R_theta[1] - y_shift) + c
-    Va2 = a * (R_theta[2] - x_shift)**2 + b * (R_theta[2] - y_shift) + c
+    Va0 = a * (R_theta[0] - x_shift)**2 + b * (R_theta[0] - x_shift) + c
+    Va1 = a * (R_theta[1] - x_shift)**2 + b * (R_theta[1] - x_shift) + c
+    Va2 = a * (R_theta[2] - x_shift)**2 + b * (R_theta[2] - x_shift) + c
     return [Va0, Va1, Va2]
 
 # Define the Hamiltonian matrix with explicit Berry phase terms
@@ -78,7 +78,7 @@ def hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d):
     R_theta_val = R_theta(d, theta)
     
     # Calculate the potentials V_x and V_a (each returns a list of 3 components)
-    Vx = V_x(R_theta_val, a, b, c_const)  # [Vx0, Vx1, Vx2]
+    Vx = V_x(R_theta_val, a)  # [Vx0, Vx1, Vx2]
     Va = V_a(R_theta_val, a, b, c_const, x_shift, y_shift)  # [Va0, Va1, Va2]
     
     # Create a 4x4 Hamiltonian with an arrowhead structure
@@ -111,9 +111,9 @@ c = 0.2  # Coupling constant
 omega = 0.1  # Frequency
 a = 1.0  # Potential parameter
 b = 1.0  # Potential parameter
-c_const = 1.0  # Potential constant
+c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
 x_shift = 1.0  # Shift in x direction
-y_shift = 1.0  # Shift in y direction
+y_shift = 0.0  # Shift in y direction --> turns out that this is not a y axis shift like I wanted it!!!!!
 d = 0.001  # Radius of the circle
 theta_min = 0
 theta_max = 2 * np.pi
@@ -170,7 +170,15 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
 
     return berry_phases, accumulated_phases
 
-def calculate_berry_curvature(eigenvectors, theta_vals):
+    #log the norm of the difference between consecutive eigenvectors into a new log file in output directory
+os.makedirs(output_dir, exist_ok=True)
+with open(f'{output_dir}/eigenvector_diff.out', "a") as log_file:
+    log_file.write('#State Theta Norm_Diff\n')
+    for i in range(1, len(theta_vals)):
+        for j in range(eigenvectors.shape[2]):
+            log_file.write(f"State {j}, Theta {theta_vals[i]:.2f}: {np.linalg.norm(eigenvectors[i, j] - eigenvectors[i-1, j]):.6f}\n")
+
+def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
     """
     Calculate the Berry curvature (i.e., the rate of change of the Berry phase)
     by computing the overlap of consecutive eigenvectors.
@@ -178,15 +186,18 @@ def calculate_berry_curvature(eigenvectors, theta_vals):
     Parameters:
     eigenvectors (ndarray): Array of eigenvectors at different theta values.
     theta_vals (ndarray): Array of theta values at which eigenvectors are calculated.
+    output_dir (str): Directory where output will be saved.
 
     Returns:
     ndarray: Berry curvature array.
     """
-    curvature = np.zeros((len(theta_vals) - 1, eigenvectors.shape[2]))
+    curvature = np.zeros((len(theta_vals) - 1, eigenvectors.shape[2]))  # For each state
     os.makedirs(output_dir, exist_ok=True)
-    #log the curvature
+    
+    # Log the curvature
     with open(f'{output_dir}/curvature.out', "w") as log_file:
-        log_file.write("Theta Curvature\n")  # Header
+        log_file.write("#Theta Curvature\n")  # Header
+        
         # Compute the Berry curvature for each state
         for i in range(1, len(theta_vals)):
             for j in range(eigenvectors.shape[2]):
@@ -195,20 +206,22 @@ def calculate_berry_curvature(eigenvectors, theta_vals):
                 # Calculate the phase difference
                 phase_diff = np.angle(overlap)
                 curvature[i-1, j] = phase_diff
-            # Log the values
-            log_file.write(f"{theta_vals[i]:.6f} {phase_diff:.6f}\n")
+
+            # Log the curvature for each state
+            log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i-1, j]:.6f}" for j in range(eigenvectors.shape[2])]) + "\n")
+
     return curvature
 
 
 def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir):
-    berry_curvature = calculate_berry_curvature(eigenvectors, theta_vals)
+    berry_curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
 
     berry_phases = np.zeros(eigenvectors.shape[2])
     accumulated_phases = np.zeros((eigenvectors.shape[2], len(theta_vals)))
 
     # Open a file to log accumulated phase values
     with open(f'{output_dir}/phase_log_berry_curvature.out', "w") as log_file:
-        log_file.write("Theta Accumulated_Phase\n")  # Header
+        log_file.write("#Theta Accumulated_Phase\n")  # Header
 
         # Compute the Berry phase for each state
         for j in range(eigenvectors.shape[2]):
@@ -217,17 +230,19 @@ def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_
             
             # Compute the Berry phase by accumulating Berry curvature
             for i in range(1, len(theta_vals)):
+                # Use trapezoidal rule to integrate Berry curvature
                 berry_phase[i] = berry_phase[i-1] + np.trapezoid(berry_curvature[:i, j], theta_vals[:i])
                 berry_phase[i] = (np.angle(berry_phase[i]) + np.pi) % (2 * np.pi) - np.pi  # Wrap phase between -π and π
+
             berry_phases[j] = berry_phase[-1].real  # Final Berry phase for each state
             accumulated_phases[j] = berry_phase.real  # Accumulated Berry phase for each point
 
-        # Log the accumulated phase values for each state (only accumulated phase)
+        # Log the accumulated phase values for each state (average across all states)
         for i in range(len(theta_vals)):
-            # Here, we average the accumulated phase over all states (if you want to combine them)
             log_file.write(f"{theta_vals[i]:.15f} {np.mean(accumulated_phases[:, i]):.15f}\n")
 
     return berry_phases, accumulated_phases
+
 
 
 # Calculate and plot eigenstate overlaps
@@ -428,7 +443,8 @@ with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write(f'Results:\n')
     for state, phase in enumerate(berry_phases):
         f.write(f'  State {state}: Berry phase = {phase:.6f}\n')
-    
+
+    f.write('Eigenvector differences logged in eigenvector_diff.out\n')
     f.write('\nEigenvalues and Eigenvectors:\n')
     f.write('To load the eigenvalues and eigenvectors, use:\n')
     f.write('eigenvalues = np.load(f"{output_dir}/eigenvalues.npy")\n')

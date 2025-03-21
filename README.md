@@ -7,6 +7,7 @@ This repository contains a Python script for analyzing Berry phases using the Wi
 - [Usage](#usage)
 - [Parameters](#parameters)
 - [Output](#output)
+- [Notes](#notes)
 
 ## Installation
 
@@ -62,4 +63,17 @@ The script generates the following output files in the specified output director
 - `berry_phases.dat`: Contains the calculated Berry phases.
 - `accumulated_phases.dat`: Contains the accumulated phases.
 - `phase_log_berry_curvature.out`: Log of phase differences and accumulated phases.
+- `eigenvector_diff.out`: Log of eigenvector differences.
+- `summary.txt`: Summary of the analysis.
 
+## Notes
+
+The script uses natural units where ħ = 1.
+
+The script imports the `create_perfect_orthogonal_vectors` function from the Arrowhead/generalized package. If the import fails, the script will fall back to a simple circle implementation.
+
+The script is currently not working well, since the parameters are not well-chosen.
+The d should be small, and the VA potential should be shifted by the x and y shift parameters well.
+The omega should be a well-chosen value, which is a bit smaller than the y shift parameter.
+I have been too wrong about the y_shift parameter.
+The y_shift should be the c_const parameter, since it is the y axis shifting in the potential.
