@@ -60,17 +60,13 @@ def R_theta(d, theta):
 # Define the potential functions V_x and V_a based on R_theta
 def V_x(R_theta, a):
     # Calculate individual V_x components for each R_theta component
-    Vx0 = a * R_theta[0]**2
-    Vx1 = a * R_theta[1]**2
-    Vx2 = a * R_theta[2]**2
-    return [Vx0, Vx1, Vx2]
+    Vx = [a * (R_theta[i] ** 2) for i in range(len(R_theta))]
+    return Vx
 
-def V_a(R_theta, a, b, c, x_shift, y_shift):
+def V_a(R_theta, a, b, c, x_shift):
     # Calculate individual V_a components with shifts applied for each R_theta component
-    Va0 = a * (R_theta[0] - x_shift)**2 + b * (R_theta[0] - x_shift) + c
-    Va1 = a * (R_theta[1] - x_shift)**2 + b * (R_theta[1] - x_shift) + c
-    Va2 = a * (R_theta[2] - x_shift)**2 + b * (R_theta[2] - x_shift) + c
-    return [Va0, Va1, Va2]
+    Va = [a * ((R_theta[i] - x_shift) ** 2) + b * (R_theta[i] - x_shift) + c for i in range(len(R_theta))]
+    return Va
 
 # Define the Hamiltonian matrix with explicit Berry phase terms
 def hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d):
@@ -79,7 +75,7 @@ def hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d):
     
     # Calculate the potentials V_x and V_a (each returns a list of 3 components)
     Vx = V_x(R_theta_val, a)  # [Vx0, Vx1, Vx2]
-    Va = V_a(R_theta_val, a, b, c_const, x_shift, y_shift)  # [Va0, Va1, Va2]
+    Va = V_a(R_theta_val, a, b, c_const, x_shift)  # [Va0, Va1, Va2]
     
     # Create a 4x4 Hamiltonian with an arrowhead structure
     H = np.zeros((4, 4), dtype=complex)
