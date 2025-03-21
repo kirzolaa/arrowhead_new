@@ -125,7 +125,7 @@ for i, theta in enumerate(theta_vals):
     eigenvectors.append(evecs)
 
 eigenvectors = np.array(eigenvectors)
-output_dir = f'output_berry_phase_results_thetamin_{theta_min}_thetamax_{theta_max}'
+output_dir = f'output_berry_phase_results_thetamin_{theta_min:.2f}_thetamax_{theta_max:.2f}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
 # Improved phase wrapping with higher consistency for Berry phase accumulation
 def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
     n_points = len(theta_vals)
