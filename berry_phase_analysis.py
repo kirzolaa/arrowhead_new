@@ -419,6 +419,64 @@ eigenvectors_array = np.array(eigenvectors_list)
 np.save(f'{output_dir}/eigenvalues.npy', eigenvalues_array)
 np.save(f'{output_dir}/eigenvectors.npy', eigenvectors_array)
 
+# Plot the eigenvalues
+plt.figure(figsize=(12, 6))
+
+# Transpose eigenvalues_array for correct plotting
+for i in range(eigenvalues_array.shape[1]):  # Loop through each eigenstate
+    plt.plot(theta_vals, eigenvalues_array[:, i], label=f'Eigenvalue {i+1}')
+
+plt.xlabel('Theta (θ)')
+plt.ylabel('Eigenvalues')
+plt.title('Eigenvalues vs Theta')
+plt.grid(True)
+plt.legend()  # Add legend to identify each eigenvalue
+plt.tight_layout()
+plt.savefig(f'{output_dir}/eigenvalues.png')
+
+## Check for degeneracy
+tolerance = 1e-3  # Define a tolerance level for degeneracy
+small_difference_threshold = 0.1  # Define a threshold for small differences
+degeneracy_list = []
+near_degeneracy_list = []
+difference_list = []
+report = []
+
+for i in range(eigenvalues_array.shape[1]):  # Loop through each eigenstate
+    for j in range(i + 1, eigenvalues_array.shape[1]):
+        difference = np.abs(eigenvalues_array[:, i] - eigenvalues_array[:, j])
+        difference_list.append(difference)
+        if np.all(difference < tolerance):
+            degeneracy_list.append((i, j))  # Store the indices of degenerate states
+        elif np.all(difference < small_difference_threshold):
+            near_degeneracy_list.append((i, j))  # Store the indices of near-degenerate states
+
+# Log the degeneracy results
+with open(f'{output_dir}/degeneracy_check.out', 'w') as log_file:
+    log_file.write("# Degeneracy Check\n")
+    log_file.write("======================================\n\n")
+    log_file.write(f"Parameters:\n")
+    log_file.write(f"Tolerance level: {tolerance}\n")
+    log_file.write(f"Small difference threshold: {small_difference_threshold}\n\n")
+    log_file.write("======================================\n\n")
+    if not degeneracy_list and not near_degeneracy_list:
+        log_file.write("No degeneracies or near degeneracies found.\n")
+    if not degeneracy_list and near_degeneracy_list:
+        log_file.write("No degenerate eigenstates found.\n")
+        for state1, state2 in near_degeneracy_list:
+            log_file.write(f"Eigenstates {state1} and {state2} are near degenerate.\n")
+    if not near_degeneracy_list and degeneracy_list:
+        log_file.write("No near-degenerate eigenstates found.\n")
+        for state1, state2 in degeneracy_list:
+            log_file.write(f"Eigenstates {state1} and {state2} are degenerate.\n")
+    log_file.write('\n')
+    # Log the differences between each eigenstate
+    log_file.write('======================================\nDifferences between eigenstates:\n')
+    for i in range(eigenvalues_array.shape[1]):  # Loop through each eigenstate
+        for j in range(i + 1, eigenvalues_array.shape[1]):
+            difference = np.abs(eigenvalues_array[:, i] - eigenvalues_array[:, j])
+            log_file.write(f"Eigenstates {i} and {j}: {difference}\n")  # Convert to string
+    
 # Write detailed text report
 with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write(f'Berry Phase Analysis Report\n')
@@ -439,6 +497,18 @@ with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write(f'Results:\n')
     for state, phase in enumerate(berry_phases):
         f.write(f'  State {state}: Berry phase = {phase:.6f}\n')
+    f.write(f'\nDegenerate Eigenstates:\n')
+    if degeneracy_list:
+        for state1, state2 in degeneracy_list:
+            f.write(f'  Eigenstates {state1} and {state2} are degenerate.\n')
+    else:
+        f.write('  No degeneracies found.\n')
+    f.write('Detailed degeneracy check logged in degeneracy_check.out\n')
+    
+    f.write('\n')
+    f.write('Berry curvature logged in phase_log_berry_curvature.out\n')
+    f.write('\n')
+    f.write('Eigenvalue plot saved as eigenvalues.png\n')
 
     f.write('Eigenvector differences logged in eigenvector_diff.out\n')
     f.write('\nEigenvalues and Eigenvectors:\n')
@@ -451,3 +521,8 @@ with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write('H = np.load(f"{output_dir}/Hamiltonians.npy")\n')
     f.write('Va = np.load(f"{output_dir}/Va_values.npy")\n')
     f.write('Vx = np.load(f"{output_dir}/Vx_values.npy")\n')
+    
+    if report:
+        f.write('\nNear Degenerate Eigenstates:\n')
+        for line in report:
+            f.write(line + '\n')
