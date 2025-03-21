@@ -1,5 +1,5 @@
 Berry Phase Analysis Report
-Generated: 2025-03-21 02:02:04
+Generated: 2025-03-21 02:58:40
 
 Parameters:
   c = 0.2
@@ -8,7 +8,7 @@ Parameters:
   b = 1.0
   c_const = 1.0
   x_shift = 1.0
-  y_shift = 1.0
+  y_shift = 0.0
   d = 0.001
 
 Calculation Parameters:
@@ -21,6 +21,7 @@ Results:
   State 1: Berry phase = 0.000000
   State 2: Berry phase = 0.000000
   State 3: Berry phase = 0.000000
+Eigenvector differences logged in eigenvector_diff.out
 
 Eigenvalues and Eigenvectors:
 To load the eigenvalues and eigenvectors, use:
