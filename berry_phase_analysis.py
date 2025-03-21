@@ -12,7 +12,7 @@ import datetime
 
 
 # Define physical constants
-hbar = 1.0  # Using natural units where ħ = 1 (common in quantum mechanics)
+hbar = 1.05457182e-34  # Planck's constant / 2pi
 
 # Import the perfect orthogonal circle generation function from the Arrowhead/generalized package
 import sys
@@ -349,7 +349,7 @@ plt.ylabel('Accumulated Phase')
 plt.title('Accumulated Phase vs Theta')
 
 plt.tight_layout()
-plt.show()
+plt.savefig(f'{output_dir}/accumulated_phases.png')
 
 #calculate and save the Hamiltonians, Va and Vx into .npy files
 # Assuming you have defined the Hamiltonian function and potential functions
