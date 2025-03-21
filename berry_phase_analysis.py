@@ -20,6 +20,7 @@ import os
 sys.path.append('/home/zoli/arrowhead/Arrowhead/generalized')
 try:
     from vector_utils import create_perfect_orthogonal_vectors
+    print("Successfully imported create_perfect_orthogonal_vectors from Arrowhead/generalized package.")
 except ImportError:
     print("Warning: Could not import create_perfect_orthogonal_vectors from Arrowhead/generalized package.")
     print("Falling back to simple circle implementation.")
