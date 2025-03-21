@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import argparse
 import datetime
 
+
 # Define physical constants
 hbar = 1.0  # Using natural units where ħ = 1 (common in quantum mechanics)
 
@@ -106,37 +107,30 @@ def hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d):
     return H, R_theta_val, Vx, Va
 
 # Parameters for the arrowhead matrix
-c = 1.0  # Coupling constant
-omega = 1.0  # Frequency
+c = 0.2  # Coupling constant
+omega = 0.1  # Frequency
 a = 1.0  # Potential parameter
-b = 0.5  # Potential parameter
+b = 1.0  # Potential parameter
 c_const = 1.0  # Potential constant
-x_shift = 0.2  # Shift in x direction
-y_shift = 0.2  # Shift in y direction
-d = 1.0  # Radius of the circle
+x_shift = 1.0  # Shift in x direction
+y_shift = 1.0  # Shift in y direction
+d = 0.001  # Radius of the circle
 theta_min = 0
 theta_max = 2 * np.pi
-
+num_points = 50
 # Generate the arrowhead matrix and Va, Vx
-theta_vals = np.linspace(theta_min, theta_max, 1000, endpoint=True)
+theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
 # Calculate eigenvectors at each theta value, explicitly including endpoint
 eigenvectors = []
 for i, theta in enumerate(theta_vals):
     # Diagonalize Hamiltonian
     evals, evecs = np.linalg.eigh(hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)[0])
-    
-    # Ensure phase continuity with previous eigenvector
-    if i > 0:
-        for j in range(evecs.shape[1]):
-            if np.abs(np.vdot(evecs[:,j], eigenvectors[-1][:,j])) < 0:
-                evecs[:,j] *= -1
-    
     eigenvectors.append(evecs)
 
 eigenvectors = np.array(eigenvectors)
-
-# Calculate the Berry phase using the new wilson loop method
+output_dir = f'output_berry_phase_results_thetamin_{theta_min}_thetamax_{theta_max}'
+# Improved phase wrapping with higher consistency for Berry phase accumulation
 def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
     n_points = len(theta_vals)
     n_states = eigenvectors.shape[2]
@@ -144,38 +138,97 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
     berry_phases = np.zeros(n_states)
     accumulated_phases = np.zeros((n_states, n_points))
 
-    for state in range(n_states):
-        phase_acc = 0.0  # Track phase accumulation
-        
-        for i in range(n_points - 1):
-            current_eigenvector = eigenvectors[i, :, state]
-            next_eigenvector = eigenvectors[i + 1, :, state]
+    # Open a file to log phase_diff and phase_acc
+    with open(f'{output_dir}/phase_log.out', "w") as log_file:
+        log_file.write("Theta Phase_Diff Phase_Accumulated\n")  # Header
 
-            # Overlap calculation
-            overlap = np.vdot(current_eigenvector, next_eigenvector)
-            overlap /= np.abs(overlap)  # Normalize to unit phase factor
-            phase_diff = np.angle(overlap)
+        for state in range(n_states):
+            phase_acc = 0.0
+            previous_phase = 0.0
 
-            # Unwrap the phase difference and accumulate (wrap between -pi to pi)
-            phase_acc += phase_diff
-            phase_acc = np.arctan2(np.sin(phase_acc), np.cos(phase_acc))  # Wrap phase to -pi to pi
-            
-            # Store the accumulated phase
-            accumulated_phases[state, i+1] = phase_acc
+            for i in range(n_points - 1):
+                current_eigenvector = eigenvectors[i, :, state]
+                next_eigenvector = eigenvectors[i + 1, :, state]
 
-        # Final Berry phase is the last accumulated phase value
-        berry_phases[state] = accumulated_phases[state, -1]
-        
-        # Optionally: add closure correction for full loop
-        final_overlap = np.vdot(eigenvectors[-1, :, state], eigenvectors[0, :, state])
-        final_overlap /= np.abs(final_overlap)
-        berry_phase_correction = np.angle(final_overlap)
-        berry_phases[state] += berry_phase_correction  # Adjust for closure
+                overlap = np.vdot(current_eigenvector, next_eigenvector)
+                overlap /= np.abs(overlap)
+                phase_diff = np.angle(overlap)
+                phase_diff = phase_diff - 2 * np.pi * np.round((phase_diff - previous_phase) / (2 * np.pi))
 
-    # Unwrap accumulated phases across states (if needed)
-    accumulated_phases = np.unwrap(accumulated_phases, axis=1)
+                phase_acc += phase_diff
+                accumulated_phases[state, i + 1] = phase_acc
+                previous_phase = phase_diff
+                
+                # Log the values
+                log_file.write(f"{theta_vals[i]:.6f} {phase_diff:.6f} {phase_acc:.6f}\n")
+
+            # Closure correction for full loop
+            final_overlap = np.vdot(eigenvectors[-1, :, state], eigenvectors[0, :, state])
+            final_overlap /= np.abs(final_overlap)
+            berry_phase_correction = np.angle(final_overlap)
+            berry_phases[state] = phase_acc + berry_phase_correction
 
     return berry_phases, accumulated_phases
+
+def calculate_berry_curvature(eigenvectors, theta_vals):
+    """
+    Calculate the Berry curvature (i.e., the rate of change of the Berry phase)
+    by computing the overlap of consecutive eigenvectors.
+
+    Parameters:
+    eigenvectors (ndarray): Array of eigenvectors at different theta values.
+    theta_vals (ndarray): Array of theta values at which eigenvectors are calculated.
+
+    Returns:
+    ndarray: Berry curvature array.
+    """
+    curvature = np.zeros((len(theta_vals) - 1, eigenvectors.shape[2]))
+    os.makedirs(output_dir, exist_ok=True)
+    #log the curvature
+    with open(f'{output_dir}/curvature.out', "w") as log_file:
+        log_file.write("Theta Curvature\n")  # Header
+        # Compute the Berry curvature for each state
+        for i in range(1, len(theta_vals)):
+            for j in range(eigenvectors.shape[2]):
+                # Compute the overlap of consecutive eigenvectors (inner product)
+                overlap = np.vdot(eigenvectors[i-1, j], eigenvectors[i, j])
+                # Calculate the phase difference
+                phase_diff = np.angle(overlap)
+                curvature[i-1, j] = phase_diff
+            # Log the values
+            log_file.write(f"{theta_vals[i]:.6f} {phase_diff:.6f}\n")
+    return curvature
+
+
+def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir):
+    berry_curvature = calculate_berry_curvature(eigenvectors, theta_vals)
+
+    berry_phases = np.zeros(eigenvectors.shape[2])
+    accumulated_phases = np.zeros((eigenvectors.shape[2], len(theta_vals)))
+
+    # Open a file to log accumulated phase values
+    with open(f'{output_dir}/phase_log_berry_curvature.out', "w") as log_file:
+        log_file.write("Theta Accumulated_Phase\n")  # Header
+
+        # Compute the Berry phase for each state
+        for j in range(eigenvectors.shape[2]):
+            berry_phase = np.zeros(len(theta_vals), dtype=complex)
+            berry_phase[0] = 0  # Phase at the first point is set to 0
+            
+            # Compute the Berry phase by accumulating Berry curvature
+            for i in range(1, len(theta_vals)):
+                berry_phase[i] = berry_phase[i-1] + np.trapezoid(berry_curvature[:i, j], theta_vals[:i])
+                berry_phase[i] = (np.angle(berry_phase[i]) + np.pi) % (2 * np.pi) - np.pi  # Wrap phase between -π and π
+            berry_phases[j] = berry_phase[-1].real  # Final Berry phase for each state
+            accumulated_phases[j] = berry_phase.real  # Accumulated Berry phase for each point
+
+        # Log the accumulated phase values for each state (only accumulated phase)
+        for i in range(len(theta_vals)):
+            # Here, we average the accumulated phase over all states (if you want to combine them)
+            log_file.write(f"{theta_vals[i]:.15f} {np.mean(accumulated_phases[:, i]):.15f}\n")
+
+    return berry_phases, accumulated_phases
+
 
 # Calculate and plot eigenstate overlaps
 overlaps = np.zeros((eigenvectors.shape[2], len(theta_vals)))
@@ -200,35 +253,22 @@ plt.title('Eigenstate Overlaps vs Theta')
 plt.legend()
 plt.grid(True)
 plt.tight_layout()
-plt.show()
+plt.savefig(f'{output_dir}/eigenstate_overlaps.png')
+
+def inspect_eigenvectors(eigenvectors, theta_vals, states):
+    for state in states:
+        print(f"State {state}:")
+        for i, theta in enumerate(theta_vals):
+            print(f"Theta = {theta:.2f}, Eigenvector: {eigenvectors[i, :, state]}")
+
+#inspect_eigenvectors(eigenvectors, theta_vals, range(eigenvectors.shape[2]))
+
 
 #plots
-berry_phases, accumulated_phases = calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors)
+berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir)
 
 # Create output directory and detailed report
-output_dir = f'output_berry_phase_results_thetamin_{theta_min}_thetamax_{theta_max}'
 os.makedirs(output_dir, exist_ok=True)
-
-# Write detailed text report
-with open(f'{output_dir}/summary.txt', 'w') as f:
-    f.write(f'Berry Phase Analysis Report\n')
-    f.write(f'Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
-    f.write(f'Parameters:\n')
-    f.write(f'  c = {c}\n')
-    f.write(f'  omega = {omega}\n')
-    f.write(f'  a = {a}\n')
-    f.write(f'  b = {b}\n')
-    f.write(f'  c_const = {c_const}\n')
-    f.write(f'  x_shift = {x_shift}\n')
-    f.write(f'  y_shift = {y_shift}\n')
-    f.write(f'  d = {d}\n\n')
-    f.write(f'Calculation Parameters:\n')
-    f.write(f'  Theta range: [{theta_min}, {theta_max}]\n')
-    f.write(f'  Number of points: {len(theta_vals)}\n')
-    f.write(f'  Number of states: {len(berry_phases)}\n\n')
-    f.write(f'Results:\n')
-    for state, phase in enumerate(berry_phases):
-        f.write(f'  State {state}: Berry phase = {phase:.6f}\n')
 
 # Write berry_phases to a .out file
 with open(f'{output_dir}/berry_phases.out', 'w') as f:
@@ -261,8 +301,8 @@ np.savetxt(f'{output_dir}/theta_values.dat', theta_vals, header='Theta values us
 
 # Write eigenstate overlaps to file
 with open(f'{output_dir}/eigenstate_overlaps.out', 'w') as f:
-    f.write('Eigenstate Overlaps vs Theta\n')
-    f.write('Theta (degrees)\tState 0\tState 1\tState 2\tState 3\n')
+    f.write('# Eigenstate Overlaps vs Theta\n')
+    f.write('# Theta (degrees)\tState 0\tState 1\tState 2\tState 3\n')
     for i, theta in enumerate(theta_vals):
         theta_deg = np.degrees(theta)
         f.write(f'{theta_deg:.2f}\t')
@@ -299,3 +339,103 @@ plt.title('Accumulated Phase vs Theta')
 
 plt.tight_layout()
 plt.show()
+
+#calculate and save the Hamiltonians, Va and Vx into .npy files
+# Assuming you have defined the Hamiltonian function and potential functions
+Hamiltonians = []
+Va_values = []
+Vx_values = []
+
+for theta in theta_vals:
+    H, R_theta_val, Vx, Va = hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)
+    Hamiltonians.append(H)
+    Va_values.append(Va)
+    Vx_values.append(Vx)
+
+# Convert lists to numpy arrays
+Hamiltonians = np.array(Hamiltonians)
+Va_values = np.array(Va_values)
+Vx_values = np.array(Vx_values)
+
+# Save the Hamiltonians, Va and Vx into .npy files
+np.save(f'{output_dir}/Hamiltonians.npy', Hamiltonians)
+np.save(f'{output_dir}/Va_values.npy', Va_values)
+np.save(f'{output_dir}/Vx_values.npy', Vx_values)
+
+#plot Va potential components
+plt.figure(figsize=(12, 6))
+Va_values = np.load(f'{output_dir}/Va_values.npy')
+for i in range(3):
+    plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i}]')
+plt.xlabel('Theta (θ)')
+plt.ylabel('Va Components')
+plt.title('Va Components vs Theta')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig(f'{output_dir}/Va_components.png')
+
+#plot Vx potential components
+plt.figure(figsize=(12, 6))
+Vx_values = np.load(f'{output_dir}/Vx_values.npy')
+for i in range(3):
+    plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i}]')
+plt.xlabel('Theta (θ)')
+plt.ylabel('Vx Components')
+plt.title('Vx Components vs Theta')
+plt.grid(True)
+plt.legend()
+plt.tight_layout()
+plt.savefig(f'{output_dir}/Vx_components.png')
+
+# Initialize lists to store eigenvalues and eigenvectors
+eigenvalues_list = []
+eigenvectors_list = []
+
+for theta in theta_vals:
+    H, R_theta_val, Vx, Va = hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)
+    
+    # Calculate eigenvalues and eigenvectors
+    evals, evecs = np.linalg.eigh(H)  # Use np.linalg.eigh for Hermitian matrices
+    eigenvalues_list.append(evals)
+    eigenvectors_list.append(evecs)
+
+# Convert lists to numpy arrays
+eigenvalues_array = np.array(eigenvalues_list)
+eigenvectors_array = np.array(eigenvectors_list)
+
+# Save the eigenvalues and eigenvectors into .npy files
+np.save(f'{output_dir}/eigenvalues.npy', eigenvalues_array)
+np.save(f'{output_dir}/eigenvectors.npy', eigenvectors_array)
+
+# Write detailed text report
+with open(f'{output_dir}/summary.txt', 'w') as f:
+    f.write(f'Berry Phase Analysis Report\n')
+    f.write(f'Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
+    f.write(f'Parameters:\n')
+    f.write(f'  c = {c}\n')
+    f.write(f'  omega = {omega}\n')
+    f.write(f'  a = {a}\n')
+    f.write(f'  b = {b}\n')
+    f.write(f'  c_const = {c_const}\n')
+    f.write(f'  x_shift = {x_shift}\n')
+    f.write(f'  y_shift = {y_shift}\n')
+    f.write(f'  d = {d}\n\n')
+    f.write(f'Calculation Parameters:\n')
+    f.write(f'  Theta range: [{theta_min}, {theta_max}]\n')
+    f.write(f'  Number of points: {len(theta_vals)}\n')
+    f.write(f'  Number of states: {len(berry_phases)}\n\n')
+    f.write(f'Results:\n')
+    for state, phase in enumerate(berry_phases):
+        f.write(f'  State {state}: Berry phase = {phase:.6f}\n')
+    
+    f.write('\nEigenvalues and Eigenvectors:\n')
+    f.write('To load the eigenvalues and eigenvectors, use:\n')
+    f.write('eigenvalues = np.load(f"{output_dir}/eigenvalues.npy")\n')
+    f.write('eigenvectors = np.load(f"{output_dir}/eigenvectors.npy")\n')
+    
+    f.write('\nFor Hamiltonians, Va, Vx:\n')
+    f.write('Use np.load() to load the data as a numpy array. Example usage:\n')
+    f.write('H = np.load(f"{output_dir}/Hamiltonians.npy")\n')
+    f.write('Va = np.load(f"{output_dir}/Va_values.npy")\n')
+    f.write('Vx = np.load(f"{output_dir}/Vx_values.npy")\n')
