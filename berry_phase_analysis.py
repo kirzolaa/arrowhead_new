@@ -144,8 +144,8 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
                 current_eigenvector = eigenvectors[i, :, state]
                 next_eigenvector = eigenvectors[i + 1, :, state]
 
-                overlap = np.vdot(current_eigenvector, next_eigenvector)
-                overlap /= np.abs(overlap)
+                overlap = np.conj(current_eigenvector).T @ next_eigenvector
+                #overlap /= np.abs(overlap)
                 phase_diff = np.angle(overlap)
                 phase_diff = phase_diff - 2 * np.pi * np.round((phase_diff - previous_phase) / (2 * np.pi))
 
@@ -157,8 +157,8 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
                 log_file.write(f"{theta_vals[i]:.6f} {phase_diff:.6f} {phase_acc:.6f}\n")
 
             # Closure correction for full loop
-            final_overlap = np.vdot(eigenvectors[-1, :, state], eigenvectors[0, :, state])
-            final_overlap /= np.abs(final_overlap)
+            final_overlap = np.conj(eigenvectors[-1, :, state]).T @ eigenvectors[0, :, state]
+            #final_overlap /= np.abs(final_overlap)
             berry_phase_correction = np.angle(final_overlap)
             berry_phases[state] = phase_acc + berry_phase_correction
 
@@ -195,11 +195,13 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
         # Compute the Berry curvature for each state
         for i in range(1, len(theta_vals)):
             for j in range(eigenvectors.shape[2]):
-                # Compute the overlap of consecutive eigenvectors (inner product)
-                overlap = np.vdot(eigenvectors[i-1, j], eigenvectors[i, j])
-                # Calculate the phase difference
-                phase_diff = np.angle(overlap)
-                curvature[i-1, j] = phase_diff
+                # Corrected Berry connection calculation
+                A_n_i = np.imag(np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j])
+
+                # Approximate the Berry curvature (simplified)
+                # Use a finite difference approximation for the derivative
+                dtheta = theta_vals[i+1] - theta_vals[i]
+                curvature[i-1, j] = (A_n_i) / dtheta  # Finite difference approximation
 
             # Log the curvature for each state
             log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i-1, j]:.6f}" for j in range(eigenvectors.shape[2])]) + "\n")
