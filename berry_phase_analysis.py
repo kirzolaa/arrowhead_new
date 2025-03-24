@@ -196,6 +196,7 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
         for i in range(len(theta_vals) - 1):  # Adjusted loop range
             for j in range(eigenvectors.shape[2]):
                 # Corrected Berry connection calculation
+                # Use complex conjugate of the previous state's eigenvector them imag part
                 A_n_i = np.imag(np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j])
 
                 # Approximate the Berry curvature (simplified)
@@ -275,9 +276,9 @@ def inspect_eigenvectors(eigenvectors, theta_vals, states):
 
 #plots
 #berry phases using berry curvature
-#berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir)
+berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir)
 #berry phases using wilson loop
-berry_phases, accumulated_phases = calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors)
+#berry_phases, accumulated_phases = calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors)
 
 
 # Create output directory and detailed report
@@ -370,14 +371,21 @@ Hamiltonians = np.array(Hamiltonians)
 Va_values = np.array(Va_values)
 Vx_values = np.array(Vx_values)
 
+#create a directory in the output directory for npy files
+#output_dir = os.path.join(output_dir, 'output_berry_phase_results_thetamin_0.00_thetamax_6.28_20250324150750')
+npy_dir = os.path.join(output_dir, 'npy_files')
+
+# Create the directory if it doesn't exist
+os.makedirs(npy_dir, exist_ok=True)
+
 # Save the Hamiltonians, Va and Vx into .npy files
-np.save(f'{output_dir}/Hamiltonians.npy', Hamiltonians)
-np.save(f'{output_dir}/Va_values.npy', Va_values)
-np.save(f'{output_dir}/Vx_values.npy', Vx_values)
+np.save(f'{npy_dir}/Hamiltonians.npy', Hamiltonians)
+np.save(f'{npy_dir}/Va_values.npy', Va_values)
+np.save(f'{npy_dir}/Vx_values.npy', Vx_values)
 
 #plot Va potential components
 plt.figure(figsize=(12, 6))
-Va_values = np.load(f'{output_dir}/Va_values.npy')
+Va_values = np.load(f'{npy_dir}/Va_values.npy')
 for i in range(3):
     plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i}]')
 plt.xlabel('Theta (θ)')
@@ -390,7 +398,7 @@ plt.savefig(f'{output_dir}/Va_components.png')
 
 #plot Vx potential components
 plt.figure(figsize=(12, 6))
-Vx_values = np.load(f'{output_dir}/Vx_values.npy')
+Vx_values = np.load(f'{npy_dir}/Vx_values.npy')
 for i in range(3):
     plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i}]')
 plt.xlabel('Theta (θ)')
@@ -400,7 +408,6 @@ plt.grid(True)
 plt.legend()
 plt.tight_layout()
 plt.savefig(f'{output_dir}/Vx_components.png')
-
 # Initialize lists to store eigenvalues and eigenvectors
 eigenvalues_list = []
 eigenvectors_list = []
@@ -418,8 +425,8 @@ eigenvalues_array = np.array(eigenvalues_list)
 eigenvectors_array = np.array(eigenvectors_list)
 
 # Save the eigenvalues and eigenvectors into .npy files
-np.save(f'{output_dir}/eigenvalues.npy', eigenvalues_array)
-np.save(f'{output_dir}/eigenvectors.npy', eigenvectors_array)
+np.save(f'{npy_dir}/eigenvalues.npy', eigenvalues_array)
+np.save(f'{npy_dir}/eigenvectors.npy', eigenvectors_array)
 
 # Plot the eigenvalues
 plt.figure(figsize=(12, 6))
@@ -434,7 +441,7 @@ plt.title('Eigenvalues vs Theta')
 plt.grid(True)
 plt.legend()  # Add legend to identify each eigenvalue
 plt.tight_layout()
-plt.savefig(f'{output_dir}/eigenvalues.png')
+plt.savefig(f'{npy_dir}/eigenvalues.png')
 
 ## Check for degeneracy
 tolerance = 1e-3  # Define a tolerance level for degeneracy
@@ -454,7 +461,7 @@ for i in range(eigenvalues_array.shape[1]):  # Loop through each eigenstate
             near_degeneracy_list.append((i, j))  # Store the indices of near-degenerate states
 
 # Log the degeneracy results
-with open(f'{output_dir}/degeneracy_check.out', 'w') as log_file:
+with open(f'{npy_dir}/degeneracy_check.out', 'w') as log_file:
     log_file.write("# Degeneracy Check\n")
     log_file.write("======================================\n\n")
     log_file.write(f"Parameters:\n")
@@ -480,7 +487,7 @@ with open(f'{output_dir}/degeneracy_check.out', 'w') as log_file:
             log_file.write(f"Eigenstates {i} and {j}: {difference}\n")  # Convert to string
     
 # Write detailed text report
-with open(f'{output_dir}/summary.txt', 'w') as f:
+with open(f'{npy_dir}/summary.txt', 'w') as f:
     f.write(f'Berry Phase Analysis Report\n')
     f.write(f'Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
     f.write(f'Parameters:\n')
@@ -515,14 +522,14 @@ with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write('Eigenvector differences logged in eigenvector_diff.out\n')
     f.write('\nEigenvalues and Eigenvectors:\n')
     f.write('To load the eigenvalues and eigenvectors, use:\n')
-    f.write('eigenvalues = np.load(f"{output_dir}/eigenvalues.npy")\n')
-    f.write('eigenvectors = np.load(f"{output_dir}/eigenvectors.npy")\n')
+    f.write('eigenvalues = np.load(f"{npy_dir}/eigenvalues.npy")\n')
+    f.write('eigenvectors = np.load(f"{npy_dir}/eigenvectors.npy")\n')
     
     f.write('\nFor Hamiltonians, Va, Vx:\n')
     f.write('Use np.load() to load the data as a numpy array. Example usage:\n')
-    f.write('H = np.load(f"{output_dir}/Hamiltonians.npy")\n')
-    f.write('Va = np.load(f"{output_dir}/Va_values.npy")\n')
-    f.write('Vx = np.load(f"{output_dir}/Vx_values.npy")\n')
+    f.write('H = np.load(f"{npy_dir}/Hamiltonians.npy")\n')
+    f.write('Va = np.load(f"{npy_dir}/Va_values.npy")\n')
+    f.write('Vx = np.load(f"{npy_dir}/Vx_values.npy")\n')
     
     if report:
         f.write('\nNear Degenerate Eigenstates:\n')
