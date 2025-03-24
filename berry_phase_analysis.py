@@ -9,10 +9,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import argparse
 import datetime
-
-
-# Define physical constants
-hbar = 1.05457182e-34  # Planck's constant / 2pi
+from scipy.constants import hbar
 
 # Import the perfect orthogonal circle generation function from the Arrowhead/generalized package
 import sys
