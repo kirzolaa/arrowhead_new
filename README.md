@@ -68,9 +68,16 @@ The script generates the following output files in the specified output director
 
 ## Notes
 
-The script uses natural units where ħ = 1.
+The script imports the `create_perfect_orthogonal_vectors` function from the generalized package. If the import fails, the script will fall back to a simple circle implementation.
 
-The script imports the `create_perfect_orthogonal_vectors` function from the Arrowhead/generalized package. If the import fails, the script will fall back to a simple circle implementation.
+The script has now multiprocessing implemented.
+The script have been tested for a Dirac cone case. See more in the `test.py` file.
+To run the script, use the following command:
+
+```bash
+python test.py
+```
+WARNING! COMMENT OUT THE `calculate_berry_phase_with_berry_curvature_simplified_multiprocessing` FUNCTION CALL IN THE `berry_phase_analysis.py` TO RUN THE TEST SCRIPT!
 
 The script is currently not working well, since the parameters are not well-chosen.
 The d should be small, and the VA potential should be shifted by the x and y shift parameters well.

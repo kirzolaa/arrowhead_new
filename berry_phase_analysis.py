@@ -10,6 +10,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import argparse
 import datetime
 from scipy.constants import hbar
+import multiprocessing
 
 # Import the perfect orthogonal circle generation function from the Arrowhead/generalized package
 import sys
@@ -116,41 +117,7 @@ for i, theta in enumerate(theta_vals):
 
 eigenvectors = np.array(eigenvectors)
 output_dir = f'output_berry_phase_results_thetamin_{theta_min:.2f}_thetamax_{theta_max:.2f}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
-# Improved phase wrapping with higher consistency for Berry phase accumulation
-def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
-    """
-    Calculate the Berry phase using the Wilson loop method.
 
-    Parameters:
-    theta_vals (ndarray): Array of theta values at which eigenvectors are calculated.
-    eigenvectors (ndarray): Array of eigenvectors at different theta values.
-
-    Returns:
-    ndarray: Berry phases for each state.
-    ndarray: Accumulated phases for each state at each theta value.
-    """
-    num_states = eigenvectors.shape[2]
-    overlaps = np.zeros((num_states, len(theta_vals)), dtype=complex)  # Ensure complex type
-    berry_phases = np.zeros(num_states)
-    accumulated_phases = np.zeros((num_states, len(theta_vals)))
-
-    for state in range(num_states):
-        for i in range(len(theta_vals)):
-            current_eigenvector = eigenvectors[i, :, state]
-            next_eigenvector = eigenvectors[(i + 1) % len(theta_vals), :, state]
-            overlaps[state, i] = np.conj(current_eigenvector).T @ next_eigenvector
-            if overlaps[state, i] < 0:
-                overlaps[state, i] *= -1 # Ensure positive overlap
-
-        # Calculate accumulated phase
-        accumulated_phases[state] = np.cumsum(np.angle(overlaps[state]))
-        # Wrap phases between -π and π
-        accumulated_phases[state] = np.angle(np.exp(1j * accumulated_phases[state]))
-        berry_phases[state] = accumulated_phases[state, -1]
-
-    return berry_phases, accumulated_phases
-
-    #log the norm of the difference between consecutive eigenvectors into a new log file in output directory
 os.makedirs(output_dir, exist_ok=True)
 figures_dir = os.path.join(output_dir, 'figures')
 out_dir = os.path.join(output_dir, 'out')
@@ -237,6 +204,47 @@ def calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvecto
 
     return berry_phases, accumulated_phases
 
+#multiprocess the calculate_berry_phase_with_berry_curvature_simplified function and ensure that we are using the num_cpus -1
+def calculate_berry_phase_for_band(j, theta_vals, eigenvectors, output_dir):
+    num_bands = eigenvectors.shape[2]
+    num_theta = len(theta_vals)
+    curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
+    
+    # Calculate berry phase
+    berry_phase = np.zeros(num_theta)
+    berry_phase[0] = 0
+    for i in range(1, num_theta):
+        berry_phase[i] = berry_phase[i - 1] + curvature[i, j] * (theta_vals[i] - theta_vals[i - 1]) #simple rectangular rule no wrapping.
+    
+    return berry_phase[-1], berry_phase
+
+def calculate_berry_phase_with_berry_curvature_simplified_multiprocessing(theta_vals, eigenvectors, output_dir):
+    num_bands = eigenvectors.shape[2]
+    num_theta = len(theta_vals)
+    berry_phases = np.zeros(num_bands)
+    accumulated_phases = np.zeros((num_bands, num_theta))
+    
+    with open(f'{output_dir}/phase_log_berry_curvature_simplified.out', "w") as log_file:
+        log_file.write("#Theta " + " ".join([f"Phase_{j}" for j in range(num_bands)]) + "\n")
+        
+        # Use multiprocessing to calculate berry phases for each band
+        with multiprocessing.Pool() as pool:
+            results = pool.starmap(
+                calculate_berry_phase_for_band,
+                [(j, theta_vals, eigenvectors, output_dir) for j in range(num_bands)]
+            )
+            
+        # Unpack results
+        for j, (berry_phase, accumulated_phase) in enumerate(results):
+            berry_phases[j] = berry_phase
+            accumulated_phases[j] = accumulated_phase
+            print(f"Berry phase for state {j}: {berry_phases[j]:.15f}")
+
+        for i in range(num_theta):
+            log_file.write(f"{theta_vals[i]:.15f} " + " ".join([f"{accumulated_phases[j, i]:.15f}" for j in range(num_bands)]) + "\n")
+
+    return berry_phases, accumulated_phases
+
 def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir):
     curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
     num_bands = eigenvectors.shape[2]
@@ -289,7 +297,7 @@ plt.savefig(f'{figures_dir}/eigenstate_overlaps.png')
 
 #plots
 #berry phases using berry curvature simplified
-berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvectors, output_dir)
+berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature_simplified_multiprocessing(theta_vals, eigenvectors, output_dir)
 #berry phases using wilson loop
 #berry_phases, accumulated_phases = calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors)
 
@@ -553,5 +561,3 @@ with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write('Summary logged in f"{output_dir}/summary.txt"\n')
     f.write('\n')
     f.write('Done.\n')
-
-

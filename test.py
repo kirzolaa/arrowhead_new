@@ -1,5 +1,5 @@
 import numpy as np
-from berry_phase_analysis import calculate_berry_phase_with_berry_curvature_simplified
+from berry_phase_analysis import calculate_berry_phase_with_berry_curvature_simplified_multiprocessing
 
 def generate_berry_phase_hamiltonian(theta):
     """
@@ -51,7 +51,7 @@ def test_berry_phase_calculation():
     os.makedirs(output_dir, exist_ok=True)
 
     eigenvectors = calculate_eigenvectors(theta_vals)
-    berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvectors, output_dir)
+    berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature_simplified_multiprocessing(theta_vals, eigenvectors, output_dir)
 
     print("Calculated Berry Phases:", berry_phases)
     # The berry phase of the lower band should be close to pi.
