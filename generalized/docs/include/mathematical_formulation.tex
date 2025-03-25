@@ -1,0 +1,158 @@
+\newpage
+\section{Mathematical Formulation}
+
+This section describes the mathematical basis for generating a single R vector orthogonal to the x=y=z line using basis vectors from a given origin point.
+
+\subsection{Basis Vectors Formulation}
+
+Let $\vec{R}_0$ be the origin vector in three-dimensional space. The R vector is calculated using basis vectors that are orthogonal to the (1,1,1) direction (the x=y=z line):
+
+\begin{align}
+\vec{R} = \vec{R}_0 + \vec{c}_1 + \vec{c}_2 + \vec{c}_3
+\end{align}
+
+where $\vec{c}_1$, $\vec{c}_2$, and $\vec{c}_3$ are component vectors calculated using two basis vectors:
+
+\begin{align}
+\vec{b}_1 &= [1, -1/2, -1/2] \quad \text{(First basis vector)} \\
+\vec{b}_2 &= [0, -1/2, 1/2] \quad \text{(Second basis vector)}
+\end{align}
+
+These basis vectors are orthogonal to the (1,1,1) direction, which ensures that any linear combination of them will also be orthogonal to this direction.
+
+The component vectors are calculated as:
+
+\begin{align}
+\vec{c}_1 &= d \cdot \cos(\theta) \cdot \sqrt{\frac{2}{3}} \cdot \vec{b}_1 \\
+\vec{c}_2 &= d \cdot \frac{\cos(\theta)/\sqrt{3} + \sin(\theta)}{\sqrt{2}} \cdot \vec{b}_1 \\
+\vec{c}_3 &= d \cdot \frac{\sin(\theta) - \cos(\theta)/\sqrt{3}}{\sqrt{2}} \cdot \vec{b}_2 \cdot \sqrt{2}
+\end{align}
+
+where:
+\begin{itemize}
+    \item $d$ is a distance parameter that scales the vector
+    \item $\theta$ is an angle parameter that rotates the vector
+\end{itemize}
+
+The resulting vector $\vec{R}$ is guaranteed to be orthogonal to the (1,1,1) direction because it is constructed using basis vectors that are orthogonal to this direction.
+
+\subsection{Perfect Orthogonal Circle Method}
+
+In addition to the basis vectors formulation described above, we have implemented a more direct method for generating a perfect circle in the plane orthogonal to the x=y=z line. This method uses normalized basis vectors to ensure that all points are exactly at the specified distance from the origin and perfectly orthogonal to the (1,1,1) direction.
+
+\subsubsection{Normalized Basis Vectors}
+
+We start with the same basis vectors as before:
+
+\begin{align}
+\vec{b}_1 &= [1, -1/2, -1/2] \\
+\vec{b}_2 &= [0, -1/2, 1/2]
+\end{align}
+
+But now we normalize them to ensure they have unit length:
+
+\begin{align}
+\hat{b}_1 &= \frac{\vec{b}_1}{\|\vec{b}_1\|} \\
+\hat{b}_2 &= \frac{\vec{b}_2}{\|\vec{b}_2\|}
+\end{align}
+
+\subsubsection{Parametric Circle Equation}
+
+We then use the parametric equation of a circle to generate points at a fixed distance $d$ from the origin $\vec{R}_0$:
+
+\begin{align}
+\vec{R}(\theta) = \vec{R}_0 + d \cdot (\cos(\theta) \cdot \hat{b}_1 + \sin(\theta) \cdot \hat{b}_2)
+\end{align}
+
+where $\theta$ is the angle parameter that varies from 0 to $2\pi$ to generate a full circle.
+
+\subsubsection{Mathematical Properties}
+
+This formulation has several important mathematical properties:
+
+\paragraph{Exact Distance} Since $\hat{b}_1$ and $\hat{b}_2$ are unit vectors and are orthogonal to each other, the term $(\cos(\theta) \cdot \hat{b}_1 + \sin(\theta) \cdot \hat{b}_2)$ has a constant magnitude of 1 for all values of $\theta$. This ensures that all points are exactly at distance $d$ from the origin $\vec{R}_0$.
+
+\paragraph{Perfect Orthogonality} Both $\hat{b}_1$ and $\hat{b}_2$ are orthogonal to the (1,1,1) direction, so any linear combination of them will also be orthogonal to this direction. This ensures that all points on the circle are perfectly orthogonal to the x=y=z line.
+
+\paragraph{Perfect Circle} The use of $\cos(\theta)$ and $\sin(\theta)$ with orthogonal unit vectors ensures that the points form a perfect circle in the plane spanned by $\hat{b}_1$ and $\hat{b}_2$, which is orthogonal to the (1,1,1) direction.
+
+\subsection{Mathematical Properties}
+
+The basis vectors formulation has several important mathematical properties:
+
+\subsubsection{Orthogonality to the x=y=z Line}
+
+The key feature of this formulation is that it generates vectors that are orthogonal to the x=y=z line (the (1,1,1) direction). This is achieved by using basis vectors that are orthogonal to this direction:
+
+\begin{align}
+\vec{b}_1 \cdot [1,1,1] &= 1 \cdot 1 + (-1/2) \cdot 1 + (-1/2) \cdot 1 = 1 - 1/2 - 1/2 = 0 \\
+\vec{b}_2 \cdot [1,1,1] &= 0 \cdot 1 + (-1/2) \cdot 1 + (1/2) \cdot 1 = 0 - 1/2 + 1/2 = 0
+\end{align}
+
+Since any linear combination of these basis vectors will also be orthogonal to the (1,1,1) direction, the resulting vector $\vec{R} - \vec{R}_0$ will be orthogonal to this direction regardless of the values of $d$, $\theta$, or $\vec{R}_0$.
+
+\subsubsection{Invariance to Origin}
+
+The behavior of the vector generation is predictable with respect to the origin point $\vec{R}_0$. The formula automatically adjusts for the origin position.
+
+\subsubsection{Invariance to Rotation}
+
+The parameter $\theta$ allows for rotation of the generated vector around the origin. This rotation parameter provides flexibility in generating different vector orientations.
+
+\subsubsection{Scaling}
+
+The parameter $d$ scales the vector magnitude, allowing for adjusting the size of the vector without changing its direction properties.
+
+\subsection{Geometric Interpretation}
+
+Geometrically, the basis vectors formulation generates vectors that lie in a plane orthogonal to the x=y=z line. This plane is spanned by the two basis vectors $\vec{b}_1 = [1, -1/2, -1/2]$ and $\vec{b}_2 = [0, -1/2, 1/2]$.
+
+The parameter $d$ controls the scale of the vector, while $\theta$ controls the orientation within this orthogonal plane. As $\theta$ varies from 0 to $2\pi$, the vector traces a circle in this plane, always maintaining orthogonality to the x=y=z line.
+
+\subsection{Circle and Sphere Generation}
+
+One interesting application of this vector generation formula is the creation of circle and sphere-like patterns that are orthogonal to the x=y=z line. By keeping $d$ constant and varying $\theta$ from 0 to $2\pi$, the resulting endpoints of the $\vec{R}$ vectors form a pattern that lies on a circle in the plane orthogonal to the x=y=z line.
+
+This behavior can be observed in the example scripts provided with the system:
+
+\begin{itemize}
+    \item \texttt{example\_circle.py} - Demonstrates the circle pattern orthogonal to the x=y=z line generated by varying $\theta$
+    \item \texttt{example\_circle\_xy.py} - Creates a traditional circle in the XY plane for comparison
+    \item \texttt{example\_orthogonal\_circle.py} - Provides improved visualization of the circle orthogonal to the x=y=z line
+    \item \texttt{perfect\_orthogonal\_circle.py} - Implements the perfect circle generation with enhanced visualization
+    \item \texttt{perfect\_circle\_distance\_range.py} - Demonstrates multiple perfect circles at different distances with enhanced visualization
+\end{itemize}
+
+The mathematical reason for this behavior is that the basis vectors formulation ensures that all generated vectors are orthogonal to the x=y=z line. When $\theta$ is varied, the vector traces a circle in the plane orthogonal to this line. This is fundamentally different from a traditional circle in the XY plane, which is not generally orthogonal to the x=y=z line.
+
+The orthogonality to the x=y=z line is guaranteed by the use of basis vectors $\vec{b}_1 = [1, -1/2, -1/2]$ and $\vec{b}_2 = [0, -1/2, 1/2]$, which form a basis for the plane orthogonal to the (1,1,1) direction.
+
+\subsection{Enhanced Visualization Techniques}
+
+To better understand the spatial relationships and properties of these orthogonal vectors, we have implemented enhanced visualization techniques that provide clearer representation of the three-dimensional space:
+
+\subsubsection{Color-coded Coordinate System}
+
+The visualization uses a color-coded coordinate system to help with spatial orientation:
+
+\begin{itemize}
+    \item X-axis: Red
+    \item Y-axis: Green
+    \item Z-axis: Blue
+\end{itemize}
+
+This color coding follows standard conventions in computer graphics and makes it easier to identify the orientation of the three-dimensional space.
+
+\subsubsection{Coordinate Labels and Tick Marks}
+
+Integer coordinate values are displayed along each axis, color-matched to the axis color. Small tick marks are also added along each axis for better spatial reference. This helps in understanding the scale and position of the vectors in the three-dimensional space.
+
+\subsubsection{Data-driven Scaling}
+
+The axis limits are dynamically adjusted based on the actual data points, ensuring that all vectors are visible while minimizing unused space. This is particularly important when visualizing multiple vectors or circles with different parameters.
+
+\subsubsection{Equal Aspect Ratio}
+
+The 3D plots maintain an equal aspect ratio for accurate spatial representation. This ensures that the visualization does not distort the geometric properties of the vectors and circles, which is crucial for understanding their orthogonality and other mathematical properties.
+
+These enhanced visualization techniques significantly improve the visual representation of the orthogonal vectors, making it easier to understand their spatial relationships and properties. They are particularly useful for visualizing the perfect orthogonal circles and their relationship to the x=y=z line.

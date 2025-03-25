@@ -1,0 +1,323 @@
+
+\newpage
+\section{API Reference}
+
+This section provides a reference for the API of the Generalized Orthogonal Vectors Generator and Visualizer package. It describes the functions and classes provided by each module.
+
+\subsection{vector\_utils Module}
+
+\subsubsection{create\_orthogonal\_vectors}
+
+\begin{lstlisting}[language=Python]
+def create_orthogonal_vectors(origin, d=1.0, theta=math.pi/4, num_points=None, perfect=False, start_theta=None, end_theta=None):
+    """
+    Create orthogonal vectors from a given origin point.
+    
+    Args:
+        origin (list or numpy.ndarray): The origin point as a 3D vector [x, y, z]
+        d (float, optional): Distance parameter. Defaults to 1.0.
+        theta (float or int, optional): Angle parameter in radians or number of points if num_points is provided. Defaults to pi/4.
+        num_points (int, optional): Number of points to generate. If provided, generates multiple vectors.
+        perfect (bool, optional): If True, uses the perfect orthogonal circle generation method. Defaults to False.
+        start_theta (float, optional): Start angle for perfect circle generation. Defaults to 0.
+        end_theta (float, optional): End angle for perfect circle generation. Defaults to 2*pi.
+        
+    Returns:
+        numpy.ndarray: The resulting R vector or array of vectors as a numpy array
+    """
+\end{lstlisting}
+
+This function creates orthogonal vectors from a given origin point using either scalar formulas or the perfect orthogonal circle method. It can generate a single vector or multiple vectors based on the parameters provided. When \texttt{perfect=True}, it uses the perfect orthogonal circle generation method, which ensures exact distance from the origin and perfect orthogonality to the (1,1,1) direction.
+
+\subsubsection{create\_perfect\_orthogonal\_circle}
+
+\begin{lstlisting}[language=Python]
+def create_perfect_orthogonal_circle(origin, d=1.0, num_points=36, start_theta=0, end_theta=2*math.pi):
+    """
+    Create a perfect circle in the plane orthogonal to the x=y=z line.
+    
+    Args:
+        origin (list or numpy.ndarray): The origin point as a 3D vector [x, y, z]
+        d (float, optional): Distance parameter. Defaults to 1.0.
+        num_points (int, optional): Number of points to generate. Defaults to 36.
+        start_theta (float, optional): Start angle in radians. Defaults to 0.
+        end_theta (float, optional): End angle in radians. Defaults to 2*pi.
+        
+    Returns:
+        numpy.ndarray: Array of points forming the circle or circle segment
+    """
+\end{lstlisting}
+
+This function generates a perfect circle or circle segment in the plane orthogonal to the x=y=z line. It uses normalized basis vectors to ensure that all points are exactly at the specified distance from the origin and perfectly orthogonal to the (1,1,1) direction. The function supports generating partial circles by specifying the start and end angles.
+
+\subsubsection{check\_orthogonality}
+
+\begin{lstlisting}[language=Python]
+def check_orthogonality(vectors, origin=None, tolerance=1e-10):
+    """
+    Check if a set of vectors is orthogonal.
+    
+    Args:
+        vectors (list): List of vectors to check
+        origin (list or numpy.ndarray, optional): Origin point. If provided, 
+                                                 checks orthogonality of 
+                                                 displacement vectors.
+        tolerance (float, optional): Tolerance for floating-point comparison. 
+                                    Defaults to 1e-10.
+        
+    Returns:
+        bool: True if vectors are orthogonal, False otherwise
+    """
+\end{lstlisting}
+
+This function checks if a set of vectors is orthogonal by calculating the dot products between them. If an origin point is provided, it checks the orthogonality of the displacement vectors from the origin. It returns True if the vectors are orthogonal (within the specified tolerance) and False otherwise.
+
+\subsubsection{calculate\_displacement\_vectors}
+
+\begin{lstlisting}[language=Python]
+def calculate_displacement_vectors(vectors, origin):
+    """
+    Calculate the displacement vectors from the origin.
+    
+    Args:
+        vectors (list): List of vectors
+        origin (list or numpy.ndarray): Origin point
+        
+    Returns:
+        list: List of displacement vectors
+    """
+\end{lstlisting}
+
+This function calculates the displacement vectors from the origin to each of the given vectors. It takes a list of vectors and an origin point as inputs and returns a list of displacement vectors.
+
+\subsubsection{calculate\_dot\_products}
+
+\begin{lstlisting}[language=Python]
+def calculate_dot_products(vectors):
+    """
+    Calculate the dot products between all pairs of vectors.
+    
+    Args:
+        vectors (list): List of vectors
+        
+    Returns:
+        list: List of dot products
+    """
+\end{lstlisting}
+
+This function calculates the dot products between all pairs of vectors in the given list. It takes a list of vectors as input and returns a list of dot products.
+
+\subsection{visualization Module}
+
+The visualization module provides functions for visualizing vectors in 2D and 3D space. It includes enhanced visualization features for better spatial understanding.
+
+\subsubsection{setup\_enhanced\_3d\_axes}
+
+\begin{lstlisting}[language=Python]
+def setup_enhanced_3d_axes(ax, points, axis_colors=['r', 'g', 'b'], 
+                         show_coordinate_labels=True, equal_aspect_ratio=True,
+                         buffer_factor=0.1):
+    """
+    Set up enhanced 3D axes with color-coded axes, coordinate labels, and proper scaling.
+    
+    Args:
+        ax (matplotlib.axes.Axes): The axes object to enhance
+        points (numpy.ndarray): Array of points to determine axis limits
+        axis_colors (list, optional): Colors for X, Y, and Z axes. Defaults to ['r', 'g', 'b'].
+        show_coordinate_labels (bool, optional): Whether to show coordinate labels. Defaults to True.
+        equal_aspect_ratio (bool, optional): Whether to maintain equal aspect ratio. Defaults to True.
+        buffer_factor (float, optional): Buffer factor for axis limits. Defaults to 0.1.
+        
+    Returns:
+        tuple: Min and max values for each axis (xmin, xmax, ymin, ymax, zmin, zmax)
+    """
+\end{lstlisting}
+
+This function sets up enhanced 3D axes with color-coded axes, coordinate labels, and proper scaling. It is used internally by the plot\_vectors\_3d function when enhanced visualization is enabled. It takes a Matplotlib axes object, an array of points to determine axis limits, and options for customizing the visualization as inputs. It returns the minimum and maximum values for each axis.
+
+\subsubsection{plot\_vectors\_3d}
+
+\begin{lstlisting}[language=Python]
+def plot_vectors_3d(vectors, origin=None, title="Orthogonal Vectors (3D)", 
+                   show_plot=True, save_path=None, enhanced_visualization=True,
+                   axis_colors=None, show_coordinate_labels=True, equal_aspect_ratio=True,
+                   buffer_factor=0.1):
+    """
+    Plot vectors in 3D space with enhanced visualization features.
+    
+    Args:
+        vectors (list): List of vectors to plot
+        origin (list or numpy.ndarray, optional): Origin point. 
+                                                 Defaults to [0, 0, 0].
+        title (str, optional): Plot title. Defaults to "Orthogonal Vectors (3D)".
+        show_plot (bool, optional): Whether to show the plot. Defaults to True.
+        save_path (str, optional): Path to save the plot. Defaults to None.
+        enhanced_visualization (bool, optional): Whether to use enhanced visualization features.
+                                               Defaults to True.
+        axis_colors (list, optional): Custom colors for the X, Y, and Z axes.
+                                    Defaults to ['r', 'g', 'b'].
+        show_coordinate_labels (bool, optional): Whether to show coordinate labels on the axes.
+                                               Defaults to True.
+        equal_aspect_ratio (bool, optional): Whether to maintain an equal aspect ratio for 3D plots.
+                                           Defaults to True.
+        buffer_factor (float, optional): Buffer factor for axis limits. Defaults to 0.1.
+        
+    Returns:
+        matplotlib.figure.Figure: The figure object
+    """
+\end{lstlisting}
+
+This function plots vectors in 3D space using Matplotlib. It takes a list of vectors, an optional origin point, a title, and options for showing and saving the plot as inputs. It returns the Matplotlib figure object.
+
+\subsubsection{plot\_vectors\_2d}
+
+\begin{lstlisting}[language=Python]
+def plot_vectors_2d(vectors, origin=None, 
+                   title="Orthogonal Vectors (2D Projections)", 
+                   show_plot=True, save_path=None, enhanced_visualization=True,
+                   axis_colors=None, show_coordinate_labels=True, equal_aspect_ratio=True,
+                   buffer_factor=0.1, include_orthogonal_projection=True):
+    """
+    Plot vectors in various 2D projections with enhanced visualization features.
+    
+    Args:
+        vectors (list): List of vectors to plot
+        origin (list or numpy.ndarray, optional): Origin point. 
+                                                 Defaults to [0, 0, 0].
+        title (str, optional): Plot title. 
+                              Defaults to "Orthogonal Vectors (2D Projections)".
+        show_plot (bool, optional): Whether to show the plot. Defaults to True.
+        save_path (str, optional): Path to save the plot. Defaults to None.
+        
+    Returns:
+        matplotlib.figure.Figure: The figure object
+    """
+\end{lstlisting}
+
+This function plots vectors in various 2D projections using Matplotlib with enhanced visualization features. It creates four subplots showing projections onto the XY, XZ, and YZ planes, as well as a projection onto the plane orthogonal to the x=y=z line. The enhanced visualization features include color-coded axes, coordinate labels, data-driven scaling, and equal aspect ratio. It takes a list of vectors, an optional origin point, a title, and options for showing and saving the plot as inputs, along with various visualization configuration options. It returns the Matplotlib figure object.
+
+\subsubsection{plot\_vectors}
+
+\begin{lstlisting}[language=Python]
+def plot_vectors(vectors, origin=None, plot_type="3d", title=None, 
+                show_plot=True, save_path=None, enhanced_visualization=True,
+                axis_colors=None, show_coordinate_labels=True, equal_aspect_ratio=True,
+                buffer_factor=0.1, include_orthogonal_projection=True):
+    """
+    Plot vectors in either 3D or 2D with enhanced visualization features, depending on the plot_type.
+    
+    Args:
+        vectors (list): List of vectors to plot
+        origin (list or numpy.ndarray, optional): Origin point. 
+                                                 Defaults to [0, 0, 0].
+        plot_type (str, optional): Type of plot, either "3d" or "2d". 
+                                  Defaults to "3d".
+        title (str, optional): Plot title. Defaults to None.
+        show_plot (bool, optional): Whether to show the plot. Defaults to True.
+        save_path (str, optional): Path to save the plot. Defaults to None.
+        
+    Returns:
+        matplotlib.figure.Figure: The figure object
+    """
+\end{lstlisting}
+
+This function is a high-level function that plots vectors in either 3D or 2D, depending on the specified plot type. It calls either \texttt{plot\_vectors\_3d} or \texttt{plot\_vectors\_2d} based on the \texttt{plot\_type} parameter. It takes a list of vectors, an optional origin point, a plot type, a title, and options for showing and saving the plot as inputs. It returns the Matplotlib figure object.
+
+\subsection{config Module}
+
+\subsubsection{VectorConfig Class}
+
+\begin{lstlisting}[language=Python]
+class VectorConfig:
+    """
+    Configuration class for vector generation and visualization.
+    """
+    
+    def __init__(self, origin=None, d=1.0, theta=math.pi/4, plot_type="3d", 
+                title=None, show_plot=True, save_path=None):
+        """
+        Initialize the configuration.
+        
+        Args:
+            origin (list or numpy.ndarray, optional): Origin point. 
+                                                     Defaults to [0, 0, 0].
+            d (float, optional): Distance parameter. Defaults to 1.0.
+            theta (float, optional): Angle parameter in radians. 
+                                    Defaults to pi/4.
+            plot_type (str, optional): Type of plot, either "3d" or "2d". 
+                                      Defaults to "3d".
+            title (str, optional): Plot title. Defaults to None.
+            show_plot (bool, optional): Whether to show the plot. 
+                                       Defaults to True.
+            save_path (str, optional): Path to save the plot. Defaults to None.
+        """
+\end{lstlisting}
+
+This class provides a unified way to configure all aspects of vector generation and visualization. It stores the configuration parameters and provides methods for saving configurations to and loading configurations from JSON files.
+
+\subsubsection{VectorConfig.save\_to\_file}
+
+\begin{lstlisting}[language=Python]
+def save_to_file(self, file_path):
+    """
+    Save the configuration to a JSON file.
+    
+    Args:
+        file_path (str): Path to save the configuration file
+        
+    Returns:
+        bool: True if successful, False otherwise
+    """
+\end{lstlisting}
+
+This method saves the configuration to a JSON file. It takes a file path as input and returns True if the save was successful and False otherwise.
+
+\subsubsection{VectorConfig.load\_from\_file}
+
+\begin{lstlisting}[language=Python]
+@classmethod
+def load_from_file(cls, file_path):
+    """
+    Load the configuration from a JSON file.
+    
+    Args:
+        file_path (str): Path to the configuration file
+        
+    Returns:
+        VectorConfig: The loaded configuration
+    """
+\end{lstlisting}
+
+This class method loads a configuration from a JSON file. It takes a file path as input and returns a new \texttt{VectorConfig} object with the loaded configuration.
+
+\subsection{main Module}
+
+\subsubsection{main Function}
+
+\begin{lstlisting}[language=Python]
+def main():
+    """
+    Main function for the command-line interface.
+    """
+\end{lstlisting}
+
+This function is the entry point for the command-line interface. It parses command-line arguments, creates a configuration, generates orthogonal vectors, and visualizes them.
+
+\subsection{\_\_init\_\_ Module}
+
+The \texttt{\_\_init\_\_.py} module exports the key functions and classes from the package, making them available when the package is imported:
+
+\begin{lstlisting}[language=Python]
+from .vector_utils import create_orthogonal_vectors, check_orthogonality
+from .visualization import plot_vectors, plot_vectors_3d, plot_vectors_2d
+from .config import VectorConfig
+
+__all__ = [
+    'create_orthogonal_vectors',
+    'check_orthogonality',
+    'plot_vectors',
+    'plot_vectors_3d',
+    'plot_vectors_2d',
+    'VectorConfig'
+]
+\end{lstlisting}

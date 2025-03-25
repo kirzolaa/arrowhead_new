@@ -14,12 +14,13 @@ from scipy.constants import hbar
 # Import the perfect orthogonal circle generation function from the Arrowhead/generalized package
 import sys
 import os
-sys.path.append('/home/zoltan/arrowhead_new_new/arrowhead_new/Arrowhead/generalized')
+sys.path.append('/home/zoltan/arrowhead_new_new/arrowhead_new/generalized')
 try:
     from vector_utils import create_perfect_orthogonal_vectors
-    print("Successfully imported create_perfect_orthogonal_vectors from Arrowhead/generalized package.")
+    from main import *
+    print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
 except ImportError:
-    print("Warning: Could not import create_perfect_orthogonal_vectors from Arrowhead/generalized package.")
+    print("Warning: Could not import create_perfect_orthogonal_vectors from arrowhead/generalized package.")
     print("Falling back to simple circle implementation.")
     # Define a fallback function if the import fails
     def create_perfect_orthogonal_vectors(R_0=(0, 0, 0), d=1, theta=0):
@@ -170,6 +171,7 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
 os.makedirs(output_dir, exist_ok=True)
 figures_dir = os.path.join(output_dir, 'figures')
 out_dir = os.path.join(output_dir, 'out')
+#create a new directory
 os.makedirs(figures_dir, exist_ok=True)
 os.makedirs(out_dir, exist_ok=True)
 

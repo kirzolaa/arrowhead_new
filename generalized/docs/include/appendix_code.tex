@@ -1,0 +1,1846 @@
+
+\newpage
+\section{Source Code}
+
+This appendix contains the complete source code for the Orthogonal Vector Visualization System package.
+
+\subsection{Example Scripts}
+
+\subsubsection{perfect\_circle\_distance\_range.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+"""
+Generate perfect orthogonal circles with different distance values.
+This script creates circles in the plane orthogonal to the (1,1,1) direction
+with distances ranging from 0.5 to 3.0 in 0.5 increments.
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import os
+import sys
+
+# Add the generalized directory to the path
+sys.path.append(os.path.join(os.path.dirname(__file__), 'generalized'))
+from vector_utils import create_perfect_orthogonal_circle
+
+# Set up the figure
+fig = plt.figure(figsize=(12, 10))
+ax = fig.add_subplot(111, projection='3d')
+
+# Define the origin
+R_0 = np.array([0.0, 0.0, 0.0])
+
+# Define the range of distances
+distances = np.arange(0.5, 3.5, 0.5)
+
+# Define the theta range (full circle)
+theta_start = 0
+theta_end = 2 * np.pi
+num_points = 73  # 5-degree increments
+
+# Generate and plot circles for each distance
+colors = plt.cm.viridis(np.linspace(0, 1, len(distances)))
+
+# Store all circle points for scaling calculations
+all_circles_points = []
+
+for i, d in enumerate(distances):
+    # Generate the circle
+    vectors = create_perfect_orthogonal_circle(
+        R_0=R_0,
+        d=d,
+        start_theta=theta_start,
+        end_theta=theta_end,
+        num_points=num_points
+    )
+    
+    # Store points for scaling calculations
+    all_circles_points.append(vectors)
+    
+    # Plot the circle
+    ax.scatter(vectors[:, 0], vectors[:, 1], vectors[:, 2], 
+               color=colors[i], label=f'd = {d}')
+    
+    # We'll keep the circles without the connecting lines to make the visualization cleaner
+
+# Plot the origin
+ax.scatter(R_0[0], R_0[1], R_0[2], color='red', s=100, marker='o', label='Origin R_0')
+
+# Add axis lines with higher visibility and labels
+# Adjust max_val to be closer to the actual data for better visualization
+max_val = max(np.max(np.abs(distances)) * 1.5, 3.5)
+
+# X-axis - red with label and coordinate markers
+ax.plot([-max_val, max_val], [0, 0], [0, 0], 'r-', alpha=0.6, linewidth=1.0)
+ax.text(max_val*1.1, 0, 0, 'X', color='red', fontsize=12)
+
+# Add coordinate markers along X-axis
+for i in range(-int(max_val), int(max_val)+1):
+    if i != 0 and i % 1 == 0:  # Only show integer values, skip zero
+        ax.text(i, 0, 0, f'{i}', color='red', fontsize=8, ha='center', va='bottom')
+        # Add small tick marks
+        ax.plot([i, i], [0, -0.05], [0, 0], 'r-', alpha=0.4, linewidth=0.5)
+
+# Y-axis - green with label and coordinate markers
+ax.plot([0, 0], [-max_val, max_val], [0, 0], 'g-', alpha=0.6, linewidth=1.0)
+ax.text(0, max_val*1.1, 0, 'Y', color='green', fontsize=12)
+
+# Add coordinate markers along Y-axis
+for i in range(-int(max_val), int(max_val)+1):
+    if i != 0 and i % 1 == 0:  # Only show integer values, skip zero
+        ax.text(0, i, 0, f'{i}', color='green', fontsize=8, ha='right', va='center')
+        # Add small tick marks
+        ax.plot([0, -0.05], [i, i], [0, 0], 'g-', alpha=0.4, linewidth=0.5)
+
+# Z-axis - blue with label and coordinate markers
+ax.plot([0, 0], [0, 0], [-max_val, max_val], 'b-', alpha=0.6, linewidth=1.0)
+ax.text(0, 0, max_val*1.1, 'Z', color='blue', fontsize=12)
+
+# Add coordinate markers along Z-axis
+for i in range(-int(max_val), int(max_val)+1):
+    if i != 0 and i % 1 == 0:  # Only show integer values, skip zero
+        ax.text(0, 0, i, f'{i}', color='blue', fontsize=8, ha='right', va='center')
+        # Add small tick marks
+        ax.plot([0, -0.05], [0, 0], [i, i], 'b-', alpha=0.4, linewidth=0.5)
+
+# Plot the x=y=z line
+line = np.array([[-1, -1, -1], [7, 7, 7]])
+ax.plot(line[:, 0], line[:, 1], line[:, 2], 'r--', label='x=y=z line')
+
+# Set labels and title
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+ax.set_title('Perfect Orthogonal Circles with Different Distances', fontsize=14)
+
+# Calculate data range for better scaling
+data_min = min([np.min(vectors) for vectors in all_circles_points])
+data_max = max([np.max(vectors) for vectors in all_circles_points])
+data_max = max(abs(data_min), abs(data_max))
+
+# Add a small buffer for better visualization
+buffer = data_max * 0.1
+
+# Set axis limits
+ax.set_xlim([-data_max-buffer, data_max+buffer])
+ax.set_ylim([-data_max-buffer, data_max+buffer])
+ax.set_zlim([-data_max-buffer, data_max+buffer])
+
+# Set equal aspect ratio for better 3D visualization
+ax.set_box_aspect([1, 1, 1])
+
+# Add a legend
+ax.legend()
+
+# Save the figure
+plt.savefig('perfect_circle_distance_range.png', dpi=300, bbox_inches='tight')
+
+# Create a second figure with 2D projections
+fig2, axs = plt.subplots(2, 2, figsize=(14, 12))
+axs = axs.flatten()
+
+# XY Projection
+for i, d in enumerate(distances):
+    vectors = create_perfect_orthogonal_circle(
+        R_0=R_0,
+        d=d,
+        start_theta=theta_start,
+        end_theta=theta_end,
+        num_points=num_points
+    )
+    axs[0].scatter(vectors[:, 0], vectors[:, 1], color=colors[i], label=f'd = {d}')
+
+axs[0].scatter(R_0[0], R_0[1], color='red', s=100, marker='o')
+axs[0].set_xlabel('X')
+axs[0].set_ylabel('Y')
+axs[0].set_title('XY Projection')
+axs[0].grid(True)
+axs[0].set_aspect('equal')
+
+# XZ Projection
+for i, d in enumerate(distances):
+    vectors = create_perfect_orthogonal_circle(
+        R_0=R_0,
+        d=d,
+        start_theta=theta_start,
+        end_theta=theta_end,
+        num_points=num_points
+    )
+    axs[1].scatter(vectors[:, 0], vectors[:, 2], color=colors[i])
+
+axs[1].scatter(R_0[0], R_0[2], color='red', s=100, marker='o')
+axs[1].set_xlabel('X')
+axs[1].set_ylabel('Z')
+axs[1].set_title('XZ Projection')
+axs[1].grid(True)
+axs[1].set_aspect('equal')
+
+# YZ Projection
+for i, d in enumerate(distances):
+    vectors = create_perfect_orthogonal_circle(
+        R_0=R_0,
+        d=d,
+        start_theta=theta_start,
+        end_theta=theta_end,
+        num_points=num_points
+    )
+    axs[2].scatter(vectors[:, 1], vectors[:, 2], color=colors[i])
+
+axs[2].scatter(R_0[1], R_0[2], color='red', s=100, marker='o')
+axs[2].set_xlabel('Y')
+axs[2].set_ylabel('Z')
+axs[2].set_title('YZ Projection')
+axs[2].grid(True)
+axs[2].set_aspect('equal')
+
+# Orthogonal Plane Projection
+# Define the basis vectors for the orthogonal plane
+basis1 = np.array([1, -1/2, -1/2])
+basis2 = np.array([0, -1/2, 1/2])
+
+# Normalize the basis vectors
+basis1 = basis1 / np.linalg.norm(basis1)
+basis2 = basis2 / np.linalg.norm(basis2)
+
+for i, d in enumerate(distances):
+    vectors = create_perfect_orthogonal_circle(
+        R_0=R_0,
+        d=d,
+        start_theta=theta_start,
+        end_theta=theta_end,
+        num_points=num_points
+    )
+    
+    # Project onto the orthogonal plane
+    projected_points = []
+    for v in vectors:
+        # Vector from R_0 to the point
+        v_rel = v - R_0
+        
+        # Project onto the basis vectors
+        x_proj = np.dot(v_rel, basis1)
+        y_proj = np.dot(v_rel, basis2)
+        
+        projected_points.append([x_proj, y_proj])
+    
+    projected_points = np.array(projected_points)
+    axs[3].scatter(projected_points[:, 0], projected_points[:, 1], color=colors[i])
+
+axs[3].scatter(0, 0, color='red', s=100, marker='o')
+axs[3].set_xlabel('Basis Vector 1')
+axs[3].set_ylabel('Basis Vector 2')
+axs[3].set_title('Projection onto Plane Orthogonal to x=y=z')
+axs[3].grid(True)
+axs[3].set_aspect('equal')
+
+# Add a legend to the first subplot only to avoid clutter
+axs[0].legend(loc='upper right')
+
+# Adjust layout and save
+plt.tight_layout()
+plt.savefig('perfect_circle_distance_range_projections.png', dpi=300, bbox_inches='tight')
+
+plt.show()
+\end{lstlisting}
+
+\subsubsection{perfect\_orthogonal\_circle.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+"""
+Generate and visualize a perfect circle in the plane orthogonal to the x=y=z line.
+This script uses R_0 = (0,0,0), d=1, and theta ranging from 0 to 360 degrees in 5-degree steps.
+"""
+
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+import os
+
+def generate_perfect_orthogonal_circle(d=1.0, num_points=73):
+    """
+    Generate a perfect circle in the plane orthogonal to the x=y=z line.
+    
+    Parameters:
+    d (float): Distance parameter, default is 1.0
+    num_points (int): Number of points to generate, default is 73 (5-degree steps)
+    
+    Returns:
+    numpy.ndarray: Array of points forming the circle
+    """
+    # Set R_0 to (0,0,0)
+    R_0 = np.array([0, 0, 0])
+    
+    # Define the basis vectors orthogonal to the (1,1,1) direction
+    basis1 = np.array([1, -1/2, -1/2])
+    basis2 = np.array([0, -1/2, 1/2])
+    
+    # Normalize the basis vectors
+    basis1 = basis1 / np.linalg.norm(basis1)
+    basis2 = basis2 / np.linalg.norm(basis2)
+    
+    # Generate theta values from 0 to 2*np.pi
+    thetas = np.linspace(0, 2*np.pi, num_points)
+    
+    # Generate points directly using the basis vectors to ensure a perfect circle
+    points = []
+    for theta in thetas:
+        # Create a point at distance d from the origin in the plane spanned by basis1 and basis2
+        point = R_0 + d * (np.cos(theta) * basis1 + np.sin(theta) * basis2)
+        points.append(point)
+    
+    return np.array(points)
+
+def visualize_perfect_orthogonal_circle(points):
+    """
+    Visualize the perfect circle in the plane orthogonal to the x=y=z line.
+    
+    Parameters:
+    points (numpy.ndarray): Array of points forming the circle
+    """
+    # Create output directory if it doesn't exist
+    output_dir = "perfect_circle_output"
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # 3D visualization
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Plot the circle points
+    ax.scatter(points[:, 0], points[:, 1], points[:, 2], c='b', marker='o')
+    
+    # Plot the origin
+    ax.scatter(0, 0, 0, c='r', marker='o', s=100)
+    
+    # Plot the x=y=z line
+    line = np.array([[-1, -1, -1], [1, 1, 1]])
+    ax.plot(line[:, 0], line[:, 1], line[:, 2], 'r--')
+    
+    # Set labels and title
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Perfect Circle Orthogonal to x=y=z Line')
+    
+    # Save the figure
+    plt.savefig(f"{output_dir}/perfect_circle_3d.png")
+    
+    # Create a figure for projections
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+    
+    # XY projection
+    axs[0, 0].scatter(points[:, 0], points[:, 1], c='b', marker='o')
+    axs[0, 0].scatter(0, 0, c='r', marker='o', s=100)
+    axs[0, 0].set_xlabel('X')
+    axs[0, 0].set_ylabel('Y')
+    axs[0, 0].set_title('XY Projection')
+    axs[0, 0].grid(True)
+    axs[0, 0].axis('equal')
+    
+    # XZ projection
+    axs[0, 1].scatter(points[:, 0], points[:, 2], c='b', marker='o')
+    axs[0, 1].scatter(0, 0, c='r', marker='o', s=100)
+    axs[0, 1].set_xlabel('X')
+    axs[0, 1].set_ylabel('Z')
+    axs[0, 1].set_title('XZ Projection')
+    axs[0, 1].grid(True)
+    axs[0, 1].axis('equal')
+    
+    # YZ projection
+    axs[1, 0].scatter(points[:, 1], points[:, 2], c='b', marker='o')
+    axs[1, 0].scatter(0, 0, c='r', marker='o', s=100)
+    axs[1, 0].set_xlabel('Y')
+    axs[1, 0].set_ylabel('Z')
+    axs[1, 0].set_title('YZ Projection')
+    axs[1, 0].grid(True)
+    axs[1, 0].axis('equal')
+    
+    # Project onto the plane orthogonal to (1,1,1)
+    # Use the basis vectors to create 2D coordinates in the orthogonal plane
+    basis1 = np.array([1, -1/2, -1/2])
+    basis2 = np.array([0, -1/2, 1/2])
+    
+    # Normalize the basis vectors
+    basis1 = basis1 / np.linalg.norm(basis1)
+    basis2 = basis2 / np.linalg.norm(basis2)
+    
+    # Project each point onto the basis vectors
+    proj_x = np.array([np.dot(p, basis1) for p in points])
+    proj_y = np.array([np.dot(p, basis2) for p in points])
+    
+    # Plot the projection onto the orthogonal plane
+    axs[1, 1].scatter(proj_x, proj_y, c='b', marker='o')
+    axs[1, 1].scatter(0, 0, c='r', marker='o', s=100)
+    axs[1, 1].set_xlabel('Basis Vector 1')
+    axs[1, 1].set_ylabel('Basis Vector 2')
+    axs[1, 1].set_title('Projection onto Orthogonal Plane')
+    axs[1, 1].grid(True)
+    axs[1, 1].axis('equal')
+    
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/perfect_circle_projections.png")
+    
+    # Create a separate figure for the orthogonal plane projection
+    plt.figure(figsize=(8, 8))
+    plt.scatter(proj_x, proj_y, c='b', marker='o')
+    plt.scatter(0, 0, c='r', marker='o', s=100)
+    plt.xlabel('Basis Vector 1')
+    plt.ylabel('Basis Vector 2')
+    plt.title('Projection onto Plane Orthogonal to x=y=z Line')
+    plt.grid(True)
+    plt.axis('equal')
+    plt.tight_layout()
+    plt.savefig(f"{output_dir}/perfect_circle_orthogonal_plane.png")
+
+def verify_circle_properties(points):
+    """
+    Verify that the generated points form a perfect circle.
+    
+    Parameters:
+    points (numpy.ndarray): Array of points forming the circle
+    
+    Returns:
+    dict: Dictionary containing verification results
+    """
+    # Calculate distances from the origin
+    distances = np.linalg.norm(points, axis=1)
+    
+    # Calculate dot products with the (1,1,1) direction
+    unit_111 = np.array([1, 1, 1]) / np.sqrt(3)
+    dot_products = np.abs(np.array([np.dot(p, unit_111) for p in points]))
+    
+    # Calculate results
+    results = {
+        'mean_distance': np.mean(distances),
+        'std_distance': np.std(distances),
+        'min_distance': np.min(distances),
+        'max_distance': np.max(distances),
+        'distance_ratio': np.max(distances) / np.min(distances),
+        'max_dot_product': np.max(dot_products),
+        'mean_dot_product': np.mean(dot_products)
+    }
+    
+    # Print the results
+    print("\nVerification Results:")
+    print(f"Mean distance from origin: {results['mean_distance']:.10f}")
+    print(f"Standard deviation of distances: {results['std_distance']:.10e}")
+    print(f"Min/max distance ratio: {results['distance_ratio']:.10f}")
+    print(f"Maximum dot product with (1,1,1): {results['max_dot_product']:.10e}")
+    print(f"Average dot product with (1,1,1): {results['mean_dot_product']:.10e}")
+    
+    return results
+
+def main():
+    """
+    Main function to generate and visualize the perfect orthogonal circle.
+    """
+    print("Generating perfect orthogonal circle...")
+    points = generate_perfect_orthogonal_circle(d=1.0, num_points=73)
+    
+    print("Verifying circle properties...")
+    verify_circle_properties(points)
+    
+    print("Visualizing perfect orthogonal circle...")
+    visualize_perfect_orthogonal_circle(points)
+    
+    print("Done!")
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\subsubsection{test\_perfect\_circle\_ranges.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+from generalized.vector_utils import create_orthogonal_vectors
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def test_perfect_circle_ranges():
+    """
+    Test the perfect circle generation with different d values and theta ranges
+    """
+    # Test with different parameters
+    R_0 = np.array([1, 2, 3])  # Origin
+    
+    # Test 1: Different d values
+    print("Test 1: Different d values")
+    d_values = [0.5, 1.0, 2.0, 3.0]
+    num_points = 36
+    
+    # Create figure for 3D visualization
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(111, projection='3d')
+    
+    for d in d_values:
+        # Generate vectors
+        vectors = create_orthogonal_vectors(R_0, d, num_points, perfect=True)
+        
+        # Check properties
+        distances = np.array([np.linalg.norm(v - R_0) for v in vectors])
+        unit_111 = np.array([1, 1, 1]) / np.sqrt(3)
+        dot_products = np.array([np.abs(np.dot(v - R_0, unit_111)) for v in vectors])
+        
+        # Print results
+        print(f"\nCircle with d = {d}:")
+        print(f"  Mean distance from origin: {np.mean(distances)}")
+        print(f"  Standard deviation of distances: {np.std(distances)}")
+        print(f"  Maximum dot product with (1,1,1): {np.max(dot_products)}")
+        
+        # Plot the circle
+        ax.scatter(vectors[:, 0], vectors[:, 1], vectors[:, 2], label=f'd = {d}')
+    
+    # Plot the origin
+    ax.scatter(R_0[0], R_0[1], R_0[2], color='red', s=100, marker='o', label='Origin R_0')
+    
+    # Plot the x=y=z line
+    line = np.array([[-1, -1, -1], [7, 7, 7]])
+    ax.plot(line[:, 0], line[:, 1], line[:, 2], 'r--', label='x=y=z line')
+    
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Perfect Circles with Different d Values')
+    ax.legend()
+    
+    # Test 2: Different theta ranges
+    print("\nTest 2: Different theta ranges")
+    d = 2.0
+    num_points = 18
+    
+    theta_ranges = [
+        (0, np.pi/2),          # Quarter circle
+        (0, np.pi),            # Half circle
+        (np.pi/4, 3*np.pi/4),  # Middle segment
+        (0, 2*np.pi)           # Full circle
+    ]
+    
+    # Create figure for 3D visualization
+    fig2 = plt.figure(figsize=(10, 8))
+    ax2 = fig2.add_subplot(111, projection='3d')
+    
+    for start_theta, end_theta in theta_ranges:
+        # Generate vectors
+        vectors = create_orthogonal_vectors(R_0, d, num_points, perfect=True, 
+                                          start_theta=start_theta, end_theta=end_theta)
+        
+        # Check properties
+        distances = np.array([np.linalg.norm(v - R_0) for v in vectors])
+        unit_111 = np.array([1, 1, 1]) / np.sqrt(3)
+        dot_products = np.array([np.abs(np.dot(v - R_0, unit_111)) for v in vectors])
+        
+        # Print results
+        range_desc = f"({start_theta:.2f}, {end_theta:.2f})"
+        print(f"\nCircle segment with theta range {range_desc}:")
+        print(f"  Mean distance from origin: {np.mean(distances)}")
+        print(f"  Standard deviation of distances: {np.std(distances)}")
+        print(f"  Maximum dot product with (1,1,1): {np.max(dot_products)}")
+        print(f"  Number of points: {len(vectors)}")
+        
+        # Plot the circle segment
+        label = f'theta in {range_desc}'
+        ax2.scatter(vectors[:, 0], vectors[:, 1], vectors[:, 2], label=label)
+    
+    # Plot the origin
+    ax2.scatter(R_0[0], R_0[1], R_0[2], color='red', s=100, marker='o', label='Origin R_0')
+    
+    # Plot the x=y=z line
+    line = np.array([[-1, -1, -1], [7, 7, 7]])
+    ax2.plot(line[:, 0], line[:, 1], line[:, 2], 'r--', label='x=y=z line')
+    
+    ax2.set_xlabel('X')
+    ax2.set_ylabel('Y')
+    ax2.set_zlabel('Z')
+    ax2.set_title('Perfect Circle Segments with Different Theta Ranges')
+    ax2.legend()
+    
+    plt.tight_layout()
+    plt.savefig('perfect_circle_tests.png')
+    plt.show()
+
+if __name__ == "__main__":
+    test_perfect_circle_ranges()
+\end{lstlisting}
+
+\subsubsection{example\_circle.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+import os
+import sys
+
+# Import from the generalized module
+from vector_utils import create_orthogonal_vectors
+from visualization import plot_multiple_vectors_3d, plot_multiple_vectors_2d, plot_multiple_vectors
+
+def generate_circle_points():
+    """
+    Generate 72 points in a circle by varying theta from 0 to 360 degrees
+    with a fixed distance d=0.1 from origin R_0=(0,0,0)
+    
+    Returns:
+    list: List of tuples (d, theta, R) containing the parameters and vectors
+    """
+    # Set parameters
+    R_0 = np.array([0, 0, 0])  # Origin
+    d = 0.1                    # Fixed distance
+    
+    # Generate theta values from 0 to 360 degrees in steps of 5 degrees
+    # Convert to radians for calculations
+    theta_values = np.radians(np.arange(0, 361, 5))
+    
+    # Generate vectors for each theta value
+    vectors = []
+    for theta in theta_values:
+        R = create_orthogonal_vectors(R_0, d, theta)
+        vectors.append((d, theta, R))
+        print(f"Generated point for theta={math.degrees(theta):.1f} deg: {R}")
+    
+    return R_0, vectors
+
+def main():
+    """
+    Main function to generate and visualize circle points
+    """
+    print("Generating circle points...")
+    R_0, vectors = generate_circle_points()
+    
+    print(f"\nGenerated {len(vectors)} points.")
+    
+    # Create plots directory if it doesn't exist
+    output_dir = 'circle_plots'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Plot the points
+    print("Creating plots...")
+    plots = plot_multiple_vectors(
+        R_0, 
+        vectors,
+        show_r0_plane=True,
+        figsize_3d=(12, 10),
+        figsize_2d=(10, 10),
+        endpoints_only=True  # Only plot the endpoints
+    )
+    
+    # Save the plots
+    for name, (fig, _) in plots.items():
+        filename = os.path.join(output_dir, f"circle_{name}.png")
+        fig.savefig(filename)
+        print(f"Saved plot to {filename}")
+    
+    # Show the plots
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\subsubsection{example\_circle\_xy.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+import os
+import sys
+
+def generate_circle_points_xy():
+    """
+    Generate 72 points in a circle in the XY plane by varying theta from 0 to 360 degrees
+    with a fixed radius of 0.1 from origin (0,0,0)
+    
+    Returns:
+    tuple: (R_0, vectors) where R_0 is the origin and vectors is a list of (d, theta, R) tuples
+    """
+    # Set parameters
+    R_0 = np.array([0, 0, 0])  # Origin
+    radius = 0.1               # Circle radius
+    
+    # Generate theta values from 0 to 360 degrees in steps of 5 degrees
+    # Convert to radians for calculations
+    theta_values = np.radians(np.arange(0, 361, 5))
+    
+    # Generate vectors for each theta value (traditional circle in XY plane)
+    vectors = []
+    for theta in theta_values:
+        # Create a point on the circle in the XY plane
+        x = radius * np.cos(theta)
+        y = radius * np.sin(theta)
+        z = 0  # Set z=0 for a flat circle in XY plane
+        
+        R = np.array([x, y, z])
+        vectors.append((radius, theta, R))
+        print(f"Generated point for theta={math.degrees(theta):.1f} deg: {R}")
+    
+    return R_0, vectors
+
+def plot_multiple_vectors_3d(R_0, vectors, figsize=(12, 10), show_legend=True, endpoints_only=True):
+    """
+    Plot multiple vectors in 3D
+    
+    Parameters:
+    R_0 (numpy.ndarray): The origin vector
+    vectors (list): List of tuples (d, theta, R) containing the parameters and vectors
+    figsize (tuple): Figure size (width, height) in inches
+    show_legend (bool): Whether to show the legend
+    endpoints_only (bool): If True, only plot the endpoints of vectors, not the arrows
+    
+    Returns:
+    tuple: (fig, ax) matplotlib figure and axis objects
+    """
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Plot the origin
+    ax.scatter(R_0[0], R_0[1], R_0[2], color='black', s=100, label='R_0')
+    
+    # Get a colormap for the vectors
+    cmap = plt.cm.get_cmap('viridis')
+    num_vectors = len(vectors)
+    
+    # Extract all R vectors for axis scaling
+    all_Rs = [R for _, _, R in vectors]
+    
+    # Plot the vectors
+    for i, (d, theta, R) in enumerate(vectors):
+        color = cmap(i / max(1, num_vectors - 1))
+        label = f'R (theta={math.degrees(theta):.1f} deg)' if i % 10 == 0 else None
+        
+        # Plot only the endpoint
+        ax.scatter(R[0], R[1], R[2], color=color, s=50, label=label)
+    
+    # Set labels and title
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('Circle Points in 3D (XY Plane)')
+    
+    # Set equal aspect ratio
+    all_points = [R_0] + all_Rs
+    max_range = np.array([
+        np.max([p[0] for p in all_points]) - np.min([p[0] for p in all_points]),
+        np.max([p[1] for p in all_points]) - np.min([p[1] for p in all_points]),
+        np.max([p[2] for p in all_points]) - np.min([p[2] for p in all_points])
+    ]).max() / 2.0
+    
+    mid_x = (np.max([p[0] for p in all_points]) + np.min([p[0] for p in all_points])) / 2
+    mid_y = (np.max([p[1] for p in all_points]) + np.min([p[1] for p in all_points])) / 2
+    mid_z = (np.max([p[2] for p in all_points]) + np.min([p[2] for p in all_points])) / 2
+    
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
+    
+    if show_legend:
+        ax.legend()
+    
+    return fig, ax
+
+def main():
+    """
+    Main function to generate and visualize circle points
+    """
+    print("Generating XY circle points...")
+    R_0, vectors = generate_circle_points_xy()
+    
+    print(f"\nGenerated {len(vectors)} points.")
+    
+    # Create plots directory if it doesn't exist
+    output_dir = 'circle_plots'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Plot the points in 3D
+    print("Creating 3D plot...")
+    fig_3d, _ = plot_multiple_vectors_3d(R_0, vectors, endpoints_only=True)
+    
+    # Save the 3D plot
+    filename_3d = os.path.join(output_dir, "3d_xy_circle.png")
+    fig_3d.savefig(filename_3d)
+    print(f"Saved 3D plot to {filename_3d}")
+    
+    # Plot the points in 2D (XY plane)
+    print("Creating 2D plot...")
+    fig_2d = plt.figure(figsize=(10, 10))
+    ax_2d = fig_2d.add_subplot(111)
+    
+    # Plot the origin
+    ax_2d.scatter(R_0[0], R_0[1], color='black', s=100, label='R_0')
+    
+    # Get a colormap for the vectors
+    cmap = plt.cm.get_cmap('viridis')
+    num_vectors = len(vectors)
+    
+    # Plot the vectors
+    for i, (d, theta, R) in enumerate(vectors):
+        color = cmap(i / max(1, num_vectors - 1))
+        label = f'R (theta={math.degrees(theta):.1f} deg)' if i % 10 == 0 else None
+        ax_2d.scatter(R[0], R[1], color=color, s=50, label=label)
+    
+    # Set labels and title
+    ax_2d.set_xlabel('X')
+    ax_2d.set_ylabel('Y')
+    ax_2d.set_title('Circle Points in XY Plane')
+    ax_2d.grid(True)
+    ax_2d.axis('equal')
+    ax_2d.legend()
+    
+    # Save the 2D plot
+    filename_2d = os.path.join(output_dir, "xy_circle.png")
+    fig_2d.savefig(filename_2d)
+    print(f"Saved 2D plot to {filename_2d}")
+    
+    # Show the plots
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\subsubsection{example\_orthogonal\_circle.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import math
+import os
+import sys
+
+# Import from the generalized module
+from vector_utils import create_orthogonal_vectors
+from visualization import plot_multiple_vectors
+
+def generate_orthogonal_circle_points():
+    """
+    Generate points in a circle-like pattern using the scalar-based vector formula
+    with a fixed distance d=0.1 from origin R_0=(0,0,0) and varying theta
+    
+    Returns:
+    tuple: (R_0, vectors) where R_0 is the origin and vectors is a list of (d, theta, R) tuples
+    """
+    # Set parameters
+    R_0 = np.array([0, 0, 0])  # Origin
+    d = 0.1                    # Fixed distance
+    
+    # Generate theta values from 0 to 360 degrees in steps of 5 degrees
+    # Convert to radians for calculations
+    theta_values = np.radians(np.arange(0, 361, 5))
+    
+    # Generate vectors for each theta value using the scalar-based vector formula
+    vectors = []
+    for theta in theta_values:
+        R = create_orthogonal_vectors(R_0, d, theta)
+        vectors.append((d, theta, R))
+        print(f"Generated point for theta={math.degrees(theta):.1f} deg: {R}")
+    
+    return R_0, vectors
+
+def main():
+    """
+    Main function to generate and visualize orthogonal circle points
+    """
+    print("Generating orthogonal circle points...")
+    R_0, vectors = generate_orthogonal_circle_points()
+    
+    print(f"\nGenerated {len(vectors)} points.")
+    
+    # Create plots directory if it doesn't exist
+    output_dir = 'circle_plots'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    # Plot the points
+    print("Creating plots...")
+    plots = plot_multiple_vectors(
+        R_0, 
+        vectors,
+        show_r0_plane=True,
+        figsize_3d=(12, 10),
+        figsize_2d=(10, 10),
+        endpoints_only=True  # Only plot the endpoints
+    )
+    
+    # Save the plots
+    for name, (fig, _) in plots.items():
+        filename = os.path.join(output_dir, f"orthogonal_{name}.png")
+        fig.savefig(filename)
+        print(f"Saved plot to {filename}")
+    
+    # Show the plots
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\subsection{main.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+import argparse
+import math
+import os
+import sys
+import importlib.util
+
+from vector_utils import create_orthogonal_vectors, check_vector_components, generate_R_vector
+from visualization import plot_vectors_3d, plot_vectors_2d_projection, plot_all_projections, plot_multiple_vectors
+from config import VectorConfig, default_config
+
+# Import the ArrowheadMatrixAnalyzer class from the arrowhead.py module
+arrowhead_path = os.path.join(os.path.dirname(__file__), 'example_use', 'arrowhead_matrix', 'arrowhead.py')
+spec = importlib.util.spec_from_file_location("arrowhead", arrowhead_path)
+arrowhead = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(arrowhead)
+ArrowheadMatrixAnalyzer = arrowhead.ArrowheadMatrixAnalyzer
+
+def parse_arguments():
+    """
+    Parse command line arguments
+    
+    Returns:
+    argparse.Namespace: Parsed arguments
+    """
+    parser = argparse.ArgumentParser(description='Generalized Arrowhead Framework')
+    subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+    
+    # Vector generation command
+    vector_parser = subparsers.add_parser('vector', help='Generate and visualize orthogonal vectors')
+    
+    # Vector parameters
+    vector_parser.add_argument('--origin', '-R', type=float, nargs=3, default=[0, 0, 0],
+                        help='Origin vector R_0 (x y z)')
+    
+    # Distance parameter with range support
+    d_group = vector_parser.add_mutually_exclusive_group()
+    d_group.add_argument('--distance', '-d', type=float, default=1,
+                        help='Distance parameter d')
+    d_group.add_argument('--d-range', type=float, nargs=3, metavar=('START', 'STEPS', 'END'),
+                        help='Distance parameter range: start steps end')
+    
+    # Angle parameter with range support
+    theta_group = vector_parser.add_mutually_exclusive_group()
+    theta_group.add_argument('--angle', '-a', '--theta', type=float, default=math.pi/4,
+                        help='Angle parameter theta in radians')
+    theta_group.add_argument('--theta-range', type=float, nargs=3, metavar=('START', 'STEPS', 'END'),
+                        help='Angle parameter range: start steps end')
+    
+    # Perfect circle generation option
+    vector_parser.add_argument('--perfect', action='store_true',
+                        help='Use perfect circle generation method')
+    
+    # Visualization parameters
+    vector_parser.add_argument('--plot-type', type=str, choices=['3d', '2d'], default='3d',
+                        help='Type of plot to generate (3d or 2d)')
+    vector_parser.add_argument('--title', type=str, default=None,
+                        help='Title for the plot')
+    vector_parser.add_argument('--no-show', action='store_false', dest='show_plot',
+                        help='Prevents the plot from being displayed interactively')
+    vector_parser.add_argument('--save-path', type=str, default=None,
+                        help='Path to save the plot')
+    vector_parser.add_argument('--no-enhanced-visualization', action='store_false', dest='enhanced_visualization',
+                        help='Disables enhanced visualization features')
+    vector_parser.add_argument('--axis-colors', type=str, nargs=3, default=['r', 'g', 'b'],
+                        help='Custom colors for the X, Y, and Z axes as three space-separated values')
+    vector_parser.add_argument('--no-coordinate-labels', action='store_false', dest='show_coordinate_labels',
+                        help='Disables coordinate labels on the axes')
+    vector_parser.add_argument('--no-equal-aspect-ratio', action='store_false', dest='equal_aspect_ratio',
+                        help='Disables equal aspect ratio for 3D plots')
+    vector_parser.add_argument('--buffer-factor', type=float, default=0.2,
+                        help='Sets the buffer factor for axis limits. Default: 0.2')
+    
+    # Existing visualization parameters
+    vector_parser.add_argument('--no-r0-plane', action='store_false', dest='show_r0_plane',
+                        help='Do not show the R_0 plane projection')
+    vector_parser.add_argument('--no-legend', action='store_false', dest='show_legend',
+                        help='Do not show the legend')
+    vector_parser.add_argument('--no-grid', action='store_false', dest='show_grid',
+                        help='Do not show the grid')
+    vector_parser.add_argument('--endpoints', type=lambda x: x.lower() == 'true', default=False,
+                        help='Only plot the endpoints of vectors, not the arrows')
+    
+    # Output parameters
+    vector_parser.add_argument('--save-plots', action='store_true',
+                        help='Save plots to files instead of displaying them')
+    vector_parser.add_argument('--output-dir', type=str, default='plots',
+                        help='Directory to save plots to')
+    vector_parser.add_argument('--config', type=str,
+                        help='Path to configuration file')
+    vector_parser.add_argument('--save-config', type=str,
+                        help='Save configuration to file')
+    
+    # Arrowhead matrix command
+    arrowhead_parser = subparsers.add_parser('arrowhead', help='Generate and analyze arrowhead matrices')
+    
+    # Matrix parameters
+    arrowhead_parser.add_argument('--r0', type=float, nargs=3, default=[0, 0, 0],
+                        help='Origin vector (x, y, z)')
+    arrowhead_parser.add_argument('--d', type=float, default=0.5,
+                        help='Distance parameter')
+    arrowhead_parser.add_argument('--theta-start', type=float, default=0,
+                        help='Starting theta value in radians')
+    arrowhead_parser.add_argument('--theta-end', type=float, default=2*np.pi,
+                        help='Ending theta value in radians')
+    arrowhead_parser.add_argument('--theta-steps', type=int, default=72,
+                        help='Number of theta values to generate matrices for')
+    arrowhead_parser.add_argument('--coupling', type=float, default=0.1,
+                        help='Coupling constant for off-diagonal elements')
+    arrowhead_parser.add_argument('--omega', type=float, default=1.0,
+                        help='Angular frequency for the energy term h*\\omega')
+    arrowhead_parser.add_argument('--size', type=int, default=4,
+                        help='Size of the matrix to generate')
+    arrowhead_parser.add_argument('--output-dir', type=str, default=None,
+                        help='Directory to save results')
+    arrowhead_parser.add_argument('--load-only', action='store_true',
+                        help='Only load existing results and create plots')
+    arrowhead_parser.add_argument('--plot-only', action='store_true',
+                        help='Only create plots from existing results')
+    arrowhead_parser.add_argument('--perfect', action='store_true', default=True,
+                        help='Whether to use perfect circle generation method')
+    
+    # If no arguments, show help
+    if len(sys.argv) == 1:
+        parser.print_help()
+        sys.exit(1)
+    
+    return parser.parse_args()
+
+def display_help():
+    """
+    Display detailed help information
+    """
+    help_text = """
+    Generalized Arrowhead Framework
+    =======================================
+    
+    This tool provides a unified interface for generating orthogonal vectors and arrowhead matrices.
+    
+    Basic Usage:
+    -----------
+    python main.py vector                      # Generate and visualize orthogonal vectors
+    python main.py arrowhead                   # Generate and analyze arrowhead matrices
+    python main.py help                        # Show detailed help
+    
+    Vector Generation Command:
+    ------------------------
+    python main.py vector [OPTIONS]            # Generate and visualize orthogonal vectors
+    
+    Vector Parameters:
+    ----------------
+    -R, --origin X Y Z    : Set the origin vector R_0 coordinates (default: 0 0 0)
+    -d, --distance VALUE  : Set the distance parameter (default: 1)
+    --d-range START STEPS END : Generate multiple vectors with distance values from START to END with STEPS steps
+    -a, --angle, --theta VALUE : Set the angle parameter in radians (default: \pi/4)
+    --theta-range START STEPS END : Generate multiple vectors with angle values from START to END with STEPS steps
+    --perfect            : Use perfect circle generation method with normalized basis vectors
+    
+    Vector Visualization Options:
+    --------------------------
+    --plot-type          : Specifies the type of plot, either "3d" or "2d" (default: "3d")
+    --title              : Specifies the title of the plot
+    --no-show            : Prevents the plot from being displayed interactively
+    --save-path          : Specifies the path to save the plot
+    --no-enhanced-visualization : Disables enhanced visualization features
+    --axis-colors        : Specifies custom colors for the X, Y, and Z axes as three space-separated values
+    --no-coordinate-labels : Disables coordinate labels on the axes
+    --no-equal-aspect-ratio : Disables equal aspect ratio for 3D plots
+    --buffer-factor VALUE : Sets the buffer factor for axis limits (default: 0.2)
+    --no-r0-plane        : Do not show the R_0 plane projection
+    --no-legend          : Do not show the legend
+    --no-grid            : Do not show the grid
+    --endpoints true/false : Only plot the endpoints of vectors, not the arrows (default: false)
+    
+    Vector Output Options:
+    -------------------
+    --save-plots         : Save plots to files instead of displaying them
+    --output-dir DIR     : Directory to save plots to (default: 'plots')
+    --config FILE        : Load configuration from a JSON file
+    --save-config FILE   : Save current configuration to a JSON file
+    
+    Vector Examples:
+    -------------
+    # Generate vector with origin at (1,1,1), distance 2, and angle \pi/3
+    python main.py vector -R 1 1 1 -d 2 -a 1.047
+    
+    # Generate multiple vectors with distance range from 1 to 3 with 5 steps
+    python main.py vector -R 0 0 0 --d-range 1 5 3 -a 0.7854
+    
+    # Generate multiple vectors with angle range from 0 to \pi with 10 steps
+    python main.py vector -R 0 0 0 -d 1.5 --theta-range 0 10 3.14159
+    
+    # Generate a perfect circle orthogonal to the x=y=z line
+    python main.py vector -R 0 0 0 -d 1 --theta-range 0 36 6.28 --perfect
+    
+    # Save plots to a custom directory
+    python main.py vector -R 0 0 2 --save-plots --output-dir my_plots
+    
+    # Load configuration from a file
+    python main.py vector --config my_config.json
+    
+    # Use custom plot type and title
+    python main.py vector -R 0 0 0 -d 1.5 --plot-type 2d --title "Custom Plot Title"
+    
+    # Customize visualization with axis colors
+    python main.py vector -R 0 0 0 -d 1 --axis-colors blue green red
+    
+    Arrowhead Matrix Command:
+    ----------------------
+    python main.py arrowhead [OPTIONS]         # Generate and analyze arrowhead matrices
+    
+    Arrowhead Matrix Parameters:
+    ------------------------
+    --r0 X Y Z           : Origin vector coordinates (default: 0 0 0)
+    --d VALUE            : Distance parameter (default: 0.5)
+    --theta-start VALUE  : Starting theta value in radians (default: 0)
+    --theta-end VALUE    : Ending theta value in radians (default: 2\pi)
+    --theta-steps VALUE  : Number of theta values to generate matrices for (default: 72)
+    --coupling VALUE     : Coupling constant for off-diagonal elements (default: 0.1)
+    --omega VALUE        : Angular frequency for the energy term h*\omega (default: 1.0)
+    --size VALUE         : Size of the matrix to generate (default: 4)
+    --perfect            : Use perfect circle generation method (default: True)
+    
+    Arrowhead Matrix Options:
+    ----------------------
+    --output-dir DIR     : Directory to save results (default: './results')
+    --load-only          : Only load existing results and create plots
+    --plot-only          : Only create plots from existing results
+    
+    Arrowhead Matrix Examples:
+    -----------------------
+    # Generate matrices with default parameters
+    python main.py arrowhead
+    
+    # Generate matrices with custom parameters
+    python main.py arrowhead --r0 1 1 1 --d 0.8 --theta-steps 36 --size 6
+    
+    # Generate matrices with perfect circle generation
+    python main.py arrowhead --perfect --theta-steps 12
+    
+    # Only create plots from existing results
+    python main.py arrowhead --plot-only --output-dir my_results
+    
+    # Load existing results and create plots
+    python main.py arrowhead --load-only --output-dir my_results
+    """
+    print(help_text)
+    sys.exit(0)
+
+def run_vector_command(args):
+    """
+    Run the vector generation and visualization command
+    """
+    # Load configuration
+    if args.config:
+        config = VectorConfig.load_from_file(args.config)
+        # Generate a single R vector
+        R_0 = config.R_0
+        perfect = getattr(config, 'perfect', False)
+        
+        # Check if theta is a single value or multiple values
+        if isinstance(config.theta, list):
+            # Multiple values, use create_orthogonal_vectors with num_points
+            R = create_orthogonal_vectors(R_0, config.d, len(config.theta), perfect=perfect)
+        else:
+            # Single value, use generate_R_vector
+            R = generate_R_vector(R_0, config.d, config.theta, perfect=perfect)
+        
+        # Print vector information
+        print("R_0:", R_0)
+        print("R:", R)
+        print("Perfect circle generation:", perfect)
+        
+        # Check vector components
+        components = check_vector_components(R_0, R, config.d, config.theta, perfect=perfect)
+        print("\nVector components:")
+        for key, value in components.items():
+            print(f"{key}: {value}")
+        
+        # Plot the vector
+        plots = plot_all_projections(
+            R_0, R,
+            show_r0_plane=config.show_r0_plane,
+            figsize_3d=config.figsize_3d,
+            figsize_2d=config.figsize_2d
+        )
+        
+        # Save or show the plots
+        if args.save_plots:
+            # Create output directory if it doesn't exist
+            os.makedirs(args.output_dir, exist_ok=True)
+            
+            # Save each plot
+            for name, (fig, _) in plots.items():
+                filename = os.path.join(args.output_dir, f"{name}.png")
+                fig.savefig(filename)
+                print(f"Saved plot to {filename}")
+        else:
+            # Show the plots
+            plt.show()
+    else:
+        # Create configuration from command line arguments
+        R_0 = np.array(args.origin)
+        
+        # Handle distance range
+        if args.d_range is not None:
+            d_start, d_steps, d_end = args.d_range
+            d_values = np.linspace(d_start, d_end, int(d_steps))
+        else:
+            d_values = [args.distance]
+        
+        # Handle theta range
+        if args.theta_range is not None:
+            theta_start, theta_steps, theta_end = args.theta_range
+            theta_values = np.linspace(theta_start, theta_end, int(theta_steps))
+        else:
+            theta_values = [args.angle]
+        
+        # Generate all combinations of d and theta
+        all_vectors = []
+        
+        # If there's only one value for each parameter, we can use either method
+        if len(d_values) == 1 and len(theta_values) == 1:
+            # Single vector case
+            d = d_values[0]
+            theta = theta_values[0]
+            
+            # Create a vector for this combination
+            R = generate_R_vector(R_0, d, theta, perfect=args.perfect)
+            all_vectors.append((d, theta, R))
+            
+            # Print vector information
+            print(f"\nR_0: {R_0}, d: {d}, theta: {theta}")
+            print(f"R: {R}")
+            print(f"Perfect circle generation: {args.perfect}")
+            
+            # Check vector components
+            components = check_vector_components(R_0, R, d, theta, perfect=args.perfect)
+            print("Vector components:")
+            for key, value in components.items():
+                if key != "Combined R":
+                    print(f"{key}: {value}")
+        elif len(theta_values) > 1 and len(d_values) == 1:
+            # Multiple angles, single distance - can use create_orthogonal_vectors for the circle
+            d = d_values[0]
+            
+            # Get the start and end theta values from the theta range
+            start_theta = theta_values[0]
+            end_theta = theta_values[-1]
+            
+            # Generate the circle of vectors
+            vectors = create_orthogonal_vectors(R_0, d, len(theta_values), perfect=args.perfect, 
+                                               start_theta=start_theta, end_theta=end_theta)
+            
+            # Add each vector to the list
+            for i, theta in enumerate(theta_values):
+                R = vectors[i]
+                all_vectors.append((d, theta, R))
+                
+                # Print vector information
+                print(f"\nR_0: {R_0}, d: {d}, theta: {theta}")
+                print(f"R: {R}")
+                print(f"Perfect circle generation: {args.perfect}")
+                
+                # Check vector components
+                components = check_vector_components(R_0, R, d, theta, perfect=args.perfect)
+                print("Vector components:")
+                for key, value in components.items():
+                    if key != "Combined R":
+                        print(f"{key}: {value}")
+        else:
+            # Multiple combinations - generate each vector individually
+            for d in d_values:
+                for theta in theta_values:
+                    # Create a vector for this combination
+                    R = generate_R_vector(R_0, d, theta, perfect=args.perfect)
+                    all_vectors.append((d, theta, R))
+                    
+                    # Print vector information
+                    print(f"\nR_0: {R_0}, d: {d}, theta: {theta}")
+                    print(f"R: {R}")
+                    print(f"Perfect circle generation: {args.perfect}")
+                    
+                    # Check vector components
+                    components = check_vector_components(R_0, R, d, theta, perfect=args.perfect)
+                    print("Vector components:")
+                    for key, value in components.items():
+                        if key != "Combined R":
+                            print(f"{key}: {value}")
+        
+        # Save configuration if requested
+        if args.save_config:
+            config = VectorConfig(
+                R_0=args.origin,
+                d=args.distance if args.d_range is None else d_values.tolist(),
+                theta=args.angle if args.theta_range is None else theta_values.tolist(),
+                show_r0_plane=args.show_r0_plane,
+                show_legend=args.show_legend,
+                show_grid=args.show_grid,
+                perfect=args.perfect
+            )
+            config.save_to_file(args.save_config)
+        
+        # Plot all vectors
+        if len(all_vectors) == 1:
+            # Only one vector, use the standard plotting function
+            d, theta, R = all_vectors[0]
+            plots = plot_all_projections(
+                R_0, R,
+                show_r0_plane=args.show_r0_plane,
+                figsize_3d=(10, 8),
+                figsize_2d=(8, 8)
+            )
+            # Note: endpoints_only is not applicable for single vector in plot_all_projections
+        else:
+            # Multiple vectors, create a special plot
+            plots = plot_multiple_vectors(
+                R_0, all_vectors,
+                show_r0_plane=args.show_r0_plane,
+                figsize_3d=(12, 10),
+                figsize_2d=(10, 10),
+                endpoints_only=args.endpoints
+            )
+        
+        # Save or show the plots
+        if args.save_plots:
+            # Create output directory if it doesn't exist
+            os.makedirs(args.output_dir, exist_ok=True)
+            
+            # Save each plot
+            for name, (fig, _) in plots.items():
+                filename = os.path.join(args.output_dir, f"{name}.png")
+                fig.savefig(filename)
+                print(f"Saved plot to {filename}")
+        else:
+            # Show the plots
+            plt.show()
+
+def run_arrowhead_command(args):
+    """
+    Run the arrowhead matrix generation and analysis command
+    """
+    # Create the analyzer
+    analyzer = ArrowheadMatrixAnalyzer(
+        R_0=tuple(args.r0),
+        d=args.d,
+        theta_start=args.theta_start,
+        theta_end=args.theta_end,
+        theta_steps=args.theta_steps,
+        coupling_constant=args.coupling,
+        omega=args.omega,
+        matrix_size=args.size,
+        perfect=args.perfect,
+        output_dir=args.output_dir
+    )
+    
+    if args.plot_only:
+        # Only create plots
+        analyzer.load_results()
+        analyzer.create_plots()
+        analyzer.plot_r_vectors()
+    elif args.load_only:
+        # Load results and create plots
+        analyzer.load_results()
+        analyzer.create_plots()
+        analyzer.plot_r_vectors()
+    else:
+        # Run the complete analysis
+        analyzer.run_all()
+
+def main():
+    """
+    Main function
+    """
+    # Check for detailed help command
+    if len(sys.argv) > 1 and sys.argv[1] == 'help':
+        display_help()
+    
+    # Parse command line arguments
+    args = parse_arguments()
+    
+    # Dispatch to the appropriate command handler
+    if args.command == 'vector':
+        run_vector_command(args)
+    elif args.command == 'arrowhead':
+        run_arrowhead_command(args)
+    else:
+        print(f"Unknown command: {args.command}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+\subsection{vector\_utils.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+
+def create_perfect_orthogonal_vectors(R_0=(0, 0, 0), d=1, theta=0):
+    """
+    Create a single R vector that forms a perfect circle orthogonal to the x=y=z line
+    using normalized basis vectors.
+    
+    Parameters:
+    R_0 (tuple or numpy.ndarray): The origin vector, default is (0, 0, 0)
+    d (float): The distance parameter, default is 1
+    theta (float): The angle parameter in radians, default is 0
+    
+    Returns:
+    numpy.ndarray: The resulting R vector orthogonal to the x=y=z line
+    """
+    # Convert R_0 to numpy array for vector operations
+    R_0 = np.array(R_0)
+    
+    # Define the basis vectors orthogonal to the (1,1,1) direction
+    basis1 = np.array([1, -1/2, -1/2])  # First basis vector
+    basis2 = np.array([0, -1/2, 1/2])   # Second basis vector
+    
+    # Normalize the basis vectors
+    basis1 = basis1 / np.linalg.norm(basis1)
+    basis2 = basis2 / np.linalg.norm(basis2)
+    
+    # Create a point at distance d from the origin in the plane spanned by basis1 and basis2
+    R = R_0 + d * (np.cos(theta) * basis1 + np.sin(theta) * basis2)
+    
+    return R
+
+def create_perfect_orthogonal_circle(R_0=(0, 0, 0), d=1, num_points=36, start_theta=0, end_theta=2*np.pi):
+    """
+    Create multiple vectors that form a perfect circle orthogonal to the x=y=z line
+    using normalized basis vectors.
+    
+    Parameters:
+    R_0 (tuple or numpy.ndarray): The origin vector, default is (0, 0, 0)
+    d (float): The distance parameter, default is 1
+    num_points (int): The number of points to generate, default is 36
+    start_theta (float): Starting angle in radians, default is 0
+    end_theta (float): Ending angle in radians, default is 2*pi
+    
+    Returns:
+    numpy.ndarray: Array of shape (num_points, 3) containing the generated vectors
+    """
+    # Convert R_0 to numpy array for vector operations
+    R_0 = np.array(R_0)
+    
+    # Generate equally spaced angles between start_theta and end_theta
+    thetas = np.linspace(start_theta, end_theta, num_points, endpoint=False)
+    
+    # Initialize the array to store the vectors
+    vectors = np.zeros((num_points, 3))
+    
+    # Generate vectors for each angle
+    for i, theta in enumerate(thetas):
+        vectors[i] = create_perfect_orthogonal_vectors(R_0, d, theta)
+    
+    return vectors
+
+def generate_R_vector(R_0, d, theta, perfect=False):
+    """
+    Generate a single R vector orthogonal to the x=y=z line
+    
+    Parameters:
+    R_0 (tuple or numpy.ndarray): The origin vector
+    d (float): The distance parameter
+    theta (float): The angle parameter in radians
+    perfect (bool): If True, use the perfect circle generation method, default is False
+    
+    Returns:
+    numpy.ndarray: The resulting R vector orthogonal to the x=y=z line
+    """
+    if perfect:
+        return create_perfect_orthogonal_vectors(R_0, d, theta)
+    
+    # Convert R_0 to numpy array for vector operations
+    R_0 = np.array(R_0)
+    
+    # Define the basis vectors orthogonal to the (1,1,1) direction
+    basis1 = np.array([1, -1/2, -1/2])  # First basis vector
+    basis2 = np.array([0, -1/2, 1/2])   # Second basis vector
+    
+    # Calculate the components using the basis vectors
+    component1 = d * np.cos(theta) * np.sqrt(2/3) * basis1
+    component2 = d * (np.cos(theta)/np.sqrt(3) + np.sin(theta))/np.sqrt(2) * basis1
+    component3 = d * (np.sin(theta) - np.cos(theta)/np.sqrt(3))/np.sqrt(2) * basis2 * np.sqrt(2)
+    
+    # Calculate the R vector using the scalar formula
+    R = R_0 + component1 + component2 + component3
+    
+    return R
+
+def create_orthogonal_vectors(R_0=(0, 0, 0), d=1, num_points=36, perfect=False, start_theta=0, end_theta=2*np.pi):
+    """
+    Create multiple vectors that form a circle orthogonal to the x=y=z line
+    
+    Parameters:
+    R_0 (tuple or numpy.ndarray): The origin vector, default is (0, 0, 0)
+    d (float): The distance parameter, default is 1
+    num_points (int): The number of points to generate, default is 36
+    perfect (bool): If True, use the perfect circle generation method, default is False
+    start_theta (float): Starting angle in radians, default is 0
+    end_theta (float): Ending angle in radians, default is 2*pi
+    
+    Returns:
+    numpy.ndarray: Array of shape (num_points, 3) containing the generated vectors
+    """
+    if perfect:
+        return create_perfect_orthogonal_circle(R_0, d, num_points, start_theta, end_theta)
+    
+    # Convert R_0 to numpy array for vector operations
+    R_0 = np.array(R_0)
+    
+    # Generate equally spaced angles
+    thetas = np.linspace(start_theta, end_theta, num_points, endpoint=False)
+    
+    # Initialize the array to store the vectors
+    vectors = np.zeros((num_points, 3))
+    
+    # Generate vectors for each angle
+    for i, theta in enumerate(thetas):
+        vectors[i] = generate_R_vector(R_0, d, theta)
+    
+    return vectors
+
+def check_vector_components(R_0, R, d, theta, perfect=False):
+    """
+    Calculate and return the individual components of the R vector for verification
+    
+    Parameters:
+    R_0 (numpy.ndarray): The origin vector
+    R (numpy.ndarray): The generated R vector
+    d (float): The distance parameter
+    theta (float): The angle parameter in radians
+    perfect (bool): If True, use the perfect circle generation method, default is False
+    
+    Returns:
+    dict: Dictionary containing the component vectors and the combined vector
+    """
+    # Calculate the individual components
+    if perfect:
+        # Define the basis vectors orthogonal to the (1,1,1) direction
+        basis1 = np.array([1, -1/2, -1/2])  # First basis vector
+        basis2 = np.array([0, -1/2, 1/2])   # Second basis vector
+        
+        # Normalize the basis vectors
+        basis1 = basis1 / np.linalg.norm(basis1)
+        basis2 = basis2 / np.linalg.norm(basis2)
+        
+        # Calculate the components using the normalized basis vectors
+        component1 = d * np.cos(theta) * basis1
+        component2 = d * np.sin(theta) * basis2
+        
+        # Calculate the expected combined vector
+        R_expected = R_0 + component1 + component2
+        
+        # Calculate the difference between expected and actual R
+        diff = np.linalg.norm(R - R_expected)
+        
+        # Check orthogonality to the (1,1,1) direction
+        unit_111 = np.array([1, 1, 1]) / np.sqrt(3)  # Normalized (1,1,1) vector
+        orthogonality = np.abs(np.dot(R - R_0, unit_111))
+        
+        # Check if the distance from R_0 is exactly d
+        distance = np.linalg.norm(R - R_0)
+        distance_error = np.abs(distance - d)
+        
+        return {
+            "Component 1 (cos term)": component1,
+            "Component 2 (sin term)": component2,
+            "Combined R": R,
+            "Verification (should be close to 0)": diff,
+            "Orthogonality to (1,1,1) (should be close to 0)": orthogonality,
+            "Distance from R_0": distance,
+            "Distance Error (should be close to 0)": distance_error
+        }
+    else:
+        # Define the basis vectors orthogonal to the (1,1,1) direction
+        basis1 = np.array([1, -1/2, -1/2])  # First basis vector
+        basis2 = np.array([0, -1/2, 1/2])   # Second basis vector
+        
+        # Calculate the components using the basis vectors
+        component1 = d * np.cos(theta) * np.sqrt(2/3) * basis1
+        component2 = d * (np.cos(theta)/np.sqrt(3) + np.sin(theta))/np.sqrt(2) * basis1
+        component3 = d * (np.sin(theta) - np.cos(theta)/np.sqrt(3))/np.sqrt(2) * basis2 * np.sqrt(2)
+        
+        # Calculate the expected combined vector
+        R_expected = R_0 + component1 + component2 + component3
+        
+        # Calculate the difference between expected and actual R
+        diff = np.linalg.norm(R - R_expected)
+        
+        # Check orthogonality to the (1,1,1) direction
+        unit_111 = np.array([1, 1, 1]) / np.sqrt(3)  # Normalized (1,1,1) vector
+        orthogonality = np.abs(np.dot(R - R_0, unit_111))
+        
+        return {
+            "Component 1": component1,
+            "Component 2": component2,
+            "Component 3": component3,
+            "Combined R": R,
+            "Verification (should be close to 0)": diff,
+            "Orthogonality to (1,1,1) (should be close to 0)": orthogonality
+        }
+\end{lstlisting}
+
+\subsection{config.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+import math
+import json
+import os
+
+class VectorConfig:
+    """
+    Configuration class for orthogonal vector generation and visualization
+    """
+    def __init__(self, 
+                 R_0=(0, 0, 0), 
+                 d=1, 
+                 theta=math.pi/4,
+                 plot_type="3d",
+                 title=None,
+                 show_plot=True,
+                 save_path=None,
+                 enhanced_visualization=True,
+                 axis_colors=["r", "g", "b"],
+                 show_coordinate_labels=True,
+                 equal_aspect_ratio=True,
+                 buffer_factor=0.2,
+                 show_r0_plane=True,
+                 figsize_3d=(10, 8),
+                 figsize_2d=(8, 8),
+                 show_legend=True,
+                 show_grid=True,
+                 perfect=False):
+        """
+        Initialize the configuration
+        
+        Parameters:
+        R_0 (tuple or list): The origin vector
+        d (float): The distance parameter
+        theta (float): The angle parameter in radians
+        plot_type (str): Type of plot, either "3d" or "2d"
+        title (str): Title of the plot
+        show_plot (bool): Whether to display the plot interactively
+        save_path (str): Path to save the plot
+        enhanced_visualization (bool): Whether to use enhanced visualization features
+        axis_colors (list): Custom colors for the X, Y, and Z axes
+        show_coordinate_labels (bool): Whether to show coordinate labels on the axes
+        equal_aspect_ratio (bool): Whether to use equal aspect ratio for 3D plots
+        buffer_factor (float): Buffer factor for axis limits
+        show_r0_plane (bool): Whether to show the R_0 plane projection
+        figsize_3d (tuple): Figure size for 3D plot
+        figsize_2d (tuple): Figure size for 2D plots
+        show_legend (bool): Whether to show the legend
+        show_grid (bool): Whether to show the grid
+        perfect (bool): Whether to use perfect circle generation method
+        """
+        self.R_0 = np.array(R_0)
+        self.d = d
+        self.theta = theta
+        self.plot_type = plot_type
+        self.title = title
+        self.show_plot = show_plot
+        self.save_path = save_path
+        self.enhanced_visualization = enhanced_visualization
+        self.axis_colors = axis_colors
+        self.show_coordinate_labels = show_coordinate_labels
+        self.equal_aspect_ratio = equal_aspect_ratio
+        self.buffer_factor = buffer_factor
+        self.show_r0_plane = show_r0_plane
+        self.figsize_3d = figsize_3d
+        self.figsize_2d = figsize_2d
+        self.show_legend = show_legend
+        self.show_grid = show_grid
+        self.perfect = perfect
+    
+    def to_dict(self):
+        """
+        Convert the configuration to a dictionary
+        
+        Returns:
+        dict: Dictionary representation of the configuration
+        """
+        return {
+            'origin': self.R_0.tolist(),
+            'd': self.d,
+            'theta': self.theta,
+            'plot_type': self.plot_type,
+            'title': self.title,
+            'show_plot': self.show_plot,
+            'save_path': self.save_path,
+            'enhanced_visualization': self.enhanced_visualization,
+            'axis_colors': self.axis_colors,
+            'show_coordinate_labels': self.show_coordinate_labels,
+            'equal_aspect_ratio': self.equal_aspect_ratio,
+            'buffer_factor': self.buffer_factor,
+            'show_r0_plane': self.show_r0_plane,
+            'figsize_3d': self.figsize_3d,
+            'figsize_2d': self.figsize_2d,
+            'show_legend': self.show_legend,
+            'show_grid': self.show_grid,
+            'perfect': self.perfect
+        }
+    
+    @classmethod
+    def from_dict(cls, config_dict):
+        """
+        Create a configuration from a dictionary
+        
+        Parameters:
+        config_dict (dict): Dictionary containing configuration parameters
+        
+        Returns:
+        VectorConfig: Configuration object
+        """
+        return cls(
+            R_0=config_dict.get('origin', (0, 0, 0)),
+            d=config_dict.get('d', 1),
+            theta=config_dict.get('theta', math.pi/4),
+            plot_type=config_dict.get('plot_type', '3d'),
+            title=config_dict.get('title', None),
+            show_plot=config_dict.get('show_plot', True),
+            save_path=config_dict.get('save_path', None),
+            enhanced_visualization=config_dict.get('enhanced_visualization', True),
+            axis_colors=config_dict.get('axis_colors', ['r', 'g', 'b']),
+            show_coordinate_labels=config_dict.get('show_coordinate_labels', True),
+            equal_aspect_ratio=config_dict.get('equal_aspect_ratio', True),
+            buffer_factor=config_dict.get('buffer_factor', 0.2),
+            show_r0_plane=config_dict.get('show_r0_plane', True),
+            figsize_3d=config_dict.get('figsize_3d', (10, 8)),
+            figsize_2d=config_dict.get('figsize_2d', (8, 8)),
+            show_legend=config_dict.get('show_legend', True),
+            show_grid=config_dict.get('show_grid', True),
+            perfect=config_dict.get('perfect', False)
+        )
+    
+    def save_to_file(self, filename):
+        """
+        Save the configuration to a JSON file
+        
+        Parameters:
+        filename (str): Path to the output file
+        """
+        with open(filename, 'w') as f:
+            json.dump(self.to_dict(), f, indent=4)
+    
+    @classmethod
+    def load_from_file(cls, filename):
+        """
+        Load a configuration from a JSON file
+        
+        Parameters:
+        filename (str): Path to the input file
+        
+        Returns:
+        VectorConfig: Configuration object
+        """
+        if not os.path.exists(filename):
+            print(f"Warning: Config file {filename} not found. Using default configuration.")
+            return cls()
+        
+        with open(filename, 'r') as f:
+            config_dict = json.load(f)
+        
+        return cls.from_dict(config_dict)
+
+# Default configuration
+default_config = VectorConfig()
+\end{lstlisting}
+
+\subsection{visualization.py}
+
+\begin{lstlisting}[language=Python]
+#!/usr/bin/env python3
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+
+def plot_vector_3d(R_0, R, figsize=(10, 8), show_legend=True):
+    """
+    Plot the vector in 3D
+    
+    Parameters:
+    R_0 (numpy.ndarray): The origin vector
+    R (numpy.ndarray): The vector generated using scalar formula
+    figsize (tuple): Figure size (width, height) in inches
+    show_legend (bool): Whether to show the legend
+    
+    Returns:
+    tuple: (fig, ax) matplotlib figure and axis objects
+    """
+    fig = plt.figure(figsize=figsize)
+    ax = fig.add_subplot(111, projection='3d')
+    
+    # Plot the origin
+    ax.scatter(R_0[0], R_0[1], R_0[2], color='black', s=100, label='R_0')
+    
+    # Plot the vector as an arrow from the origin
+    ax.quiver(R_0[0], R_0[1], R_0[2], 
+             R[0]-R_0[0], R[1]-R_0[1], R[2]-R_0[2], 
+             color='r', label='R', arrow_length_ratio=0.1)
+    
+    # Set labels and title
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.set_title('3D Plot of Vector')
+    
+    # Set equal aspect ratio
+    max_range = np.array([
+        np.max([R_0[0], R[0]]) - np.min([R_0[0], R[0]]),
+        np.max([R_0[1], R[1]]) - np.min([R_0[1], R[1]]),
+        np.max([R_0[2], R[2]]) - np.min([R_0[2], R[2]])
+    ]).max() / 2.0
+    
+    mid_x = (np.max([R_0[0], R[0]]) + np.min([R_0[0], R[0]])) / 2
+    mid_y = (np.max([R_0[1], R[1]]) + np.min([R_0[1], R[1]])) / 2
+    mid_z = (np.max([R_0[2], R[2]]) + np.min([R_0[2], R[2]])) / 2
+    
+    ax.set_xlim(mid_x - max_range, mid_x + max_range)
+    ax.set_ylim(mid_y - max_range, mid_y + max_range)
+    ax.set_zlim(mid_z - max_range, mid_z + max_range)
+    
+    if show_legend:
+        ax.legend()
+    
+    return fig, ax
+
+# Note: This is a partial listing. The full visualization.py file contains additional functions
+# such as plot_vectors_2d_projection and plot_all_projections that are omitted here for brevity.
+\end{lstlisting}
+
+\subsection{\_\_init\_\_.py}
+
+\begin{lstlisting}[language=Python]
+# Generalized Orthogonal Vectors Generator and Visualizer
+# This package provides tools for generating and visualizing orthogonal vectors
+
+from .vector_utils import create_orthogonal_vectors, check_orthogonality
+from .visualization import plot_vectors_3d, plot_vectors_2d_projection, plot_all_projections
+from .config import VectorConfig, default_config
+
+__all__ = [
+    'create_orthogonal_vectors',
+    'check_orthogonality',
+    'plot_vectors_3d',
+    'plot_vectors_2d_projection',
+    'plot_all_projections',
+    'VectorConfig',
+    'default_config'
+]
+
+__version__ = '1.0.0'
+\end{lstlisting}

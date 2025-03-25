@@ -1,0 +1,29 @@
+Arrowhead Matrix Details:
+-------------------------
+Matrix size: 4x4
+Origin vector R_0: [0 0 0]
+Distance parameter d: 0.5
+Theta value: 3.9269908169872414 radians
+Coupling constant: 0.1
+Angular frequency ω: 1.0
+Reduced Planck constant ħ: 1.0545718176461565e-34
+Energy term ħω: 1.0545718176461565e-34
+
+Generated R vector:
+  R (θ = 3.9270): [-0.28867513  0.39433757 -0.10566243]
+
+Potential values:
+  VX: 0.0417
+  VA: 0.8303
+
+Diagonal elements:
+  D_00 = VX + ħω = 0.04166666666666669 + 1.0545718176461565e-34 = 0.04166666666666669
+  D_11 = VA = 0.8303418012614798 = 0.8303418012614798
+  D_22 = VA = 0.8303418012614798 = 0.8303418012614798
+  D_33 = VA = 0.8303418012614798 = 0.8303418012614798
+
+Arrowhead Matrix:
+[[0.04166667 0.1        0.1        0.1       ]
+ [0.1        0.8303418  0.         0.        ]
+ [0.1        0.         0.8303418  0.        ]
+ [0.1        0.         0.         0.8303418 ]]

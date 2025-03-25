@@ -1,0 +1,569 @@
+\newpage
+\section{Usage Examples}
+
+This section provides examples of how to use the Generalized Arrowhead Framework. It includes examples of using the package as a Python module and as a command-line tool, with a focus on both vector generation and arrowhead matrix analysis.
+
+\subsection{Basic Usage as a Python Module}
+
+The following example shows how to use the package as a Python module to generate and visualize orthogonal vectors with default parameters:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from generalized import create_orthogonal_vectors, plot_vectors
+
+# Generate orthogonal vectors with default parameters
+# (origin at [0, 0, 0], d=1.0, theta=pi/4)
+vectors = create_orthogonal_vectors(origin=[0, 0, 0])
+
+# Plot the vectors in 3D with enhanced visualization
+plot_vectors(vectors, origin=[0, 0, 0], enhanced_visualization=True, 
+           axis_colors=['r', 'g', 'b'], show_coordinate_labels=True, 
+           equal_aspect_ratio=True)
+\end{lstlisting}
+
+\subsection{Customizing Vector Generation}
+
+The following example shows how to customize the vector generation by specifying the origin, distance parameter, and angle parameter:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+import math
+from generalized import create_orthogonal_vectors, plot_vectors
+
+# Generate orthogonal vectors with custom parameters
+origin = [1, 1, 1]
+d = 2.0
+theta = math.pi / 3
+
+vectors = create_orthogonal_vectors(origin=origin, d=d, theta=theta)
+
+# Plot the vectors in 3D
+plot_vectors(vectors, origin=origin, title=f"Orthogonal Vectors (Origin={origin}, d={d}, theta={theta})")
+\end{lstlisting}
+
+\subsection{Using the VectorConfig Class}
+
+The following example shows how to use the \texttt{VectorConfig} class to configure vector generation and visualization:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+import math
+from generalized import create_orthogonal_vectors, plot_vectors, VectorConfig
+
+# Create a configuration
+config = VectorConfig(
+    origin=[0, 0, 2],
+    d=1.5,
+    theta=math.pi / 6,
+    plot_type="2d",
+    title="Custom Configuration",
+    save_path="custom_config.png"
+)
+
+# Generate orthogonal vectors using the configuration
+vectors = create_orthogonal_vectors(
+    origin=config.origin,
+    d=config.d,
+    theta=config.theta
+)
+
+# Plot the vectors using the configuration
+plot_vectors(
+    vectors,
+    origin=config.origin,
+    plot_type=config.plot_type,
+    title=config.title,
+    show_plot=config.show_plot,
+    save_path=config.save_path
+)
+\end{lstlisting}
+
+\subsection{Saving and Loading Configurations}
+
+The following example shows how to save a configuration to a file and load it later:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+import math
+from generalized import VectorConfig, create_orthogonal_vectors, plot_vectors
+
+# Create a configuration
+config = VectorConfig(
+    origin=[0, 0, 2],
+    d=1.5,
+    theta=math.pi / 6,
+    plot_type="2d",
+    title="Custom Configuration"
+)
+
+# Save the configuration to a file
+config.save_to_file("config.json")
+
+# Later, load the configuration from the file
+loaded_config = VectorConfig.load_from_file("config.json")
+
+# Generate orthogonal vectors using the loaded configuration
+vectors = create_orthogonal_vectors(
+    origin=loaded_config.origin,
+    d=loaded_config.d,
+    theta=loaded_config.theta
+)
+
+# Plot the vectors using the loaded configuration
+plot_vectors(
+    vectors,
+    origin=loaded_config.origin,
+    plot_type=loaded_config.plot_type,
+    title=loaded_config.title,
+    show_plot=loaded_config.show_plot,
+    save_path=loaded_config.save_path
+)
+\end{lstlisting}
+
+\subsection{Checking Orthogonality}
+
+The following example shows how to check if a set of vectors is orthogonal:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from generalized import create_orthogonal_vectors, check_orthogonality
+
+# Generate orthogonal vectors
+vectors = create_orthogonal_vectors(origin=[0, 0, 0])
+
+# Check if the vectors are orthogonal
+is_orthogonal = check_orthogonality(vectors, origin=[0, 0, 0])
+
+print(f"Vectors are orthogonal: {is_orthogonal}")
+\end{lstlisting}
+
+\subsection{Perfect Orthogonal Circle Generation}
+
+The following example shows how to generate a perfect circle in the plane orthogonal to the x=y=z line with enhanced visualization features:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from generalized import create_orthogonal_vectors
+from generalized.visualization import setup_enhanced_3d_axes
+
+# Set parameters
+R_0 = np.array([1, 2, 3])  # Origin
+d = 2.0                    # Distance parameter
+num_points = 36            # Number of points
+
+# Generate a perfect circle
+vectors = create_orthogonal_vectors(R_0, d, num_points, perfect=True)
+
+# Verify properties
+distances = np.array([np.linalg.norm(v - R_0) for v in vectors])
+unit_111 = np.array([1, 1, 1]) / np.sqrt(3)
+dot_products = np.array([np.abs(np.dot(v - R_0, unit_111)) for v in vectors])
+
+print(f"Mean distance from origin: {np.mean(distances)}")
+print(f"Standard deviation of distances: {np.std(distances)}")
+print(f"Maximum dot product with (1,1,1): {np.max(dot_products)}")
+
+# Create 3D visualization with enhanced features
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# Apply enhanced axis styling with custom colors and labels
+setup_enhanced_3d_axes(ax, vectors, axis_colors=['r', 'g', 'b'], 
+                     show_coordinate_labels=True, equal_aspect_ratio=True, 
+                     buffer_factor=0.1)
+
+# Plot the circle
+ax.scatter(vectors[:, 0], vectors[:, 1], vectors[:, 2], label='Perfect Circle')
+
+# Plot the origin
+ax.scatter(R_0[0], R_0[1], R_0[2], color='red', s=100, marker='o', label='Origin R_0')
+
+# Plot the x=y=z line
+line = np.array([[-1, -1, -1], [7, 7, 7]])
+ax.plot(line[:, 0], line[:, 1], line[:, 2], 'r--', label='x=y=z line')
+
+ax.set_title('Perfect Circle Orthogonal to x=y=z Line')
+ax.legend()
+
+plt.show()
+\end{lstlisting}
+
+\subsection{Generating Circle Segments}
+
+The following example shows how to generate circle segments by specifying start and end angles:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from generalized import create_orthogonal_vectors
+
+# Set parameters
+R_0 = np.array([1, 2, 3])  # Origin
+d = 2.0                    # Distance parameter
+num_points = 18            # Number of points
+
+# Define theta ranges
+theta_ranges = [
+    (0, np.pi/2),          # Quarter circle
+    (0, np.pi),            # Half circle
+    (np.pi/4, 3*np.pi/4),  # Middle segment
+    (0, 2*np.pi)           # Full circle
+]
+
+# Create 3D visualization with enhanced features
+fig = plt.figure(figsize=(10, 8))
+ax = fig.add_subplot(111, projection='3d')
+
+# Collect all vectors for proper axis scaling
+all_vectors = []
+for start_theta, end_theta in theta_ranges:
+    # Generate vectors for this segment
+    vectors = create_orthogonal_vectors(R_0, d, num_points, perfect=True, 
+                                      start_theta=start_theta, end_theta=end_theta)
+    all_vectors.append(vectors)
+
+# Apply enhanced axis styling with all points for proper scaling
+all_points = np.vstack(all_vectors)
+from generalized.visualization import setup_enhanced_3d_axes
+setup_enhanced_3d_axes(ax, all_points)
+
+# Plot each circle segment
+for i, ((start_theta, end_theta), vectors) in enumerate(zip(theta_ranges, all_vectors)):
+    # Plot the circle segment
+    range_desc = f"({start_theta:.2f}, {end_theta:.2f})"
+    ax.scatter(vectors[:, 0], vectors[:, 1], vectors[:, 2], label=f'$\\theta \\in$ {range_desc}')
+
+# Plot the origin
+ax.scatter(R_0[0], R_0[1], R_0[2], color='red', s=100, marker='o', label='Origin R_0')
+
+# Plot the x=y=z line
+line = np.array([[-1, -1, -1], [7, 7, 7]])
+ax.plot(line[:, 0], line[:, 1], line[:, 2], 'r--', label='x=y=z line')
+
+ax.set_title('Perfect Circle Segments with Different Theta Ranges')
+ax.legend()
+
+plt.show()
+\end{lstlisting}
+
+\subsection{Using the Command-line Interface}
+
+The command-line interface provides access to both vector generation and arrowhead matrix analysis functionality through the \texttt{main.py} script.
+
+\subsubsection{Vector Generation Examples}
+
+\paragraph{Basic Vector Usage}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector
+\end{lstlisting}
+
+This command generates and visualizes orthogonal vectors with default parameters (origin at [0, 0, 0], d=1.0, theta=pi/4).
+
+\paragraph{Customizing Vector Generation}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector --origin 1 1 1 --d 2.0 --theta 1.047
+\end{lstlisting}
+
+This command generates and visualizes orthogonal vectors with custom parameters (origin at [1, 1, 1], d=2.0, theta=pi/3).
+
+\paragraph{Customizing Visualization}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector --plot-type 2d --title "Custom Visualization" --save-path custom.png
+\end{lstlisting}
+
+This command generates orthogonal vectors with default parameters and visualizes them with custom visualization options (2D plot, custom title, save to file).
+
+\paragraph{Generating Perfect Orthogonal Circles}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector --origin 1 2 3 --d 2.0 --theta-range 0 36 6.28 --perfect
+\end{lstlisting}
+
+This command generates a perfect circle in the plane orthogonal to the x=y=z line with 36 points, centered at [1, 2, 3] with a distance of 2.0.
+
+\paragraph{Generating Circle Segments}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector --origin 1 2 3 --d 2.0 --theta-range 0 18 3.14159 --perfect
+\end{lstlisting}
+
+This command generates a half-circle segment (from 0 to $\pi$) in the plane orthogonal to the x=y=z line.
+
+\paragraph{Using a Configuration File}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector --config config.json
+\end{lstlisting}
+
+This command loads a configuration from a file and uses it to generate and visualize orthogonal vectors.
+
+\subsubsection{Arrowhead Matrix Examples}
+
+\paragraph{Basic Arrowhead Usage}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main arrowhead
+\end{lstlisting}
+
+This command generates and analyzes arrowhead matrices with default parameters (4x4 matrix, 72 theta steps).
+
+\paragraph{Customizing Matrix Generation}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main arrowhead --r0 1 1 1 --d 0.8 --theta-steps 36 --size 6
+\end{lstlisting}
+
+This command generates and analyzes 6x6 arrowhead matrices with custom parameters (origin at [1, 1, 1], d=0.8, 36 theta steps).
+
+\paragraph{Using Perfect Circle Generation}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main arrowhead --perfect --theta-steps 12
+\end{lstlisting}
+
+This command generates and analyzes arrowhead matrices using the perfect circle generation method with 12 theta steps.
+
+\paragraph{Only Creating Plots from Existing Results}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main arrowhead --plot-only --output-dir my_results
+\end{lstlisting}
+
+This command only creates plots from existing results in the specified directory.
+
+\paragraph{Loading Existing Results and Creating Plots}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main arrowhead --load-only --output-dir my_results
+\end{lstlisting}
+
+This command loads existing results from the specified directory and creates plots.
+
+\subsubsection{Saving a Configuration File}
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main vector --origin 1 1 1 --d 2.0 --theta 1.047 --save-config config.json
+\end{lstlisting}
+
+This command generates and visualizes orthogonal vectors with custom parameters and saves the configuration to a file.
+
+\subsection{Using the Arrowhead Matrix Analyzer as a Python Module}
+
+The following examples show how to use the ArrowheadMatrixAnalyzer class directly in Python code:
+
+\subsubsection{Basic Usage}
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from example_use.arrowhead_matrix.arrowhead import ArrowheadMatrixAnalyzer
+
+# Create an analyzer with default parameters
+analyzer = ArrowheadMatrixAnalyzer()
+
+# Generate matrices, calculate eigenvalues/eigenvectors, and create plots
+analyzer.run_analysis()
+\end{lstlisting}
+
+\subsubsection{Customizing Matrix Generation}
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from example_use.arrowhead_matrix.arrowhead import ArrowheadMatrixAnalyzer
+
+# Create an analyzer with custom parameters
+analyzer = ArrowheadMatrixAnalyzer(
+    R_0=(1, 1, 1),           # Origin vector
+    d=0.8,                   # Distance parameter
+    theta_start=0,           # Starting theta value
+    theta_end=2*np.pi,       # Ending theta value
+    theta_steps=36,          # Number of theta steps
+    coupling_constant=0.2,   # Coupling constant
+    omega=1.0,               # Angular frequency
+    matrix_size=6,           # Matrix size
+    perfect=True,            # Use perfect circle generation
+    output_dir='./results'   # Output directory
+)
+
+# Generate matrices, calculate eigenvalues/eigenvectors, and create plots
+analyzer.run_analysis()
+\end{lstlisting}
+
+\subsubsection{Loading Existing Results}
+
+\begin{lstlisting}[language=Python]
+from example_use.arrowhead_matrix.arrowhead import ArrowheadMatrixAnalyzer
+
+# Create an analyzer with the same output directory as previous runs
+analyzer = ArrowheadMatrixAnalyzer(output_dir='./results')
+
+# Load existing results and create plots
+analyzer.load_results()
+analyzer.create_plots()
+\end{lstlisting}
+
+\subsubsection{Accessing Eigenvalues and Eigenvectors}
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+from example_use.arrowhead_matrix.arrowhead import ArrowheadMatrixAnalyzer
+
+# Create an analyzer with custom parameters
+analyzer = ArrowheadMatrixAnalyzer(matrix_size=4, theta_steps=12)
+
+# Generate matrices and calculate eigenvalues/eigenvectors
+analyzer.generate_matrices()
+analyzer.calculate_eigenvalues()
+
+# Access eigenvalues and eigenvectors
+for i, theta in enumerate(analyzer.theta_values):
+    print(f"Theta = {theta:.4f} radians:")
+    print(f"  Eigenvalues: {analyzer.eigenvalues[i]}")
+    print(f"  Eigenvectors shape: {analyzer.eigenvectors[i].shape}")
+    
+    # Access the matrix for this theta value
+    matrix = analyzer.matrices[i]
+    print(f"  Matrix shape: {matrix.shape}")
+\end{lstlisting}
+
+\subsection{Complete Example Script}
+
+The following is a complete example script that demonstrates various features of the package:
+
+\begin{lstlisting}[language=Python]
+import numpy as np
+import math
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
+from generalized import create_orthogonal_vectors, check_orthogonality, plot_vectors, VectorConfig
+
+def main():
+    # Create configurations for different examples
+    configs = [
+        VectorConfig(
+            origin=[0, 0, 0],
+            d=1.0,
+            theta=math.pi / 4,
+            plot_type="3d",
+            title="Default Configuration",
+            save_path="default.png"
+        ),
+        VectorConfig(
+            origin=[1, 1, 1],
+            d=2.0,
+            theta=math.pi / 3,
+            plot_type="3d",
+            title="Alternative Configuration",
+            save_path="alternative.png"
+        ),
+        VectorConfig(
+            origin=[1, 2, 3],
+            d=1.5,
+            num_points=36,
+            perfect=True,
+            plot_type="3d",
+            title="Perfect Orthogonal Circle",
+            save_path="perfect_circle.png"
+        )
+    ]
+    
+    # Process each configuration
+    for i, config in enumerate(configs):
+        print(f"Processing configuration {i+1}/{len(configs)}")
+        
+        # Generate orthogonal vectors
+        if hasattr(config, 'perfect') and config.perfect:
+            # Generate perfect orthogonal circle
+            vectors = create_orthogonal_vectors(
+                origin=config.origin,
+                d=config.d,
+                num_points=config.num_points,
+                perfect=True
+            )
+            
+            # Verify perfect circle properties
+            distances = np.array([np.linalg.norm(v - config.origin) for v in vectors])
+            unit_111 = np.array([1, 1, 1]) / np.sqrt(3)
+            dot_products = np.array([np.abs(np.dot(v - config.origin, unit_111)) for v in vectors])
+            
+            print(f"  Mean distance from origin: {np.mean(distances)}")
+            print(f"  Standard deviation of distances: {np.std(distances)}")
+            print(f"  Maximum dot product with (1,1,1): {np.max(dot_products)}")
+            
+            # Custom 3D plot for perfect circle with enhanced visualization
+            if config.plot_type == "3d":
+                fig = plt.figure(figsize=(10, 8))
+                ax = fig.add_subplot(111, projection='3d')
+                
+                # Apply enhanced axis styling
+                from generalized.visualization import setup_enhanced_3d_axes
+                setup_enhanced_3d_axes(ax, vectors)
+                
+                # Plot the circle
+                ax.scatter(vectors[:, 0], vectors[:, 1], vectors[:, 2], label='Perfect Circle')
+                
+                # Plot the origin
+                ax.scatter(config.origin[0], config.origin[1], config.origin[2], 
+                          color='red', s=100, marker='o', label='Origin R_0')
+                
+                # Plot the x=y=z line
+                line = np.array([[-1, -1, -1], [7, 7, 7]])
+                ax.plot(line[:, 0], line[:, 1], line[:, 2], 'r--', label='x=y=z line')
+                
+                ax.set_title(config.title)
+                ax.legend()
+                
+                plt.savefig(config.save_path)
+                print(f"  Plot saved to {config.save_path}")
+            else:
+                # Use standard plot_vectors for other plot types
+                plot_vectors(
+                    vectors,
+                    origin=config.origin,
+                    plot_type=config.plot_type,
+                    title=config.title,
+                    show_plot=False,
+                    save_path=config.save_path
+                )
+                print(f"  Plot saved to {config.save_path}")
+        else:
+            # Generate standard orthogonal vectors
+            vectors = create_orthogonal_vectors(
+                origin=config.origin,
+                d=config.d,
+                theta=config.theta
+            )
+            
+            # Check orthogonality
+            is_orthogonal = check_orthogonality(vectors, origin=config.origin)
+            print(f"  Vectors are orthogonal: {is_orthogonal}")
+            
+            # Plot vectors
+            plot_vectors(
+                vectors,
+                origin=config.origin,
+                plot_type=config.plot_type,
+                title=config.title,
+                show_plot=False,
+                save_path=config.save_path
+            )
+            print(f"  Plot saved to {config.save_path}")
+        
+        # Save configuration
+        config_file = f"config{i+1}.json"
+        config.save_to_file(config_file)
+        print(f"  Configuration saved to {config_file}")
+    
+    # Show all plots
+    plt.show()
+
+if __name__ == "__main__":
+    main()
+\end{lstlisting}
+
+This script creates three different configurations, generates orthogonal vectors for each, checks their orthogonality, plots them, and saves both the plots and configurations to files. Finally, it displays all the plots.
