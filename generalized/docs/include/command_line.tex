@@ -1,0 +1,313 @@
+\newpage
+\section{Command-line Interface}
+
+The Generalized Arrowhead Framework provides a comprehensive command-line interface that allows users to generate and visualize vectors orthogonal to the x=y=z line, as well as generate and analyze arrowhead matrices. This section describes the command-line interface and its features.
+
+\subsection{Basic Usage}
+
+The command-line interface can be accessed by running the \texttt{main.py} module with the appropriate subcommand:
+
+\begin{lstlisting}[language=bash]
+# For vector generation and visualization
+python generalized/main.py vector
+
+# For arrowhead matrix generation and analysis
+python generalized/main.py arrowhead
+
+# For detailed help information
+python generalized/main.py help
+\end{lstlisting}
+
+The \texttt{vector} subcommand generates and visualizes a single vector with default parameters (origin at [0, 0, 0], d=1.0, theta=pi/4).
+
+The \texttt{arrowhead} subcommand generates and analyzes arrowhead matrices with default parameters (4x4 matrix, 72 theta steps).
+
+\subsection{Command-line Options}
+
+The command-line interface provides extensive options for both vector generation and arrowhead matrix analysis. The options are organized by subcommand.
+
+\subsubsection{Vector Generation Options}
+
+The following options are available for the \texttt{vector} subcommand:
+
+\begin{itemize}
+    \item \texttt{-R X Y Z}, \texttt{--origin X Y Z}: Sets the origin vector R\_0 coordinates. Default: 0 0 0.
+    \item \texttt{-d VALUE}, \texttt{--distance VALUE}: Sets the distance parameter. Default: 1.0.
+    \item \texttt{--d-range START STEPS END}: Generates multiple vectors with distance values from START to END with STEPS steps.
+    \item \texttt{-a VALUE}, \texttt{--angle VALUE}, \texttt{--theta VALUE}: Sets the angle parameter in radians. Default: 0.7853981633974483 (pi/4).
+    \item \texttt{--theta-range START STEPS END}: Generates multiple vectors with angle values from START to END with STEPS steps.
+    \item \texttt{--perfect}: Uses the perfect orthogonal circle method for vector generation.
+    \item \texttt{--plot-type TYPE}: Specifies the type of plot, either "3d" or "2d". Default: "3d".
+    \item \texttt{--title TITLE}: Specifies the title of the plot.
+    \item \texttt{--no-show}: Prevents the plot from being displayed interactively.
+    \item \texttt{--save-path PATH}: Specifies the path to save the plot.
+    \item \texttt{--no-enhanced-visualization}: Disables enhanced visualization features.
+    \item \texttt{--axis-colors X Y Z}: Sets custom colors for the X, Y, and Z axes. Default: 'r g b'.
+    \item \texttt{--no-coordinate-labels}: Disables coordinate labels on the axes.
+    \item \texttt{--no-equal-aspect-ratio}: Disables equal aspect ratio for 3D plots.
+    \item \texttt{--buffer-factor VALUE}: Sets the buffer factor for axis limits. Default: 0.2.
+    \item \texttt{--no-r0-plane}: Does not show the R\_0 plane projection.
+    \item \texttt{--no-legend}: Does not show the legend.
+    \item \texttt{--no-grid}: Does not show the grid.
+    \item \texttt{--endpoints true/false}: Only plot the endpoints of vectors, not the arrows. Default: false.
+    \item \texttt{--save-plots}: Save plots to files instead of displaying them.
+    \item \texttt{--output-dir DIR}: Directory to save plots to. Default: 'plots'.
+    \item \texttt{--config FILE}: Load configuration from a JSON file.
+    \item \texttt{--save-config FILE}: Save current configuration to a JSON file.
+\end{itemize}
+
+\subsubsection{Arrowhead Matrix Options}
+
+The following options are available for the \texttt{arrowhead} subcommand:
+
+\begin{itemize}
+    \item \texttt{--r0 X Y Z}: Origin vector coordinates. Default: 0 0 0.
+    \item \texttt{--d VALUE}: Distance parameter. Default: 0.5.
+    \item \texttt{--theta-start VALUE}: Starting theta value in radians. Default: 0.
+    \item \texttt{--theta-end VALUE}: Ending theta value in radians. Default: $2\pi$.
+    \item \texttt{--theta-steps VALUE}: Number of theta values to generate matrices for. Default: 72.
+    \item \texttt{--coupling VALUE}: Coupling constant for off-diagonal elements. Default: 0.1.
+    \item \texttt{--omega VALUE}: Angular frequency for the energy term $\hbar\omega$. Default: 1.0.
+    \item \texttt{--size VALUE}: Size of the matrix to generate. Default: 4.
+    \item \texttt{--perfect}: Use perfect circle generation method. Default: True.
+    \item \texttt{--output-dir DIR}: Directory to save results. Default: './results'.
+    \item \texttt{--load-only}: Only load existing results and create plots.
+    \item \texttt{--plot-only}: Only create plots from existing results.
+\end{itemize}
+
+
+
+\subsection{Examples}
+
+\subsubsection{Vector Generation Examples}
+
+\paragraph{Generating a Single Vector}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py vector -R 1 1 1 -d 2.0 -a 1.047
+\end{lstlisting}
+
+This command generates and visualizes a single vector with custom parameters (origin at [1, 1, 1], d=2.0, theta=pi/3).
+
+\paragraph{Generating Multiple Vectors with Distance Range}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py vector -R 0 0 0 --d-range 1 5 3 -a 0.7854
+\end{lstlisting}
+
+This command generates and visualizes multiple vectors with varying distance values (from 1 to 3 in 5 steps) and fixed angle (pi/4).
+
+\paragraph{Generating Multiple Vectors with Angle Range}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py vector -R 0 0 0 -d 1.5 --theta-range 0 10 3.14159
+\end{lstlisting}
+
+This command generates and visualizes multiple vectors with fixed distance (1.5) and varying angle values (from 0 to pi in 10 steps).
+
+\paragraph{Using 2D Plot Type}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py vector --plot-type 2d --title "2D Projection of Orthogonal Vector"
+\end{lstlisting}
+
+This command generates a vector with default parameters and displays it using a 2D plot with a custom title.
+
+\paragraph{Customizing Visualization}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py vector --axis-colors blue green red --no-coordinate-labels
+\end{lstlisting}
+
+This command generates a vector with default parameters and customizes the visualization with custom axis colors and no coordinate labels.
+
+\paragraph{Saving to a Specific Path}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py vector --no-show --save-path "./figures/orthogonal_vector.png"
+\end{lstlisting}
+
+\subsubsection{Arrowhead Matrix Examples}
+
+\paragraph{Generating Matrices with Default Parameters}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py arrowhead
+\end{lstlisting}
+
+This command generates and analyzes arrowhead matrices with default parameters (4x4 matrix, 72 theta steps).
+
+\paragraph{Generating Matrices with Custom Parameters}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py arrowhead --r0 1 1 1 --d 0.8 --theta-steps 36 --size 6
+\end{lstlisting}
+
+This command generates and analyzes 6x6 arrowhead matrices with custom parameters (origin at [1, 1, 1], d=0.8, 36 theta steps).
+
+\paragraph{Using Perfect Circle Generation}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py arrowhead --perfect --theta-steps 12
+\end{lstlisting}
+
+This command generates and analyzes arrowhead matrices using the perfect circle generation method with 12 theta steps.
+
+\paragraph{Only Creating Plots from Existing Results}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py arrowhead --plot-only --output-dir my_results
+\end{lstlisting}
+
+This command only creates plots from existing results in the specified directory.
+
+\paragraph{Loading Existing Results and Creating Plots}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py arrowhead --load-only --output-dir my_results
+\end{lstlisting}
+
+This command loads existing results from the specified directory and creates plots.
+
+\subsubsection{Endpoints-only Plotting}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py --endpoints true
+\end{lstlisting}
+
+This command generates a vector with default parameters and plots only the endpoints, not the arrows.
+
+\subsubsection{Saving Plots}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py --save-plots --output-dir my_plots
+\end{lstlisting}
+
+This command generates a vector with default parameters and saves the plots to the 'my\_plots' directory.
+
+\subsubsection{Using a Configuration File}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py --config my_config.json
+\end{lstlisting}
+
+This command loads a configuration from a file and uses it to generate and visualize vectors.
+
+\subsubsection{Saving a Configuration File}
+
+\begin{lstlisting}[language=bash]
+python generalized/main.py -R 1 1 1 -d 2.0 -a 1.047 --save-config my_config.json
+\end{lstlisting}
+
+This command generates and visualizes a vector with custom parameters and saves the configuration to a file.
+
+\subsection{Configuration File Format}
+
+The configuration file is a JSON file with the following structure:
+
+\begin{lstlisting}[language=json]
+{
+    "origin": [x, y, z],
+    "d": float,
+    "theta": float,
+    "plot_type": "3d" or "2d",
+    "title": string or null,
+    "show_plot": boolean,
+    "save_path": string or null,
+    "enhanced_visualization": boolean,
+    "axis_colors": ["r", "g", "b"],
+    "show_coordinate_labels": boolean,
+    "equal_aspect_ratio": boolean,
+    "buffer_factor": float,
+    "show_r0_plane": boolean,
+    "show_legend": boolean,
+    "show_grid": boolean,
+    "perfect": boolean
+}
+\end{lstlisting}
+
+All fields are optional and will use default values if not specified. The default configuration is as follows:
+
+\begin{itemize}
+    \item \texttt{origin}: [0, 0, 0]
+    \item \texttt{d}: 1.0
+    \item \texttt{theta}: $\pi/4$ (approximately 0.7853981633974483)
+    \item \texttt{plot\_type}: "3d"
+    \item \texttt{title}: null (uses a default title based on the plot type)
+    \item \texttt{show\_plot}: true
+    \item \texttt{save\_path}: null (doesn't save the plot)
+    \item \texttt{enhanced\_visualization}: true
+    \item \texttt{axis\_colors}: ["r", "g", "b"]
+    \item \texttt{show\_coordinate\_labels}: true
+    \item \texttt{equal\_aspect\_ratio}: true
+    \item \texttt{buffer\_factor}: 0.2
+    \item \texttt{show\_r0\_plane}: true
+    \item \texttt{show\_legend}: true
+    \item \texttt{show\_grid}: true
+    \item \texttt{perfect}: false
+\end{itemize}
+
+\subsection{Circle Examples}
+
+The system includes several example scripts for generating and visualizing circle and sphere-like patterns:
+
+\begin{lstlisting}[language=bash]
+# Generate a sphere-like pattern using vectors orthogonal to the x=y=z line
+python generalized/example_circle.py
+
+# Generate a traditional circle in the XY plane
+python generalized/example_circle_xy.py
+
+# Generate a sphere-like pattern with improved visualization
+# using vectors orthogonal to the x=y=z line
+python generalized/example_orthogonal_circle.py
+
+# Generate a perfect circle in the plane orthogonal to the x=y=z line
+# with enhanced visualization features
+python perfect_orthogonal_circle.py
+
+# Generate multiple perfect circles at different distances
+# with enhanced visualization features
+python perfect_circle_distance_range.py
+\end{lstlisting}
+
+These examples generate 73 points (from 0\textdegree\ to 360\textdegree\ in 5\textdegree\ increments) and plot only the endpoints of the vectors, providing a clear visualization of the patterns formed. The orthogonality to the x=y=z line is ensured by using the basis vectors [1, -1/2, -1/2] and [0, -1/2, 1/2] in the vector generation process.
+
+\subsection{Implementation Details}
+
+The command-line interface is implemented in the \texttt{main.py} module using the \texttt{argparse} module from the Python standard library. The module defines a \texttt{main} function that parses command-line arguments, creates a configuration, generates vectors, and visualizes them.
+
+The command-line interface follows these steps:
+
+\begin{enumerate}
+    \item Parse command-line arguments using \texttt{argparse}.
+    \item If a configuration file is specified, load the configuration from the file.
+    \item Override the configuration with any command-line options that are specified.
+    \item Generate a vector using the scalar-based formula and the configuration.
+    \item If requested, analyze the properties of the generated vector and print the result.
+    \item If verbose output is enabled, print vector coordinates and properties.
+    \item Visualize the vectors using the configuration.
+    \item If requested, save the configuration to a file.
+\end{enumerate}
+
+\subsection{Error Handling}
+
+The command-line interface includes error handling for various scenarios, including:
+
+\begin{itemize}
+    \item Invalid command-line arguments (e.g., non-numeric values for numeric options).
+    \item Invalid configuration file (e.g., file not found, invalid JSON).
+    \item Invalid configuration parameters (e.g., negative distance parameter).
+\end{itemize}
+
+When an error occurs, the command-line interface prints an error message and exits with a non-zero exit code.
+
+\subsection{Help Message}
+
+The command-line interface provides a help message that can be displayed using the \texttt{--help} option:
+
+\begin{lstlisting}[language=bash]
+python -m generalized.main --help
+\end{lstlisting}
+
+The help message includes a description of the program, a list of all available options, and examples of how to use the program.

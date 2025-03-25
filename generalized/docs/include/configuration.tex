@@ -1,0 +1,169 @@
+\newpage
+\section{Configuration}
+
+The Generalized Orthogonal Vectors Generator and Visualizer package provides a flexible configuration system that allows users to customize all aspects of vector generation and visualization. This section describes the configuration system and its features.
+
+\subsection{VectorConfig Class}
+
+The configuration system is implemented through the \texttt{VectorConfig} class, which provides a unified way to configure all aspects of vector generation and visualization. The class has the following attributes:
+
+\begin{itemize}
+    \item \texttt{origin}: The origin point for vector generation (default: [0, 0, 0]).
+    \item \texttt{d}: The distance parameter for vector generation (default: 1.0).
+    \item \texttt{theta}: The angle parameter for vector generation (default: $\pi/4$).
+    \item \texttt{plot\_type}: The type of plot, either "3d" or "2d" (default: "3d").
+    \item \texttt{title}: The title of the plot (default: None, which uses a default title based on the plot type).
+    \item \texttt{show\_plot}: Whether to show the plot interactively (default: True).
+    \item \texttt{save\_path}: The path to save the plot (default: None, which doesn't save the plot).
+    \item \texttt{enhanced\_visualization}: Whether to use enhanced visualization features (default: True).
+    \item \texttt{axis\_colors}: Custom colors for the X, Y, and Z axes (default: ['r', 'g', 'b']).
+    \item \texttt{show\_coordinate\_labels}: Whether to show coordinate labels on the axes (default: True).
+    \item \texttt{equal\_aspect\_ratio}: Whether to maintain an equal aspect ratio for 3D plots (default: True).
+\end{itemize}
+
+The class provides methods for initializing the configuration, saving it to a file, and loading it from a file.
+
+\subsection{Initializing a Configuration}
+
+A configuration can be initialized with default values or with custom values:
+
+\begin{lstlisting}[language=Python]
+# Initialize with default values
+config = VectorConfig()
+
+# Initialize with custom values
+config = VectorConfig(
+    origin=[1, 1, 1],
+    d=2.0,
+    theta=math.pi / 3,
+    plot_type="2d",
+    title="Vector Configuration",
+    show_plot=False,
+    save_path="custom.png",
+    enhanced_visualization=True,
+    axis_colors=['red', 'green', 'blue'],
+    show_coordinate_labels=True,
+    equal_aspect_ratio=True
+)
+\end{lstlisting}
+
+\subsection{Using a Configuration}
+
+A configuration can be used to generate and visualize orthogonal vectors:
+
+\begin{lstlisting}[language=Python]
+# Generate orthogonal vectors using the configuration
+vectors = create_orthogonal_vectors(
+    origin=config.origin,
+    d=config.d,
+    theta=config.theta
+)
+
+# Plot the vectors using the configuration
+plot_vectors(
+    vectors,
+    origin=config.origin,
+    plot_type=config.plot_type,
+    title=config.title,
+    show_plot=config.show_plot,
+    save_path=config.save_path
+)
+\end{lstlisting}
+
+\subsection{Saving a Configuration to a File}
+
+A configuration can be saved to a JSON file for later use:
+
+\begin{lstlisting}[language=Python]
+# Save the configuration to a file
+config.save_to_file("config.json")
+\end{lstlisting}
+
+The saved file will contain all the configuration parameters in JSON format:
+
+\begin{lstlisting}[language=JSON]
+{
+    "origin": [1, 1, 1],
+    "d": 2.0,
+    "theta": 1.0471975511965976,
+    "plot_type": "2d",
+    "title": "Custom Configuration",
+    "show_plot": false,
+    "save_path": "custom.png"
+}
+\end{lstlisting}
+
+\subsection{Loading a Configuration from a File}
+
+A configuration can be loaded from a JSON file:
+
+\begin{lstlisting}[language=Python]
+# Load the configuration from a file
+config = VectorConfig.load_from_file("config.json")
+\end{lstlisting}
+
+This creates a new \texttt{VectorConfig} object with the parameters specified in the file.
+
+\subsection{Configuration in the Command-line Interface}
+
+The command-line interface provides options for configuring vector generation and visualization:
+
+\begin{itemize}
+    \item \texttt{--origin}: Specifies the origin point as three space-separated values.
+    \item \texttt{--d}: Specifies the distance parameter.
+    \item \texttt{--theta}: Specifies the angle parameter in radians.
+    \item \texttt{--plot-type}: Specifies the type of plot, either "3d" or "2d".
+    \item \texttt{--title}: Specifies the title of the plot.
+    \item \texttt{--no-show}: Prevents the plot from being displayed interactively.
+    \item \texttt{--save-path}: Specifies the path to save the plot.
+    \item \texttt{--config}: Specifies a configuration file to load.
+    \item \texttt{--save-config}: Specifies a file to save the configuration to.
+    \item \texttt{--no-enhanced-visualization}: Disables enhanced visualization features.
+    \item \texttt{--axis-colors}: Specifies custom colors for the X, Y, and Z axes as three space-separated values.
+    \item \texttt{--no-coordinate-labels}: Disables coordinate labels on the axes.
+    \item \texttt{--no-equal-aspect-ratio}: Disables equal aspect ratio for 3D plots.
+\end{itemize}
+
+These options allow users to customize the configuration without modifying the code.
+
+\subsection{Configuration File Format}
+
+The configuration file is a JSON file with the following structure:
+
+\begin{lstlisting}[language=JSON]
+{
+    "origin": [x, y, z],
+    "d": float,
+    "theta": float,
+    "plot_type": "3d" or "2d",
+    "title": string or null,
+    "show_plot": boolean,
+    "save_path": string or null,
+    "enhanced_visualization": boolean,
+    "axis_colors": ["r", "g", "b"],
+    "show_coordinate_labels": boolean,
+    "equal_aspect_ratio": boolean
+}
+\end{lstlisting}
+
+All fields are optional and will use default values if not specified.
+
+\subsection{Default Configuration}
+
+The default configuration is as follows:
+
+\begin{itemize}
+    \item \texttt{origin}: [0, 0, 0]
+    \item \texttt{d}: 1.0
+    \item \texttt{theta}: $\pi/4$ (approximately 0.7853981633974483)
+    \item \texttt{plot\_type}: "3d"
+    \item \texttt{title}: None (uses a default title based on the plot type)
+    \item \texttt{show\_plot}: True
+    \item \texttt{save\_path}: None (doesn't save the plot)
+    \item \texttt{enhanced\_visualization}: True
+    \item \texttt{axis\_colors}: ['r', 'g', 'b']
+    \item \texttt{show\_coordinate\_labels}: True
+    \item \texttt{equal\_aspect\_ratio}: True
+\end{itemize}
+
+This configuration generates three orthogonal vectors from the origin [0, 0, 0] with a distance parameter of 1.0 and an angle parameter of $\pi/4$, and visualizes them in 3D.

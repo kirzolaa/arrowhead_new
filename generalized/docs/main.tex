@@ -1,0 +1,105 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tikz}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+
+% Define JSON language for listings
+\lstdefinelanguage{JSON}{
+    keywords={true,false,null},
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+    morestring=[d]'
+}
+
+% Set page geometry
+\geometry{a4paper, margin=1in}
+
+% Configure fancy headers
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{Orthogonal Vectors Generator}
+\fancyhead[R]{Generalized Implementation}
+\fancyfoot[C]{\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Define colors for code listings
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+% Define code listing style
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{magenta},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+% Set the code listing style
+\lstset{style=mystyle}
+
+% Set the graphics path
+\graphicspath{{figures/}}
+
+% Document information
+\title{Orthogonal Vector Visualization System}
+\author{Technical Documentation}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This document provides a comprehensive guide to the Orthogonal Vector Visualization System. The system is a flexible Python tool for generating and visualizing complex orthogonal vector configurations with advanced plotting capabilities. It generates a single R vector using scalar formulas and provides comprehensive visualization options for both single and multiple vectors. This document covers the mathematical formulation, implementation details, API reference, usage examples, and visualization techniques, with a focus on the circle/sphere pattern generation examples.
+\end{abstract}
+
+\tableofcontents
+\newpage
+
+% Include the various sections from separate files
+\input{include/introduction}
+\input{include/mathematical_formulation}
+\input{include/implementation}
+\input{include/api_reference}
+\input{include/usage_examples}
+\input{include/visualization_new}
+\input{include/configuration}
+\input{include/command_line}
+\input{include/example_results}
+\input{include/arrowhead}
+\input{include/arrowhead_generalized}
+\input{include/conclusion}
+
+\appendix
+\input{include/appendix_code}
+\input{include/appendix_example_application}
+\input{include/appendix_arrowhead_generalized}
+\input{include/appendix_berry_phase}
+
+\end{document}
