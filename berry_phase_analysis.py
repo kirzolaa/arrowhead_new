@@ -155,6 +155,8 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
             current_eigenvector = eigenvectors[i, :, state]
             next_eigenvector = eigenvectors[(i + 1) % len(theta_vals), :, state]
             overlaps[state, i] = np.conj(current_eigenvector).T @ next_eigenvector
+            if overlaps[state, i] < 0:
+                overlaps[state, i] *= -1 # Ensure positive overlap
 
         # Calculate accumulated phase
         accumulated_phases[state] = np.cumsum(np.angle(overlaps[state]))
@@ -166,7 +168,12 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
 
     #log the norm of the difference between consecutive eigenvectors into a new log file in output directory
 os.makedirs(output_dir, exist_ok=True)
-with open(f'{output_dir}/eigenvector_diff.out', "a") as log_file:
+figures_dir = os.path.join(output_dir, 'figures')
+out_dir = os.path.join(output_dir, 'out')
+os.makedirs(figures_dir, exist_ok=True)
+os.makedirs(out_dir, exist_ok=True)
+
+with open(f'{out_dir}/eigenvector_diff.out', "a") as log_file:
     log_file.write('#State Theta Norm_Diff\n')
     for i in range(1, len(theta_vals)):
         for j in range(eigenvectors.shape[2]):
@@ -186,10 +193,9 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
     ndarray: Berry curvature array.
     """
     curvature = np.zeros((len(theta_vals) - 1, eigenvectors.shape[2]))  # For each state
-    os.makedirs(output_dir, exist_ok=True)
     
     # Log the curvature
-    with open(f'{output_dir}/curvature.out', "w") as log_file:
+    with open(f'{out_dir}/curvature.out', "w") as log_file:
         log_file.write("#Theta Curvature\n")  # Header
         
         # Compute the Berry curvature for each state
@@ -197,12 +203,17 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
             for j in range(eigenvectors.shape[2]):
                 # Corrected Berry connection calculation
                 # Use complex conjugate of the previous state's eigenvector them imag part
+
+                """
                 A_n_i = np.imag(np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j])
 
                 # Approximate the Berry curvature (simplified)
                 # Use a finite difference approximation for the derivative
                 dtheta = theta_vals[i+1] - theta_vals[i]
                 curvature[i, j] = (A_n_i) / dtheta  # Finite difference approximation
+                """
+                # Use central difference
+                curvature[i, j] = np.imag(np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / (theta_vals[i + 1] - theta_vals[i - 1])
 
             # Log the curvature for each state
             log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(eigenvectors.shape[2])]) + "\n")
@@ -217,7 +228,7 @@ def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_
     accumulated_phases = np.zeros((eigenvectors.shape[2], len(theta_vals)))
 
     # Open a file to log accumulated phase values
-    with open(f'{output_dir}/phase_log_berry_curvature.out', "w") as log_file:
+    with open(f'{out_dir}/phase_log_berry_curvature.out', "w") as log_file:
         log_file.write("#Theta Accumulated_Phase\n")  # Header
 
         # Compute the Berry phase for each state
@@ -255,6 +266,8 @@ for state in range(eigenvectors.shape[2]):
         if i == len(theta_vals) - 1:
             next_eigenvector = eigenvectors[0, :, state]
         overlaps[state, i] = np.conj(current_eigenvector).T @ next_eigenvector
+        if overlaps[state, i] < 0:
+            overlaps[state, i] *= -1 # Ensure positive overlap
     
     plt.plot(theta_vals, np.real(overlaps[state]), label=f'State {state}')
 
@@ -263,15 +276,7 @@ plt.ylabel('Overlap')
 plt.title('Eigenstate Overlaps')
 plt.legend()
 plt.grid()
-plt.savefig(f'{output_dir}/eigenstate_overlaps.png')
-
-def inspect_eigenvectors(eigenvectors, theta_vals, states):
-    for state in states:
-        print(f"State {state}:")
-        for i, theta in enumerate(theta_vals):
-            print(f"Theta = {theta:.2f}, Eigenvector: {eigenvectors[i, :, state]}")
-
-#inspect_eigenvectors(eigenvectors, theta_vals, range(eigenvectors.shape[2]))
+plt.savefig(f'{figures_dir}/eigenstate_overlaps.png')
 
 
 #plots
@@ -280,9 +285,6 @@ berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature(th
 #berry phases using wilson loop
 #berry_phases, accumulated_phases = calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors)
 
-
-# Create output directory and detailed report
-os.makedirs(output_dir, exist_ok=True)
 
 # Write berry_phases to a .out file
 with open(f'{output_dir}/berry_phases.out', 'w') as f:
@@ -301,20 +303,20 @@ with open(f'{output_dir}/berry_phases.out', 'w') as f:
         f.write('\n')
 
 # Write berry_phases to a .dat file
-np.savetxt(f'{output_dir}/berry_phases.dat', berry_phases, header='Berry phases for each state')
+np.savetxt(f'{out_dir}/berry_phases.dat', berry_phases, header='Berry phases for each state')
 
 # Write accumulated_phases to a .dat file with theta values
-with open(f'{output_dir}/accumulated_phases.dat', 'w') as f:
+with open(f'{out_dir}/accumulated_phases.dat', 'w') as f:
     f.write('# Theta (radians)\tState 0\tState 1\tState 2\tState 3\n')
     for i, theta in enumerate(theta_vals):
         f.write(f'{theta:.8f}\t')
         np.savetxt(f, accumulated_phases[:, i].reshape(1, -1), fmt='%.8f', delimiter='\t')
 
 # Write theta values to a .dat file
-np.savetxt(f'{output_dir}/theta_values.dat', theta_vals, header='Theta values used in calculation')
+np.savetxt(f'{out_dir}/theta_values.dat', theta_vals, header='Theta values used in calculation')
 
 # Write eigenstate overlaps to file
-with open(f'{output_dir}/eigenstate_overlaps.out', 'w') as f:
+with open(f'{out_dir}/eigenstate_overlaps.out', 'w') as f:
     f.write('# Eigenstate Overlaps vs Theta\n')
     f.write('# Theta (degrees)\tState 0\tState 1\tState 2\tState 3\n')
     for i, theta in enumerate(theta_vals):
@@ -324,9 +326,9 @@ with open(f'{output_dir}/eigenstate_overlaps.out', 'w') as f:
             f.write(f'{overlaps[state, i]:.8f}\t')
         f.write('\n')
 
-# Write eigenstates to file
-with open(f'{output_dir}/eigenstates.out', 'w') as f:
-    f.write('Eigenstates vs Theta\n')
+# Write eigenvectors to file
+with open(f'{out_dir}/eigenvectors.out', 'w') as f:
+    f.write('Eigenvectors vs Theta\n')
     for i, theta in enumerate(theta_vals):
         theta_deg = np.degrees(theta)
         f.write(f'Theta = {theta_deg:.2f} degrees\n')
@@ -334,6 +336,7 @@ with open(f'{output_dir}/eigenstates.out', 'w') as f:
             f.write(f'State {state}:\n')
             np.savetxt(f, eigenvectors[i, :, state].reshape(1, -1), fmt='%.8f')
         f.write('\n')
+    
 
 plt.figure(figsize=(12, 6))
 
@@ -352,7 +355,7 @@ plt.ylabel('Accumulated Phase')
 plt.title('Accumulated Phase vs Theta')
 
 plt.tight_layout()
-plt.savefig(f'{output_dir}/accumulated_phases.png')
+plt.savefig(f'{figures_dir}/accumulated_phases.png')
 
 #calculate and save the Hamiltonians, Va and Vx into .npy files
 # Assuming you have defined the Hamiltonian function and potential functions
@@ -373,7 +376,8 @@ Vx_values = np.array(Vx_values)
 
 #create a directory in the output directory for npy files
 #output_dir = os.path.join(output_dir, 'output_berry_phase_results_thetamin_0.00_thetamax_6.28_20250324150750')
-npy_dir = os.path.join(output_dir, 'npy_files')
+npy_dir = os.path.join(output_dir, 'npy')
+
 
 # Create the directory if it doesn't exist
 os.makedirs(npy_dir, exist_ok=True)
@@ -394,7 +398,7 @@ plt.title('Va Components vs Theta')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(f'{output_dir}/Va_components.png')
+plt.savefig(f'{figures_dir}/Va_components.png')
 
 #plot Vx potential components
 plt.figure(figsize=(12, 6))
@@ -407,7 +411,7 @@ plt.title('Vx Components vs Theta')
 plt.grid(True)
 plt.legend()
 plt.tight_layout()
-plt.savefig(f'{output_dir}/Vx_components.png')
+plt.savefig(f'{figures_dir}/Vx_components.png')
 # Initialize lists to store eigenvalues and eigenvectors
 eigenvalues_list = []
 eigenvectors_list = []
@@ -441,7 +445,7 @@ plt.title('Eigenvalues vs Theta')
 plt.grid(True)
 plt.legend()  # Add legend to identify each eigenvalue
 plt.tight_layout()
-plt.savefig(f'{npy_dir}/eigenvalues.png')
+plt.savefig(f'{figures_dir}/eigenvalues.png')
 
 ## Check for degeneracy
 tolerance = 1e-3  # Define a tolerance level for degeneracy
@@ -461,7 +465,7 @@ for i in range(eigenvalues_array.shape[1]):  # Loop through each eigenstate
             near_degeneracy_list.append((i, j))  # Store the indices of near-degenerate states
 
 # Log the degeneracy results
-with open(f'{npy_dir}/degeneracy_check.out', 'w') as log_file:
+with open(f'{out_dir}/degeneracy_check.out', 'w') as log_file:
     log_file.write("# Degeneracy Check\n")
     log_file.write("======================================\n\n")
     log_file.write(f"Parameters:\n")
@@ -487,7 +491,7 @@ with open(f'{npy_dir}/degeneracy_check.out', 'w') as log_file:
             log_file.write(f"Eigenstates {i} and {j}: {difference}\n")  # Convert to string
     
 # Write detailed text report
-with open(f'{npy_dir}/summary.txt', 'w') as f:
+with open(f'{output_dir}/summary.txt', 'w') as f:
     f.write(f'Berry Phase Analysis Report\n')
     f.write(f'Generated: {datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")}\n\n')
     f.write(f'Parameters:\n')
@@ -512,14 +516,15 @@ with open(f'{npy_dir}/summary.txt', 'w') as f:
             f.write(f'  Eigenstates {state1} and {state2} are degenerate.\n')
     else:
         f.write('  No degeneracies found.\n')
-    f.write('Detailed degeneracy check logged in degeneracy_check.out\n')
+    f.write('Detailed degeneracy check logged in f"{out_dir}/degeneracy_check.out"\n')
     
     f.write('\n')
-    f.write('Berry curvature logged in phase_log_berry_curvature.out\n')
+    f.write('Berry curvature logged in f"{out_dir}/phase_log_berry_curvature.out"\n')
+    f.write('Berry phases logged in f"{output_dir}/berry_phases.out"\n')
     f.write('\n')
-    f.write('Eigenvalue plot saved as eigenvalues.png\n')
+    f.write('Eigenvalue plot saved as f"{figures_dir}/eigenvalues.png"\n')
 
-    f.write('Eigenvector differences logged in eigenvector_diff.out\n')
+    f.write('Eigenvector differences logged in f"{out_dir}/eigenvector_diff.out"\n')
     f.write('\nEigenvalues and Eigenvectors:\n')
     f.write('To load the eigenvalues and eigenvectors, use:\n')
     f.write('eigenvalues = np.load(f"{npy_dir}/eigenvalues.npy")\n')
@@ -535,3 +540,10 @@ with open(f'{npy_dir}/summary.txt', 'w') as f:
         f.write('\nNear Degenerate Eigenstates:\n')
         for line in report:
             f.write(line + '\n')
+
+    f.write('\n')
+    f.write('Summary logged in f"{output_dir}/summary.txt"\n')
+    f.write('\n')
+    f.write('Done.\n')
+
+
