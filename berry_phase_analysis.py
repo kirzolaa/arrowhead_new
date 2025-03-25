@@ -179,79 +179,90 @@ with open(f'{out_dir}/eigenvector_diff.out', "a") as log_file:
         for j in range(eigenvectors.shape[2]):
             log_file.write(f"State {j}, Theta {theta_vals[i]:.2f}: {np.linalg.norm(eigenvectors[i, j] - eigenvectors[i-1, j]):.6f}\n")
 
+def fix_gauge(eigenvectors):
+    for i in range(1, len(eigenvectors)):
+        for j in range(eigenvectors.shape[2]):
+            overlap = np.dot(np.conj(eigenvectors[i - 1, :, j]), eigenvectors[i, :, j])
+            if np.real(overlap) < 0:
+                eigenvectors[i, :, j] *= -1
+    return eigenvectors
+
 def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
     """
-    Calculate the Berry curvature (i.e., the rate of change of the Berry phase)
-    by computing the overlap of consecutive eigenvectors.
-
-    Parameters:
-    eigenvectors (ndarray): Array of eigenvectors at different theta values.
-    theta_vals (ndarray): Array of theta values at which eigenvectors are calculated.
-    output_dir (str): Directory where output will be saved.
-
-    Returns:
-    ndarray: Berry curvature array.
+    Calculate the Berry curvature with central difference and boundary handling.
     """
-    curvature = np.zeros((len(theta_vals) - 1, eigenvectors.shape[2]))  # For each state
-    
-    # Log the curvature
-    with open(f'{out_dir}/curvature.out', "w") as log_file:
-        log_file.write("#Theta Curvature\n")  # Header
-        
-        # Compute the Berry curvature for each state
-        for i in range(len(theta_vals) - 1):  # Adjusted loop range
-            for j in range(eigenvectors.shape[2]):
-                # Corrected Berry connection calculation
-                # Use complex conjugate of the previous state's eigenvector them imag part
+    num_theta = len(theta_vals)
+    num_bands = eigenvectors.shape[2]
+    eigenvectors = fix_gauge(eigenvectors)
+    curvature = np.zeros((num_theta, num_bands))  # Now includes boundary points
 
-                """
-                A_n_i = np.imag(np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j])
+    with open(f'{output_dir}/curvature.out', "w") as log_file:
+        log_file.write("#Theta " + " ".join([f"Curv_{j}" for j in range(num_bands)]) + "\n")
 
-                # Approximate the Berry curvature (simplified)
-                # Use a finite difference approximation for the derivative
-                dtheta = theta_vals[i+1] - theta_vals[i]
-                curvature[i, j] = (A_n_i) / dtheta  # Finite difference approximation
-                """
-                # Use central difference
-                curvature[i, j] = np.imag(np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / (theta_vals[i + 1] - theta_vals[i - 1])
+        for i in range(num_theta):
+            for j in range(num_bands):
+                if i == 0:  # Forward difference at the boundary
+                    dtheta = theta_vals[1] - theta_vals[0]
+                    curvature[i, j] = np.imag(np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
+                elif i == num_theta - 1:  # Backward difference at the boundary
+                    dtheta = theta_vals[-1] - theta_vals[-2]
+                    curvature[i, j] = np.imag(np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i, :, j]) / dtheta
+                else:  # Central difference
+                    dtheta = theta_vals[i + 1] - theta_vals[i - 1]
+                    curvature[i, j] = np.imag(np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
 
-            # Log the curvature for each state
-            log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(eigenvectors.shape[2])]) + "\n")
+            log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(num_bands)]) + "\n")
 
     return curvature
 
+#lets log the simplified method in the test.py
+def calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvectors, output_dir):
+    curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
+    num_bands = eigenvectors.shape[2]
+    num_theta = len(theta_vals)
+    berry_phases = np.zeros(num_bands)
+    accumulated_phases = np.zeros((num_bands, num_theta))
 
-def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir):
-    berry_curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
+    with open(f'{output_dir}/phase_log_berry_curvature_simplified.out', "w") as log_file:
+        log_file.write("#Theta " + " ".join([f"Phase_{j}" for j in range(num_bands)]) + "\n")
 
-    berry_phases = np.zeros(eigenvectors.shape[2])
-    accumulated_phases = np.zeros((eigenvectors.shape[2], len(theta_vals)))
+        for j in range(num_bands):
+            berry_phase = np.zeros(num_theta)
+            berry_phase[0] = 0
+            for i in range(1, num_theta):
+                berry_phase[i] = berry_phase[i - 1] + curvature[i, j] * (theta_vals[i] - theta_vals[i - 1]) #simple rectangular rule no wrapping.
+            berry_phases[j] = berry_phase[-1]
+            print(f"Berry phase for state {j}: {berry_phases[j]:.15f}")
+            accumulated_phases[j] = berry_phase
 
-    # Open a file to log accumulated phase values
-    with open(f'{out_dir}/phase_log_berry_curvature.out', "w") as log_file:
-        log_file.write("#Theta Accumulated_Phase\n")  # Header
-
-        # Compute the Berry phase for each state
-        for j in range(eigenvectors.shape[2]):
-            berry_phase = np.zeros(len(theta_vals), dtype=complex)
-            berry_phase[0] = 0  # Phase at the first point is set to 0
-            
-            # Compute the Berry phase by accumulating Berry curvature
-            for i in range(1, len(theta_vals)):
-                # Use trapezoidal rule to integrate Berry curvature
-                berry_phase[i] = berry_phase[i-1] + np.trapezoid(berry_curvature[:i, j], theta_vals[:i])
-                berry_phase[i] = (np.angle(berry_phase[i]) + np.pi) % (2 * np.pi) - np.pi  # Wrap phase between -π and π
-
-            berry_phases[j] = berry_phase[-1].real  # Final Berry phase for each state
-            accumulated_phases[j] = berry_phase.real  # Accumulated Berry phase for each point
-
-        # Log the accumulated phase values for each state (average across all states)
-        for i in range(len(theta_vals)):
-            log_file.write(f"{theta_vals[i]:.15f} {np.mean(accumulated_phases[:, i]):.15f}\n")
+        for i in range(num_theta):
+            log_file.write(f"{theta_vals[i]:.15f} " + " ".join([f"{accumulated_phases[j, i]:.15f}" for j in range(num_bands)]) + "\n")
 
     return berry_phases, accumulated_phases
 
+def calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir):
+    curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
+    num_bands = eigenvectors.shape[2]
+    num_theta = len(theta_vals)
+    berry_phases = np.zeros(num_bands)
+    accumulated_phases = np.zeros((num_bands, num_theta))
 
+    with open(f'{output_dir}/phase_log_berry_curvature.out', "w") as log_file:
+        log_file.write("#Theta " + " ".join([f"Phase_{j}" for j in range(num_bands)]) + "\n")
+
+        for j in range(num_bands):
+            berry_phase = np.zeros(num_theta, dtype=complex)
+            berry_phase[0] = 0
+            for i in range(1, num_theta):
+                berry_phase[i] = berry_phase[i - 1] + np.trapezoid(curvature[:i+1, j], theta_vals[:i+1])
+                berry_phase[i] = (np.angle(berry_phase[i]) + np.pi) % (2 * np.pi) - np.pi
+            berry_phases[j] = berry_phase[-1].real
+            accumulated_phases[j] = berry_phase.real
+
+        for i in range(num_theta):
+            log_file.write(f"{theta_vals[i]:.15f} " + " ".join([f"{accumulated_phases[j, i]:.15f}" for j in range(num_bands)]) + "\n")
+
+    return berry_phases, accumulated_phases
 
 # Calculate and plot eigenstate overlaps
 overlaps = np.zeros((eigenvectors.shape[2], len(theta_vals)), dtype=complex)
@@ -280,8 +291,8 @@ plt.savefig(f'{figures_dir}/eigenstate_overlaps.png')
 
 
 #plots
-#berry phases using berry curvature
-berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature(theta_vals, eigenvectors, output_dir)
+#berry phases using berry curvature simplified
+berry_phases, accumulated_phases = calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvectors, output_dir)
 #berry phases using wilson loop
 #berry_phases, accumulated_phases = calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors)
 
