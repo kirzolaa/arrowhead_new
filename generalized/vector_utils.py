@@ -49,7 +49,7 @@ def create_perfect_orthogonal_circle(R_0=(0, 0, 0), d=1, num_points=36, start_th
     R_0 = np.array(R_0)
     
     # Generate equally spaced angles between start_theta and end_theta
-    thetas = np.linspace(start_theta, end_theta, num_points, endpoint=False)
+    thetas = np.linspace(start_theta, end_theta, num_points, endpoint=True)
     
     # Initialize the array to store the vectors
     vectors = np.zeros((num_points, 3))
@@ -59,6 +59,40 @@ def create_perfect_orthogonal_circle(R_0=(0, 0, 0), d=1, num_points=36, start_th
         vectors[i] = create_perfect_orthogonal_vectors(R_0, d, theta)
     
     return vectors
+
+import multiprocessing
+
+def multiprocessing_create_perfect_orthogonal_circle(R_0=(0, 0, 0), d=1, num_points=36, start_theta=0, end_theta=2*np.pi):
+    """
+    Create multiple vectors that form a perfect circle orthogonal to the x=y=z line
+    using normalized basis vectors.
+    Use all possible processors/logical threads -1 this time
+    
+    Parameters:
+    R_0 (tuple or numpy.ndarray): The origin vector, default is (0, 0, 0)
+    d (float): The distance parameter, default is 1
+    num_points (int): The number of points to generate, default is 36
+    start_theta (float): Starting angle in radians, default is 0
+    end_theta (float): Ending angle in radians, default is 2*pi
+    
+    Returns:
+    numpy.ndarray: Array of shape (num_points, 3) containing the generated vectors
+    """
+    # Convert R_0 to numpy array for vector operations
+    R_0 = np.array(R_0)
+    num_processes = multiprocessing.cpu_count() - 1
+    # Generate equally spaced angles between start_theta and end_theta
+    thetas = np.linspace(start_theta, end_theta, num_points, endpoint=True)
+    
+    # Initialize the array to store the vectors
+    vectors = np.zeros((num_points, 3))
+    
+    # Generate vectors for each angle, multiprocessed
+    with multiprocessing.Pool(processes=num_processes) as pool:
+        vectors = pool.starmap(create_perfect_orthogonal_vectors, [(R_0, d, theta) for theta in thetas])
+    
+    # Convert list of arrays to 2D numpy array
+    return np.array(vectors)
 
 def generate_R_vector(R_0, d, theta, perfect=False):
     """

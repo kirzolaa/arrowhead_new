@@ -15,27 +15,9 @@ from scipy.constants import hbar
 import sys
 import os
 sys.path.append('/home/zoltan/arrowhead_new_new/arrowhead_new/generalized')
-try:
-    from vector_utils import create_perfect_orthogonal_vectors
-    from main import *
-    print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
-except ImportError:
-    print("Warning: Could not import create_perfect_orthogonal_vectors from arrowhead/generalized package.")
-    print("Falling back to simple circle implementation.")
-    # Define a fallback function if the import fails
-    def create_perfect_orthogonal_vectors(R_0=(0, 0, 0), d=1, theta=0):
-        # Define the basis vectors orthogonal to the (1,1,1) direction
-        basis1 = np.array([1, -1/2, -1/2])  # First basis vector
-        basis2 = np.array([0, -1/2, 1/2])   # Second basis vector
-        
-        # Normalize the basis vectors
-        basis1 = basis1 / np.linalg.norm(basis1)
-        basis2 = basis2 / np.linalg.norm(basis2)
-        
-        # Create a point at distance d from the origin in the plane spanned by basis1 and basis2
-        R = np.array(R_0) + d * (np.cos(theta) * basis1 + np.sin(theta) * basis2)
-        
-        return R
+from vector_utils import create_perfect_orthogonal_vectors, multiprocessing_create_perfect_orthogonal_circle, create_perfect_orthogonal_circle
+from main import *
+print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
 
 # Function to create R_theta vector that traces a perfect circle orthogonal to the x=y=z line
 def R_theta(d, theta):
@@ -121,6 +103,7 @@ d = 0.001  # Radius of the circle
 theta_min = 0
 theta_max = 2 * np.pi
 num_points = 50
+R_0 = (0, 0, 0)
 # Generate the arrowhead matrix and Va, Vx
 theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
@@ -171,9 +154,21 @@ def calculate_wilson_loop_berry_phase_new(theta_vals, eigenvectors):
 os.makedirs(output_dir, exist_ok=True)
 figures_dir = os.path.join(output_dir, 'figures')
 out_dir = os.path.join(output_dir, 'out')
-#create a new directory
+#create a new directory for the vectors
+save_dir = os.path.join(output_dir, 'vectors')
 os.makedirs(figures_dir, exist_ok=True)
 os.makedirs(out_dir, exist_ok=True)
+os.makedirs(save_dir, exist_ok=True)
+
+#use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
+from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle, generate_perfect_orthogonal_circle
+
+#visualize the R_theta vectors
+points = multiprocessing_create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max) #we already have a method for this
+#points = create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max)
+print(points.shape)
+visualize_perfect_orthogonal_circle(points, save_dir)
+verify_circle_properties(d, num_points, points, save_dir)
 
 with open(f'{out_dir}/eigenvector_diff.out', "a") as log_file:
     log_file.write('#State Theta Norm_Diff\n')
