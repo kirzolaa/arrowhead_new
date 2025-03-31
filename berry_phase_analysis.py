@@ -15,7 +15,7 @@ import multiprocessing
 # Import the perfect orthogonal circle generation function from the Arrowhead/generalized package
 import sys
 import os
-sys.path.append('/home/zoltan/arrowhead_new_new/arrowhead_new/generalized')
+sys.path.append('/home/zoli/arrowhead_new/completely_new/arrowhead_new/generalized')
 from vector_utils import create_perfect_orthogonal_vectors, multiprocessing_create_perfect_orthogonal_circle, create_perfect_orthogonal_circle
 from main import *
 print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
@@ -92,11 +92,112 @@ def hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d):
     """
     for i in range(1, len(H)):
         H[i, 0] = H[0, i] = c
+    eigvals, eigvecs = np.linalg.eigh(H)
+    sorted_indices = np.argsort(eigvals)
+    sorted_eigvals = eigvals[sorted_indices]
+    sorted_eigvecs = eigvecs[:, sorted_indices]
+    #print(H.shape)
+    return H, R_theta_val, Vx, Va, sorted_eigvals, sorted_eigvecs
 
-    return H, R_theta_val, Vx, Va
+# Function to compute the Berry connection A(R_theta)
+def berry_connection(R_vals, eigvecs):
+    """
+    Computes the Berry connection A(R_theta) for each eigenstate.
+
+    Parameters:
+    - R_vals: Array of R_theta values (shape: (num_points, 3)).
+    - eigvecs: Array of eigenvectors at each R_theta (shape: (num_points, 4, 4)).
+
+    Returns:
+    - A_R: Berry connection values for each eigenstate (shape: (num_points-1, 4)).
+    """
+    num_states = eigvecs.shape[1] # Number of eigenstates (should be 4)
+    num_points = R_vals.shape[0]
+
+    A_R = np.zeros((num_points - 1, num_states), dtype=complex)
+
+    # Compute numerical derivative with respect to R_theta
+    for j in range(num_points - 1):
+        dR = R_vals[j + 1] - R_vals[j] # Small change in R_theta (3D vector)
+        for state_index in range(num_states):
+            v1 = eigvecs[j, :, state_index] # Eigenvector at R_theta[j]
+            v2 = eigvecs[j + 1, :, state_index] # Eigenvector at R_theta[j+1]
+
+            # Approximate ∂v/∂R_theta using finite differences
+            dv_dR = (v2 - v1) / np.linalg.norm(dR)
+
+            # Compute A(R_theta) = ⟨v | i ∇_R | v⟩
+            A_R[j, state_index] = np.vdot(v1, 1j * dv_dR)
+
+    return A_R
+
+# Function to compute the Berry phase γ by integrating A(R_theta)
+def berry_phase(A_R):
+    """
+    Computes the Berry phase by integrating A(R_theta) over the full cycle.
+
+    Parameters:
+    - A_R: Berry connection values for each eigenstate (shape: (num_points-1, 4)).
+
+    Returns:
+    - Berry phase γ for each eigenstate (shape: (4,)).
+    """
+    # Integrate A(R_theta) over the full cycle using summation
+    gamma = np.sum(np.real(A_R), axis=0)
+    return gamma % (2 * np.pi)  # Wrap to [0, 2π)
 
 
 
+# Parameters for the arrowhead matrix
+c = 0.2  # Coupling constant
+omega = 0.1  # Frequency
+#let a be an aVx and an aVa parameter
+aVx = 1.0
+aVa = 5.0
+b = 1.0  # Potential parameter
+c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
+x_shift = 1.0  # Shift in x direction
+y_shift = 0.0  # Shift in y direction --> turns out that this is not a y axis shift like I wanted it!!!!!
+d = 0.001  # Radius of the circle
+theta_min = 0
+theta_max = 2 * np.pi
+num_points = 5000
+R_0 = (0, 0, 0)
+# Generate the arrowhead matrix and Va, Vx
+theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
+# Compute R_theta values for all theta values
+#R_vals = np.array([R_theta(d, theta) for theta in theta_vals])
+
+# Initialize an empty list to store the eigenvectors
+eigvecs_all = []
+eigvals_all = []
+R_vals = []
+H_theta = []
+
+# Compute eigenvectors for all theta values
+for theta in theta_vals:
+    H, R_theta_val, Vx, Va, sorted_eigvals, sorted_eigvecs = hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d)
+    eigvecs_all.append(sorted_eigvecs)
+    R_vals.append(R_theta_val)
+    H_theta.append(H)
+    eigvals_all.append(sorted_eigvals)
+
+# Convert the lists to numpy arrays
+eigvecs_all = np.array(eigvecs_all)
+R_vals = np.array(R_vals)
+H_theta = np.array(H_theta)
+eigvals_all = np.array(eigvals_all)
+
+# Compute the Berry connection
+A_R_vals = berry_connection(R_vals, eigvecs_all)
+
+# Compute the Berry phase
+berry_phases_corrected = berry_phase(A_R_vals)
+
+# Output the computed Berry phases
+print(np.array2string(berry_phases_corrected, formatter={'float_kind':lambda x: np.format_float_scientific(x, precision=10)}))
+
+"""
 if __name__ == '__main__':
     # Parameters for the arrowhead matrix
     c = 0.2  # Coupling constant
@@ -152,15 +253,15 @@ if __name__ == '__main__':
             for j in range(eigenvectors.shape[2]):
                 log_file.write(f"State {j}, Theta {theta_vals[i]:.2f}: {np.linalg.norm(eigenvectors[i, j] - eigenvectors[i-1, j]):.6f}\n")
         log_file.close()
-    """
-    def fix_gauge(eigenvectors):
-        for i in range(1, len(eigenvectors)):
-            for j in range(eigenvectors.shape[2]):
-                overlap = np.dot(np.conj(eigenvectors[i - 1, :, j]), eigenvectors[i, :, j])
-                if np.real(overlap) < 0:
-                    eigenvectors[i, :, j] *= -1
-        return eigenvectors
-    """
+    
+
+    #def fix_gauge(eigenvectors):
+    #   for i in range(1, len(eigenvectors)):
+    #       for j in range(eigenvectors.shape[2]):
+    #           overlap = np.dot(np.conj(eigenvectors[i - 1, :, j]), eigenvectors[i, :, j])
+    #           if np.real(overlap) < 0:
+    #               eigenvectors[i, :, j] *= -1
+    #   return eigenvectors
     
     # Calculate and plot eigenstate overlaps
     overlaps = np.zeros((eigenvectors.shape[2], len(theta_vals)), dtype=complex)
@@ -503,3 +604,4 @@ if __name__ == '__main__':
         f.write('Summary logged in f"{output_dir}/summary.txt"\n')
         f.write('\n')
         f.write('Done.\n')
+"""
