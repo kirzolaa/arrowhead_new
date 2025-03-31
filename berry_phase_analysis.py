@@ -113,6 +113,7 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
         ValueError: If the input arrays have incorrect shapes.
     https://qutip.org/docs/4.6/modules/qutip/topology.html we used the np.vdot as qtip, iirc, qtip.topology has been removed
     """
+    
     num_theta = len(theta_vals)
     num_bands = eigenvectors.shape[2]
     #eigenvectors = fix_gauge(eigenvectors)
@@ -134,7 +135,120 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
                     curvature[i, j] = (np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
 
             log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(num_bands)]) + "\n")
+    
+    #for funsies and testing purposes, here is what qtip has
+    """
+    Computes the discretized Berry curvature on the two dimensional grid
+    of parameters. The function works well for cases with no band mixing.
 
+    Parameters
+    ==========
+    eigfs : numpy ndarray
+        4 dimensional numpy ndarray where the first two indices are for the two
+        discrete values of the two parameters and the third is the index of the
+        occupied bands. The fourth dimension holds the eigenfunctions.
+
+    Returns
+    -------
+    b_curv : numpy ndarray
+        A two dimensional array of the discretized Berry curvature defined for
+        the values of the two parameters defined in the eigfs.
+
+    Code:
+    def berry_curvature(eigfs):
+        nparam0 = eigfs.shape[0]
+        nparam1 = eigfs.shape[1]
+        nocc = eigfs.shape[2]
+        b_curv = np.zeros((nparam0-1, nparam1-1), dtype=float)
+
+        for i in range(nparam0-1):
+            for j in range(nparam1-1):
+                rect_prd = np.identity(nocc, dtype=complex)
+                innP0 = np.zeros([nocc, nocc], dtype=complex)
+                innP1 = np.zeros([nocc, nocc], dtype=complex)
+                innP2 = np.zeros([nocc, nocc], dtype=complex)
+                innP3 = np.zeros([nocc, nocc], dtype=complex)
+
+                for k in range(nocc):
+                    for l in range(nocc):
+                        wf0 = eigfs[i, j, k, :]
+                        wf1 = eigfs[i+1, j, l, :]
+                        innP0[k, l] = np.dot(wf0.conjugate(), wf1)
+
+                        wf1 = eigfs[i+1, j, k, :]
+                        wf2 = eigfs[i+1, j+1, l, :]
+                        innP1[k, l] = np.dot(wf1.conjugate(), wf2)
+
+                        wf2 = eigfs[i+1, j+1, k, :]
+                        wf3 = eigfs[i, j+1, l, :]
+                        innP2[k, l] = np.dot(wf2.conjugate(), wf3)
+
+                        wf3 = eigfs[i, j+1, k, :]
+                        wf0 = eigfs[i, j, l, :]
+                        innP3[k, l] = np.dot(wf3.conjugate(), wf0)
+
+                rect_prd = np.dot(rect_prd, innP0)
+                rect_prd = np.dot(rect_prd, innP1)
+                rect_prd = np.dot(rect_prd, innP2)
+                rect_prd = np.dot(rect_prd, innP3)
+
+            dett = np.linalg.det(rect_prd)
+            curl_z = np.angle(dett)
+            b_curv[i, j] = curl_z
+
+        return b_curv
+    """
+    #end of qtip
+    """
+    def calculate_berry_curvature_new(eigenvectors, theta_vals, output_dir):
+        num_theta = len(theta_vals)
+        num_bands = eigenvectors.shape[2]
+        curvature = np.zeros((num_theta - 1, num_bands), dtype=float)
+    
+        with open(f'{output_dir}/curvature.out', "w") as log_file:
+            log_file.write("#Theta " + " ".join([f"Curv_{j}" for j in range(num_bands)]) + "\n")
+    
+            for i in range(num_theta - 1):
+                for j in range(num_bands):
+                    rect_prd = np.identity(num_bands, dtype=complex)
+                    innP0 = np.zeros([num_bands, num_bands], dtype=complex)
+                    innP1 = np.zeros([num_bands, num_bands], dtype=complex)
+                    innP2 = np.zeros([num_bands, num_bands], dtype=complex)
+                    innP3 = np.zeros([num_bands, num_bands], dtype=complex)
+    
+                    for k in range(num_bands):
+                        for l in range(num_bands):
+                            wf0 = eigenvectors[i, :, k]
+                            wf1 = eigenvectors[i + 1, :, l]
+                            innP0[k, l] = np.dot(wf0.conjugate(), wf1)
+    
+                            wf1 = eigenvectors[i + 1, :, k]
+                            wf2 = eigenvectors[i + 1, :, l]
+                            innP1[k, l] = np.dot(wf1.conjugate(), wf2)
+    
+                            wf2 = eigenvectors[i + 1, :, k]
+                            wf3 = eigenvectors[i, :, l]
+                            innP2[k, l] = np.dot(wf2.conjugate(), wf3)
+    
+                            wf3 = eigenvectors[i, :, k]
+                            wf0 = eigenvectors[i, :, l]
+                            innP3[k, l] = np.dot(wf3.conjugate(), wf0)
+    
+                    rect_prd = np.dot(rect_prd, innP0)
+                    rect_prd = np.dot(rect_prd, innP1)
+                    rect_prd = np.dot(rect_prd, innP2)
+                    rect_prd = np.dot(rect_prd, innP3)
+    
+                    dett = np.linalg.det(rect_prd)
+                    curl_z = np.angle(dett)
+                    curvature[i, j] = curl_z
+    
+                log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(num_bands)]) + "\n")
+    
+        return curvature
+
+    curvature = calculate_berry_curvature_new(eigenvectors, theta_vals, output_dir)
+    """
     return curvature
 
 #lets log the simplified method in the test.py
