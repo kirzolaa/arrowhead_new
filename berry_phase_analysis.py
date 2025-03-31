@@ -117,7 +117,7 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
     num_theta = len(theta_vals)
     num_bands = eigenvectors.shape[2]
     #eigenvectors = fix_gauge(eigenvectors)
-    curvature = np.zeros((num_theta, num_bands))  # Now includes boundary points
+    curvature = np.zeros((num_theta, num_bands), dtype=complex)  # Now includes boundary points
 
     with open(f'{output_dir}/curvature.out', "w") as log_file:
         log_file.write("#Theta " + " ".join([f"Curv_{j}" for j in range(num_bands)]) + "\n")
@@ -126,13 +126,13 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
             for j in range(num_bands):
                 if i == 0:  # Forward difference at the boundary
                     dtheta = theta_vals[1] - theta_vals[0]
-                    curvature[i, j] = (np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
+                    curvature[i, j] = np.dot(np.conj(eigenvectors[i, :, j]).T, eigenvectors[i + 1, :, j]) / dtheta
                 elif i == num_theta - 1:  # Backward difference at the boundary
                     dtheta = theta_vals[-1] - theta_vals[-2]
-                    curvature[i, j] = (np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i, :, j]) / dtheta
+                    curvature[i, j] = np.dot(np.conj(eigenvectors[i - 1, :, j]).T, eigenvectors[i, :, j]) / dtheta
                 else:  # Central difference
                     dtheta = theta_vals[i + 1] - theta_vals[i - 1]
-                    curvature[i, j] = (np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
+                    curvature[i, j] = np.dot(np.conj(eigenvectors[i - 1, :, j]).T, eigenvectors[i + 1, :, j]) / dtheta
 
             log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(num_bands)]) + "\n")
     
@@ -251,9 +251,57 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
     """
     return curvature
 
+def calculate_berry_curvature_new(eigenvectors, theta_vals, output_dir):
+    num_theta = len(theta_vals)
+    num_bands = eigenvectors.shape[2]
+    curvature = np.zeros((num_theta, num_bands), dtype=float)  # Adjusted shape to match calculate_berry_curvature
+    
+    with open(f'{output_dir}/curvature.out', "w") as log_file:
+        log_file.write("#Theta " + " ".join([f"Curv_{j}" for j in range(num_bands)]) + "\n")
+
+        for i in range(num_theta):
+            for j in range(num_bands):
+                rect_prd = np.identity(num_bands, dtype=complex)
+                innP0 = np.zeros([num_bands, num_bands], dtype=complex)
+                innP1 = np.zeros([num_bands, num_bands], dtype=complex)
+                innP2 = np.zeros([num_bands, num_bands], dtype=complex)
+                innP3 = np.zeros([num_bands, num_bands], dtype=complex)
+
+                for k in range(num_bands):
+                    for l in range(num_bands):
+                        wf0 = eigenvectors[i, :, k]
+                        wf1 = eigenvectors[(i + 1) % num_theta, :, l]  # Use modulo to handle boundary conditions
+                        innP0[k, l] = np.dot(wf0.conjugate(), wf1)
+
+                        wf1 = eigenvectors[(i + 1) % num_theta, :, k]
+                        wf2 = eigenvectors[(i + 1) % num_theta, :, l]
+                        innP1[k, l] = np.dot(wf1.conjugate(), wf2)
+
+                        wf2 = eigenvectors[(i + 1) % num_theta, :, k]
+                        wf3 = eigenvectors[i, :, l]
+                        innP2[k, l] = np.dot(wf2.conjugate(), wf3)
+
+                        wf3 = eigenvectors[i, :, k]
+                        wf0 = eigenvectors[i, :, l]
+                        innP3[k, l] = np.dot(wf3.conjugate(), wf0)
+
+                rect_prd = np.dot(rect_prd, innP0)
+                rect_prd = np.dot(rect_prd, innP1)
+                rect_prd = np.dot(rect_prd, innP2)
+                rect_prd = np.dot(rect_prd, innP3)
+
+                dett = np.linalg.det(rect_prd)
+                curl_z = np.angle(dett)
+                curvature[i, j] = curl_z
+
+            log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(num_bands)]) + "\n")
+    
+    return curvature
+    
+
 #lets log the simplified method in the test.py
 def calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvectors, output_dir):
-    curvature = calculate_berry_curvature(eigenvectors, theta_vals, output_dir)
+    curvature = calculate_berry_curvature_new(eigenvectors, theta_vals, output_dir)
     num_bands = eigenvectors.shape[2]
     num_theta = len(theta_vals)
     berry_phases = np.zeros(num_bands)
