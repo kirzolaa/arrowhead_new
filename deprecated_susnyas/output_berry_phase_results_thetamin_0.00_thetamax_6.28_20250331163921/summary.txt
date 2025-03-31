@@ -1,0 +1,6 @@
+Berry Phase Analysis Report
+Generated: 2025-03-31 16:39:39
+
+Parameters:
+  c = 0.2
+  omega = 0.1
