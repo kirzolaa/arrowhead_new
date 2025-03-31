@@ -100,6 +100,18 @@ def hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d):
 def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
     """
     Calculate the Berry curvature with central difference and boundary handling.
+
+    Args:
+        eigenvectors: Array of shape (num_theta, num_bands, num_bands) containing the eigenvectors.
+        theta_vals: Array of shape (num_theta,) containing the theta values.
+        output_dir: Directory to save the output files.
+    
+    Returns:
+        curvature: Array of shape (num_theta, num_bands) containing the Berry curvature.
+    
+    Raises:
+        ValueError: If the input arrays have incorrect shapes.
+    https://qutip.org/docs/4.6/modules/qutip/topology.html we used the np.vdot as qtip, iirc, qtip.topology has been removed
     """
     num_theta = len(theta_vals)
     num_bands = eigenvectors.shape[2]
@@ -113,13 +125,13 @@ def calculate_berry_curvature(eigenvectors, theta_vals, output_dir):
             for j in range(num_bands):
                 if i == 0:  # Forward difference at the boundary
                     dtheta = theta_vals[1] - theta_vals[0]
-                    curvature[i, j] = np.imag(np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
+                    curvature[i, j] = (np.conj(eigenvectors[i, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
                 elif i == num_theta - 1:  # Backward difference at the boundary
                     dtheta = theta_vals[-1] - theta_vals[-2]
-                    curvature[i, j] = np.imag(np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i, :, j]) / dtheta
+                    curvature[i, j] = (np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i, :, j]) / dtheta
                 else:  # Central difference
                     dtheta = theta_vals[i + 1] - theta_vals[i - 1]
-                    curvature[i, j] = np.imag(np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
+                    curvature[i, j] = (np.conj(eigenvectors[i - 1, :, j]).T @ eigenvectors[i + 1, :, j]) / dtheta
 
             log_file.write(f"{theta_vals[i]:.6f} " + " ".join([f"{curvature[i, j]:.6f}" for j in range(num_bands)]) + "\n")
 
