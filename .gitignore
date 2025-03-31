@@ -25,3 +25,6 @@ Arrowhead/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Output files
+deprecated_susnyas/
