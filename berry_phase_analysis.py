@@ -40,24 +40,24 @@ def R_theta(d, theta):
     return create_perfect_orthogonal_vectors(R_0, d, theta)
 
 # Define the potential functions V_x and V_a based on R_theta
-def V_x(R_theta, a):
+def V_x(R_theta, aVx):
     # Calculate individual V_x components for each R_theta component
-    Vx = [a * (R_theta[i] ** 2) for i in range(len(R_theta))]
+    Vx = [aVx * (R_theta[i] ** 2) for i in range(len(R_theta))]
     return Vx
 
-def V_a(R_theta, a, b, c, x_shift):
+def V_a(R_theta, aVa, c, x_shift):
     # Calculate individual V_a components with shifts applied for each R_theta component
-    Va = [a * ((R_theta[i] - x_shift) ** 2) + c for i in range(len(R_theta))]
+    Va = [aVa * ((R_theta[i] - x_shift) ** 2) + c for i in range(len(R_theta))]
     return Va
 
 # Define the Hamiltonian matrix with explicit Berry phase terms
-def hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d):
+def hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d):
     # Calculate R_theta for the current theta and parameters
     R_theta_val = R_theta(d, theta)
     
     # Calculate the potentials V_x and V_a (each returns a list of 3 components)
-    Vx = V_x(R_theta_val, a)  # [Vx0, Vx1, Vx2]
-    Va = V_a(R_theta_val, a, b, c_const, x_shift)  # [Va0, Va1, Va2]
+    Vx = V_x(R_theta_val, aVx)  # [Vx0, Vx1, Vx2]
+    Va = V_a(R_theta_val, aVa, c_const, x_shift)  # [Va0, Va1, Va2]
     
     # Create a 4x4 Hamiltonian with an arrowhead structure
     H = np.zeros((4, 4), dtype=complex)
@@ -219,7 +219,10 @@ if __name__ == '__main__':
     # Parameters for the arrowhead matrix
     c = 0.2  # Coupling constant
     omega = 0.1  # Frequency
-    a = 1.0  # Potential parameter
+    #a = 1.0  # Potential parameter
+    #let a be an aVx and an aVa parameter
+    aVx = 1.0
+    aVa = 5.0
     b = 1.0  # Potential parameter
     c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 1.0  # Shift in x direction
@@ -236,7 +239,7 @@ if __name__ == '__main__':
     eigenvectors = []
     for i, theta in enumerate(theta_vals):
         # Diagonalize Hamiltonian
-        evals, evecs = np.linalg.eigh(hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)[0])
+        evals, evecs = np.linalg.eigh(hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d)[0])
         eigenvectors.append(evecs)
 
     eigenvectors = np.array(eigenvectors)
@@ -311,7 +314,7 @@ if __name__ == '__main__':
         Hv_results = np.zeros((len(theta_vals), eigenvectors.shape[1]), dtype=complex)
         #get eigenvaluesof each H_theta, it is not theta vals
         #calculate H_thetas array by calculating H_theta, it should be a (num_points, 4, 4) array, like (theta_value, 4, 4)
-        H_thetas = np.array([hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)[0] for theta in theta_vals])
+        H_thetas = np.array([hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d)[0] for theta in theta_vals])
         print(H_thetas.shape)
         # Get all the eigenvalues
         eigenvalues = np.array([np.linalg.eigvalsh(H) for H in H_thetas])
@@ -400,9 +403,9 @@ if __name__ == '__main__':
         for i, theta in enumerate(theta_vals):
             theta_deg = np.degrees(theta)
             f.write(f'{theta_deg:.2f}\t')
-        for state in range(len(berry_phases)):
-            f.write(f'{accumulated_phases[state][i]:.8f}\t')
-        f.write('\n')
+            for state in range(len(berry_phases)):
+                f.write(f'{accumulated_phases[state][i]:.8f}\t')
+            f.write('\n')
 
     # Write berry_phases to a .dat file
     np.savetxt(f'{out_dir}/berry_phases.dat', berry_phases, header='Berry phases for each state')
@@ -426,7 +429,7 @@ if __name__ == '__main__':
             f.write(f'{theta_deg:.2f}\t')
             for state in range(eigenvectors.shape[2]):
                 f.write(f'{overlaps[state, i]:.8f}\t')
-        f.write('\n')
+            f.write('\n')
 
     # Write eigenvectors to file
     with open(f'{out_dir}/eigenvectors.out', 'w') as f:
@@ -434,10 +437,10 @@ if __name__ == '__main__':
         for i, theta in enumerate(theta_vals):
             theta_deg = np.degrees(theta)
             f.write(f'Theta = {theta_deg:.2f} degrees\n')
-        for state in range(eigenvectors.shape[2]):
-            f.write(f'State {state}:\n')
-            np.savetxt(f, eigenvectors[i, :, state].reshape(1, -1), fmt='%.8f')
-        f.write('\n')
+            for state in range(eigenvectors.shape[2]):
+                f.write(f'State {state}:\n')
+                np.savetxt(f, eigenvectors[i, :, state].reshape(1, -1), fmt='%.8f')
+            f.write('\n')
     
     #plot accumulated phases
     plt.figure(figsize=(12, 6))
@@ -465,7 +468,7 @@ if __name__ == '__main__':
     Vx_values = []
 
     for theta in theta_vals:
-        H, R_theta_val, Vx, Va = hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)
+        H, R_theta_val, Vx, Va = hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d)
         Hamiltonians.append(H)
         Va_values.append(Va)
         Vx_values.append(Vx)
@@ -518,7 +521,7 @@ if __name__ == '__main__':
     eigenvectors_list = []
 
     for theta in theta_vals:
-        H, R_theta_val, Vx, Va = hamiltonian(theta, c, omega, a, b, c_const, x_shift, y_shift, d)
+        H, R_theta_val, Vx, Va = hamiltonian(theta, c, omega, aVx, aVa, b, c_const, x_shift, y_shift, d)
     
         # Calculate eigenvalues and eigenvectors
         evals, evecs = np.linalg.eigh(H)  # Use np.linalg.eigh for Hermitian matrices
@@ -598,7 +601,8 @@ if __name__ == '__main__':
         f.write(f'Parameters:\n')
         f.write(f'  c = {c}\n')
         f.write(f'  omega = {omega}\n')
-        f.write(f'  a = {a}\n')
+        f.write(f'  aVx = {aVx}\n')
+        f.write(f'  aVa = {aVa}\n')
         f.write(f'  b = {b}\n')
         f.write(f'  c_const = {c_const}\n')
         f.write(f'  x_shift = {x_shift}\n')

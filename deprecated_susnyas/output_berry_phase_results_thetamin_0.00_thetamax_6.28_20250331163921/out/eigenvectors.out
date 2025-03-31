@@ -1,0 +1,60 @@
+Eigenvectors vs Theta
+Theta = 0.00 degrees
+Theta = 7.35 degrees
+Theta = 14.69 degrees
+Theta = 22.04 degrees
+Theta = 29.39 degrees
+Theta = 36.73 degrees
+Theta = 44.08 degrees
+Theta = 51.43 degrees
+Theta = 58.78 degrees
+Theta = 66.12 degrees
+Theta = 73.47 degrees
+Theta = 80.82 degrees
+Theta = 88.16 degrees
+Theta = 95.51 degrees
+Theta = 102.86 degrees
+Theta = 110.20 degrees
+Theta = 117.55 degrees
+Theta = 124.90 degrees
+Theta = 132.24 degrees
+Theta = 139.59 degrees
+Theta = 146.94 degrees
+Theta = 154.29 degrees
+Theta = 161.63 degrees
+Theta = 168.98 degrees
+Theta = 176.33 degrees
+Theta = 183.67 degrees
+Theta = 191.02 degrees
+Theta = 198.37 degrees
+Theta = 205.71 degrees
+Theta = 213.06 degrees
+Theta = 220.41 degrees
+Theta = 227.76 degrees
+Theta = 235.10 degrees
+Theta = 242.45 degrees
+Theta = 249.80 degrees
+Theta = 257.14 degrees
+Theta = 264.49 degrees
+Theta = 271.84 degrees
+Theta = 279.18 degrees
+Theta = 286.53 degrees
+Theta = 293.88 degrees
+Theta = 301.22 degrees
+Theta = 308.57 degrees
+Theta = 315.92 degrees
+Theta = 323.27 degrees
+Theta = 330.61 degrees
+Theta = 337.96 degrees
+Theta = 345.31 degrees
+Theta = 352.65 degrees
+Theta = 360.00 degrees
+State 0:
+ (0.99834845+0.00000000j)  (-0.03321312+0.00000000j)  (-0.03314561+0.00000000j)  (-0.03314561+0.00000000j)
+State 1:
+ (-0.01280007+0.00000000j)  (-0.92403135+0.00000000j)  (0.27018717+0.00000000j)  (0.27018717+0.00000000j)
+State 2:
+ (0.00000000+0.00000000j)  (-0.00000000+0.00000000j)  (-0.70710678+0.00000000j)  (0.70710678+0.00000000j)
+State 3:
+ (0.05600475-0.00000000j)  (0.38087130+0.00000000j)  (0.65261034+0.00000000j)  (0.65261034+0.00000000j)
+
