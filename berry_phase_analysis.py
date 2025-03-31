@@ -271,19 +271,19 @@ def calculate_berry_curvature_new(eigenvectors, theta_vals, output_dir):
                     for l in range(num_bands):
                         wf0 = eigenvectors[i, :, k]
                         wf1 = eigenvectors[(i + 1) % num_theta, :, l]  # Use modulo to handle boundary conditions
-                        innP0[k, l] = np.dot(wf0.conjugate(), wf1)
+                        innP0[k, l] = np.dot(np.conj(wf0), wf1)
 
                         wf1 = eigenvectors[(i + 1) % num_theta, :, k]
                         wf2 = eigenvectors[(i + 1) % num_theta, :, l]
-                        innP1[k, l] = np.dot(wf1.conjugate(), wf2)
+                        innP1[k, l] = np.dot(np.conj(wf1), wf2)
 
                         wf2 = eigenvectors[(i + 1) % num_theta, :, k]
                         wf3 = eigenvectors[i, :, l]
-                        innP2[k, l] = np.dot(wf2.conjugate(), wf3)
+                        innP2[k, l] = np.dot(np.conj(wf2), wf3)
 
                         wf3 = eigenvectors[i, :, k]
                         wf0 = eigenvectors[i, :, l]
-                        innP3[k, l] = np.dot(wf3.conjugate(), wf0)
+                        innP3[k, l] = np.dot(np.conj(wf3), wf0)
 
                 rect_prd = np.dot(rect_prd, innP0)
                 rect_prd = np.dot(rect_prd, innP1)
@@ -325,6 +325,7 @@ def calculate_berry_phase_with_berry_curvature_simplified(theta_vals, eigenvecto
     return berry_phases, accumulated_phases
 
 #multiprocess the calculate_berry_phase_with_berry_curvature_simplified function and ensure that we are using the num_cpus -1
+""" OG CODE SNIPPET
 def calculate_berry_phase_for_band(j, theta_vals, eigenvectors, output_dir):
     num_bands = eigenvectors.shape[2]
     num_theta = len(theta_vals)
@@ -335,6 +336,24 @@ def calculate_berry_phase_for_band(j, theta_vals, eigenvectors, output_dir):
     berry_phase[0] = 0
     for i in range(1, num_theta):
         berry_phase[i] = berry_phase[i - 1] + curvature[i, j] * (theta_vals[i] - theta_vals[i - 1]) #simple rectangular rule no wrapping.
+    
+    return berry_phase[-1], berry_phase
+"""
+def calculate_berry_phase_for_band(j, theta_vals, eigenvectors, output_dir):
+    num_bands = eigenvectors.shape[2]
+    num_theta = len(theta_vals)
+    curvature = calculate_berry_curvature_new(eigenvectors, theta_vals, output_dir)
+    
+    # Calculate berry phase
+    berry_phase = np.zeros(num_theta)
+    for i in range(1, num_theta):
+        berry_phase[i] = berry_phase[i - 1] + curvature[i, j] * (theta_vals[i] - theta_vals[i - 1])  # simple rectangular rule no wrapping.
+    
+    # Unwrap the berry phase to ensure continuity
+    berry_phase = np.unwrap(berry_phase)
+
+    # Ensure the berry phase is within the range [0, 2pi]
+    berry_phase = np.mod(berry_phase, 2 * np.pi)
     
     return berry_phase[-1], berry_phase
 
