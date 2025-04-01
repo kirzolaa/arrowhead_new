@@ -397,29 +397,8 @@ for state in range(eigvecs_all.shape[2]):
 
     # Print the total sums
     print(f"State {state}: Sum(H*v) = {S_total}, Sum(lambda*v) = {lambda_total}")
-
-    # Plot the real and imaginary parts of the total sums
-    plt.figure()
-    plt.plot(theta_vals, np.real(S_total) * np.ones_like(theta_vals), 'ro', label=r"Re($S_{\text{total}}$)")
-    plt.plot(theta_vals, np.imag(S_total) * np.ones_like(theta_vals), 'bo', label=r"Im($S_{\text{total}}$)")
-    plt.xlabel(r'$\theta$')
-    plt.ylabel(r'Total Sum $S_{\text{total}}$')
-    plt.legend()
-    plt.grid()
-    plt.title(r'Total Sum $S_{\text{total}}$ vs. $\theta$ for State {state}')
-    plt.savefig(f'{plot_dir}/total_sum/H_times_v_sum_total_state_{state}.png')
-    plt.close()
-
-    # Plot the magnitude of the total sums
-    plt.figure()
-    plt.plot(theta_vals, np.abs(S_total) * np.ones_like(theta_vals), 'ro', label=r"|$S_{\text{total}}$|")
-    plt.xlabel(r'$\theta$')
-    plt.ylabel(r'Magnitude of Total Sum $S_{\text{total}}$')
-    plt.legend()
-    plt.grid()
-    plt.title(r'Magnitude of Total Sum $S_{\text{total}}$ vs. $\theta$ for State {state}')
-    plt.savefig(f'{plot_dir}/total_sum/abs_H_times_v_sum_total_state_{state}.png')
-    plt.close()
+    with open(f'{plot_dir}/total_sum/total_sum_state_{state}.txt', 'a') as f:
+        f.write(f"State {state}\n====================\nSum(H*v) = {S_total}\nSum(lambda*v) = {lambda_total}\n")
 
     # Compute the Berry connection
     A_R_vals = berry_connection(R_vals, eigvecs_all)
