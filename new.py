@@ -436,23 +436,13 @@ for state in range(eigvecs_all.shape[2]):
     with open(f'{plot_dir}/total_sum/total_sum_state_{state}.txt', 'a') as f:
         f.write(f"State {state}\n====================\nSum(H*v) = {S_total}\nSum(lambda*v) = {lambda_total}\n")
 
-    # Compute the Berry connection
-    A_R_vals = berry_connection(eigvecs_all)
 
-    # Compute the Berry phase
-    berry_phases_corrected = berry_phase(A_R_vals)
+# Compute the Berry phase using test.py
+from test import calculate_berry_phase
+print(H_theta.shape)
 
-# Output the computed Berry phases
-print(np.array2string(berry_phases_corrected, formatter={'float_kind':lambda x: np.format_float_scientific(x, precision=10)}))
+Hamiltonians = H_theta
 
-H_thetas = test_berry_hamiltonian(theta_vals)
-
-# Compute the eigenvalues and eigenvectors for each H_theta
-eigvecs_all = np.array([np.linalg.eigh(H)[1] for H in H_thetas])
-
-# Compute the Berry connection using H_thetas eigenvectors
-A_R_vals = berry_connection(eigvecs_all)
-
-# Compute the Berry phase
-berry_phases_corrected = berry_phase(A_R_vals)
-print("Berry phases from test Hamiltonian:", berry_phases_corrected)
+for state_index in range(4):
+    berry_phases_corrected = calculate_berry_phase(Hamiltonians, theta_vals, state_index)
+    print(f"Berry phase (state {state_index}): {berry_phases_corrected}")
