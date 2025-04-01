@@ -232,6 +232,7 @@ os.makedirs(npy_dir, exist_ok=True)
 os.makedirs(os.path.join(plot_dir, 'real'), exist_ok=True)
 os.makedirs(os.path.join(plot_dir, 'imag'), exist_ok=True)
 os.makedirs(os.path.join(plot_dir, 'abs'), exist_ok=True)
+os.makedirs(os.path.join(plot_dir, 'total_sum'), exist_ok=True)
 
 
 #plot the H*v aka Hamiltonian times eigenvectors
@@ -268,7 +269,7 @@ for state in range(eigvecs_all.shape[2]):
         #plot the magnitude of H*v
         axs[j].plot(theta_vals, np.abs(Hv_results[:, j]), 'ro', label='|H*v|')
         #plot the magnitude of λ*v
-        axs[j].plot(theta_vals, np.abs(lambda_v[:, j]), 'b--', label='|λ*v|')
+        axs[j].plot(theta_vals, np.abs(lambda_v[:, j]), 'bo', label='|λ*v|')
         
         axs[j].set_title(f'Component {j}')
         axs[j].set_xlabel('Theta')
@@ -295,7 +296,7 @@ for state in range(eigvecs_all.shape[2]):
         #plot the real of H*v
         axs[j].plot(theta_vals, np.real(Hv_results[:, j]), 'ro', label='Re(H*v)')
         #plot the real of lambda_v
-        axs[j].plot(theta_vals, np.real(lambda_v[:, j]), 'b--', label='Re(λ*v)')
+        axs[j].plot(theta_vals, np.real(lambda_v[:, j]), 'bo', label='Re(λ*v)')
         
         axs[j].set_title(f'Component {j}')
         axs[j].set_xlabel('Theta')
@@ -317,7 +318,7 @@ for state in range(eigvecs_all.shape[2]):
         #plot the imaginary of H*v
         axs[j].plot(theta_vals, np.imag(Hv_results[:, j]), 'ro', label='Im(H*v)')
         #plot the imaginary of lambda_v
-        axs[j].plot(theta_vals, np.imag(lambda_v[:, j]), 'b--', label='Im(λ*v)')
+        axs[j].plot(theta_vals, np.imag(lambda_v[:, j]), 'bo', label='Im(λ*v)')
         
         axs[j].set_title(f'Component {j}')
         axs[j].set_xlabel('Theta')
@@ -341,7 +342,7 @@ for state in range(eigvecs_all.shape[2]):
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
     axs = axs.ravel()
     for j in range(4):
-        axs[j].plot(theta_vals, np.abs(Hv_sum[j]), 'r-', label=f'Component {j}')
+        axs[j].plot(theta_vals, np.abs(Hv_sum[j]), 'ro', label=f'Component {j}')
         axs[j].set_title(f'Component {j}')
         axs[j].set_xlabel('Theta')
         axs[j].set_ylabel('Value')
@@ -351,14 +352,14 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v Sum Components for State {state}')
     plt.subplots_adjust(top=0.92)
     plt.savefig(f'{plot_dir}/abs/H_times_v_sum_components_state_{state}.png')
-    print(f"Saved {plot_dir}/abs/H_times_v_sum_components_state_{state}.png")
+    #print(f"Saved {plot_dir}/abs/H_times_v_sum_components_state_{state}.png")
     plt.close()
 
     #plot each component of Hv_sum in a 2x2 grid
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
     axs = axs.ravel()
     for j in range(4):
-        axs[j].plot(theta_vals, np.real(Hv_sum[j]), 'r-', label=f'Component {j}')
+        axs[j].plot(theta_vals, np.real(Hv_sum[j]), 'ro', label=f'Component {j}')
         axs[j].set_title(f'Component {j}')
         axs[j].set_xlabel('Theta')
         axs[j].set_ylabel('Value')
@@ -368,13 +369,14 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v Sum Components for State {state}')
     plt.subplots_adjust(top=0.92)
     plt.savefig(f'{plot_dir}/real/H_times_v_sum_components_state_{state}.png')
+    #print(f"Saved {plot_dir}/real/H_times_v_sum_components_state_{state}.png")
     plt.close()
 
     #plot each component of Hv_sum in a 2x2 grid
     fig, axs = plt.subplots(2, 2, figsize=(10, 8))
     axs = axs.ravel()
     for j in range(4):
-        axs[j].plot(theta_vals, np.imag(Hv_sum[j]), 'r-', label=f'Component {j}')
+        axs[j].plot(theta_vals, np.imag(Hv_sum[j]), 'ro', label=f'Component {j}')
         axs[j].set_title(f'Component {j}')
         axs[j].set_xlabel('Theta')
         axs[j].set_ylabel('Value')
@@ -384,14 +386,46 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v Sum Components for State {state}')
     plt.subplots_adjust(top=0.92)
     plt.savefig(f'{plot_dir}/imag/H_times_v_sum_components_state_{state}.png')
-    print(f"Saved {plot_dir}/imag/H_times_v_sum_components_state_{state}.png")
+    #print(f"Saved {plot_dir}/imag/H_times_v_sum_components_state_{state}.png")
     plt.close()
 
-# Compute the Berry connection
-A_R_vals = berry_connection(R_vals, eigvecs_all)
+        # Calculate the sum of H*v across all components and theta values
+    S_total = np.sum(Hv_results, axis=(1, 0))
 
-# Compute the Berry phase
-berry_phases_corrected = berry_phase(A_R_vals)
+    # Calculate the sum of lambda*v across all components and theta values
+    lambda_total = np.sum(lambda_v, axis=(1, 0))
+
+    # Print the total sums
+    print(f"State {state}: Sum(H*v) = {S_total}, Sum(lambda*v) = {lambda_total}")
+
+    # Plot the real and imaginary parts of the total sums
+    plt.figure()
+    plt.plot(theta_vals, np.real(S_total) * np.ones_like(theta_vals), 'ro', label=r"Re($S_{\text{total}}$)")
+    plt.plot(theta_vals, np.imag(S_total) * np.ones_like(theta_vals), 'bo', label=r"Im($S_{\text{total}}$)")
+    plt.xlabel(r'$\theta$')
+    plt.ylabel(r'Total Sum $S_{\text{total}}$')
+    plt.legend()
+    plt.grid()
+    plt.title(r'Total Sum $S_{\text{total}}$ vs. $\theta$ for State {state}')
+    plt.savefig(f'{plot_dir}/total_sum/H_times_v_sum_total_state_{state}.png')
+    plt.close()
+
+    # Plot the magnitude of the total sums
+    plt.figure()
+    plt.plot(theta_vals, np.abs(S_total) * np.ones_like(theta_vals), 'ro', label=r"|$S_{\text{total}}$|")
+    plt.xlabel(r'$\theta$')
+    plt.ylabel(r'Magnitude of Total Sum $S_{\text{total}}$')
+    plt.legend()
+    plt.grid()
+    plt.title(r'Magnitude of Total Sum $S_{\text{total}}$ vs. $\theta$ for State {state}')
+    plt.savefig(f'{plot_dir}/total_sum/abs_H_times_v_sum_total_state_{state}.png')
+    plt.close()
+
+    # Compute the Berry connection
+    A_R_vals = berry_connection(R_vals, eigvecs_all)
+
+    # Compute the Berry phase
+    berry_phases_corrected = berry_phase(A_R_vals)
 
 # Output the computed Berry phases
 print(np.array2string(berry_phases_corrected, formatter={'float_kind':lambda x: np.format_float_scientific(x, precision=10)}))
