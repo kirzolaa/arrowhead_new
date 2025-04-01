@@ -133,6 +133,7 @@ def hamiltonian(theta, omega, aVx, aVa, c_const, x_shift, d):
 
     return H, R_theta_val, Vx, Va, sorted_eigvals, sorted_eigvecs
 
+"""
 # Function to compute the Berry connection A(R_theta)
 def berry_connection(R_vals, eigvecs):
     num_states = eigvecs.shape[1]
@@ -163,6 +164,36 @@ def berry_connection(R_vals, eigvecs):
         A_R[-1, state_index] = np.vdot(eigvecs[-2, :, state_index], 1j * dv_dR)
 
     return A_R
+"""
+
+def berry_connection(eigvecs_all):
+    """
+    Computes the Berry connection A(theta) for each eigenstate.
+
+    Parameters:
+    - eigvecs_all: Array of eigenvectors at each theta (shape: (num_points, 4, 4)).
+
+    Returns:
+    - A_theta: Berry connection values for each eigenstate (shape: (num_points-1, 4)).
+    """
+    num_states = eigvecs_all.shape[2]  # Number of eigenstates (should be 4 or 2 for testing)
+    num_points = eigvecs_all.shape[0]
+    
+    A_theta = np.zeros((num_points - 1, num_states), dtype=complex)
+    
+    # Compute numerical derivative with respect to theta
+    for j in range(num_points - 1):
+        for state_index in range(num_states):
+            v1 = eigvecs_all[j, :, state_index]  # Eigenvector at point j
+            
+            # Use numpy's gradient function to compute ∂v/∂theta
+            dv_dtheta = np.gradient(eigvecs_all[:, :, state_index], axis=0)[j]
+            
+            # Compute A(theta) = ⟨v | i ∇_theta | v⟩
+            A_theta[j, state_index] = np.vdot(v1, 1j * dv_dtheta)
+    print(A_theta[j, state_index])
+    
+    return A_theta
 
 # Function to compute the Berry phase γ by integrating A(R_theta)
 def berry_phase(A_R):
@@ -179,8 +210,13 @@ def berry_phase(A_R):
     gamma = np.sum(np.real(A_R), axis=0)
     return gamma % (2 * np.pi)  # Wrap to [0, 2π]
 
-
-
+def test_berry_hamiltonian(theta_vals):
+    H_thetas = [np.array([
+        [np.cos(theta), np.sin(theta)],
+        [np.sin(theta), -np.cos(theta)]
+    ]) for theta in theta_vals] #this has a pi berry phase
+    return H_thetas
+    
 # Parameters for the arrowhead matrix
 omega = 0.1  # Frequency
 #let a be an aVx and an aVa parameter
@@ -401,10 +437,22 @@ for state in range(eigvecs_all.shape[2]):
         f.write(f"State {state}\n====================\nSum(H*v) = {S_total}\nSum(lambda*v) = {lambda_total}\n")
 
     # Compute the Berry connection
-    A_R_vals = berry_connection(R_vals, eigvecs_all)
+    A_R_vals = berry_connection(eigvecs_all)
 
     # Compute the Berry phase
     berry_phases_corrected = berry_phase(A_R_vals)
 
 # Output the computed Berry phases
 print(np.array2string(berry_phases_corrected, formatter={'float_kind':lambda x: np.format_float_scientific(x, precision=10)}))
+
+H_thetas = test_berry_hamiltonian(theta_vals)
+
+# Compute the eigenvalues and eigenvectors for each H_theta
+eigvecs_all = np.array([np.linalg.eigh(H)[1] for H in H_thetas])
+
+# Compute the Berry connection using H_thetas eigenvectors
+A_R_vals = berry_connection(eigvecs_all)
+
+# Compute the Berry phase
+berry_phases_corrected = berry_phase(A_R_vals)
+print("Berry phases from test Hamiltonian:", berry_phases_corrected)
