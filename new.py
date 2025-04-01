@@ -185,11 +185,11 @@ def berry_phase(A_R):
 omega = 0.1  # Frequency
 #let a be an aVx and an aVa parameter
 aVx = 1.0
-aVa = 5.0
+aVa = 2.0
 b = 1.0  # Potential parameter
-c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
-x_shift = 1.0  # Shift in x direction
-d = 0.001  # Radius of the circle
+c_const = 25.0  # Potential constant, shifts the 2d parabola on the y axis
+x_shift = 25.0  # Shift in x direction
+d = 1.0  # Radius of the circle, use the unit circle
 theta_min = 0
 theta_max = 2 * np.pi
 num_points = 5000
