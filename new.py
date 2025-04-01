@@ -351,6 +351,7 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v Sum Components for State {state}')
     plt.subplots_adjust(top=0.92)
     plt.savefig(f'{plot_dir}/abs/H_times_v_sum_components_state_{state}.png')
+    print(f"Saved {plot_dir}/abs/H_times_v_sum_components_state_{state}.png")
     plt.close()
 
     #plot each component of Hv_sum in a 2x2 grid
@@ -383,6 +384,7 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v Sum Components for State {state}')
     plt.subplots_adjust(top=0.92)
     plt.savefig(f'{plot_dir}/imag/H_times_v_sum_components_state_{state}.png')
+    print(f"Saved {plot_dir}/imag/H_times_v_sum_components_state_{state}.png")
     plt.close()
 
 # Compute the Berry connection
