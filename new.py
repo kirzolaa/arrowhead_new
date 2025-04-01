@@ -177,12 +177,11 @@ def berry_phase(A_R):
     """
     # Integrate A(R_theta) over the full cycle using summation
     gamma = np.sum(np.real(A_R), axis=0)
-    return gamma % (2 * np.pi)  # Wrap to [0, 2π)
+    return gamma % (2 * np.pi)  # Wrap to [0, 2π]
 
 
 
 # Parameters for the arrowhead matrix
-c = 0.2  # Coupling constant
 omega = 0.1  # Frequency
 #let a be an aVx and an aVa parameter
 aVx = 1.0
@@ -190,7 +189,6 @@ aVa = 5.0
 b = 1.0  # Potential parameter
 c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
 x_shift = 1.0  # Shift in x direction
-y_shift = 0.0  # Shift in y direction --> turns out that this is not a y axis shift like I wanted it!!!!!
 d = 0.001  # Radius of the circle
 theta_min = 0
 theta_max = 2 * np.pi
@@ -230,8 +228,13 @@ plot_dir = 'plots'
 npy_dir = 'npy'
 os.makedirs(plot_dir, exist_ok=True)
 os.makedirs(npy_dir, exist_ok=True)
+#append the plots dir with real, imag and abs dirs
+os.makedirs(os.path.join(plot_dir, 'real'), exist_ok=True)
+os.makedirs(os.path.join(plot_dir, 'imag'), exist_ok=True)
+os.makedirs(os.path.join(plot_dir, 'abs'), exist_ok=True)
 
-#plot the H*v aka Hamiltonian times eigenvectors weighted by the eigenvalues
+
+#plot the H*v aka Hamiltonian times eigenvectors
 plt.figure(figsize=(12, 6))
 for state in range(eigvecs_all.shape[2]):
     # Calculate H*v for each theta value
@@ -277,7 +280,7 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v for State {state}')
     plt.subplots_adjust(top=0.92)
         
-    plt.savefig(f'{plot_dir}/H_times_v_state_{state}.png')
+    plt.savefig(f'{plot_dir}/abs/H_times_v_state_{state}.png')
     plt.close()
 
     #save the Hv_results
@@ -304,7 +307,7 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v for State {state}')
     plt.subplots_adjust(top=0.92)
         
-    plt.savefig(f'{plot_dir}/H_times_v_state_{state}_real.png')
+    plt.savefig(f'{plot_dir}/real/H_times_v_state_{state}_real.png')
     plt.close()
 
     #plot the imaginary part of H*v and lambda_v
@@ -326,7 +329,60 @@ for state in range(eigvecs_all.shape[2]):
     plt.suptitle(f'H*v for State {state}')
     plt.subplots_adjust(top=0.92)
         
-    plt.savefig(f'{plot_dir}/H_times_v_state_{state}_imag.png')
+    plt.savefig(f'{plot_dir}/imag/H_times_v_state_{state}_imag.png')
+    plt.close()
+
+    #sum up Hv ACROSS ALL THE 4 COMPONENTS
+    Hv_sum = np.zeros((4, len(theta_vals)), dtype=complex)
+    for j in range(4):
+        Hv_sum[j] = Hv_results[:, j]
+    
+    #plot each component of Hv_sum in a 2x2 grid
+    fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+    axs = axs.ravel()
+    for j in range(4):
+        axs[j].plot(theta_vals, np.abs(Hv_sum[j]), 'r-', label=f'Component {j}')
+        axs[j].set_title(f'Component {j}')
+        axs[j].set_xlabel('Theta')
+        axs[j].set_ylabel('Value')
+        axs[j].grid(True)
+        axs[j].legend()
+    plt.tight_layout()
+    plt.suptitle(f'H*v Sum Components for State {state}')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/abs/H_times_v_sum_components_state_{state}.png')
+    plt.close()
+
+    #plot each component of Hv_sum in a 2x2 grid
+    fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+    axs = axs.ravel()
+    for j in range(4):
+        axs[j].plot(theta_vals, np.real(Hv_sum[j]), 'r-', label=f'Component {j}')
+        axs[j].set_title(f'Component {j}')
+        axs[j].set_xlabel('Theta')
+        axs[j].set_ylabel('Value')
+        axs[j].grid(True)
+        axs[j].legend()
+    plt.tight_layout()
+    plt.suptitle(f'H*v Sum Components for State {state}')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/real/H_times_v_sum_components_state_{state}.png')
+    plt.close()
+
+    #plot each component of Hv_sum in a 2x2 grid
+    fig, axs = plt.subplots(2, 2, figsize=(10, 8))
+    axs = axs.ravel()
+    for j in range(4):
+        axs[j].plot(theta_vals, np.imag(Hv_sum[j]), 'r-', label=f'Component {j}')
+        axs[j].set_title(f'Component {j}')
+        axs[j].set_xlabel('Theta')
+        axs[j].set_ylabel('Value')
+        axs[j].grid(True)
+        axs[j].legend()
+    plt.tight_layout()
+    plt.suptitle(f'H*v Sum Components for State {state}')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/imag/H_times_v_sum_components_state_{state}.png')
     plt.close()
 
 # Compute the Berry connection
