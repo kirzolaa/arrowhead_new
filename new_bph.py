@@ -122,8 +122,7 @@ class BerryPhaseCalculator:
         for n in range(num_states):
             berry_phases[n] = np.sum(np.real(A_R[:, n]))
             
-        # Wrap to [0, 2π)
-        return berry_phases % (2 * np.pi)
+        return berry_phases
 
 if __name__ == "__main__":
     #let a be an aVx and an aVa parameter
