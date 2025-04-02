@@ -102,11 +102,18 @@ class BerryPhaseCalculator:
         A_R = np.zeros((len(self.R_thetas)-1, num_states), dtype=complex)
 
         for i in range(len(self.R_thetas)-1):
-            dR = self.R_thetas[i+1] - self.R_thetas[i]
-            for n in range(num_states):
-                v = self.eigenstates[i][:, n]
-                dv_dR = (self.eigenstates[i+1][:, n] - v) / np.linalg.norm(dR)
-                A_R[i, n] = np.vdot(v, 1j * dv_dR)
+            if i == len(self.R_thetas) - 1:
+                dR = self.R_thetas[0] - self.R_thetas[i]
+                for n in range(num_states):
+                    v = self.eigenstates[i][:, n] #we use % operator to wrap around the circle
+                    dv_dR = (self.eigenstates[(i + 1) % len(self.R_thetas)][:, n] - v) / np.linalg.norm(dR)
+                    A_R[i, n] = np.vdot(np.conj(v), 1j * dv_dR)
+            if i == len(self.R_thetas)-1:
+                dR = self.R_thetas[len(self.R_thetas)-1] - self.R_thetas[0] #the parameter space is a closed perfect orthogonalcircle
+                for n in range(num_states):
+                    v = self.eigenstates[i][:, n]
+                    dv_dR = (self.eigenstates[(i + 1) % len(self.R_thetas)][:, n] - v) / np.linalg.norm(dR)
+                    A_R[i, n] = np.vdot(np.conj(v), 1j * dv_dR)
 
         return A_R
 
@@ -134,10 +141,26 @@ if __name__ == "__main__":
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
-    num_points = 50
+    num_points = 5000
     R_0 = (0, 0, 0)
     # Generate the arrowhead matrix and Va, Vx
     theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
+
+    # Save results
+    output_dir = f'results_thetamin_{theta_min:.2f}_thetamax_{theta_max:.2f}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
+    plot_dir = f'{output_dir}/plots'
+    abs_dir = f'{plot_dir}/abs'
+    real_dir = f'{plot_dir}/real'
+    imag_dir = f'{plot_dir}/imag'
+    total_sum_dir = f'{plot_dir}/total_sum'
+    npy_dir = f'{output_dir}/npy'
+    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(plot_dir, exist_ok=True)
+    os.makedirs(abs_dir, exist_ok=True)
+    os.makedirs(real_dir, exist_ok=True)
+    os.makedirs(imag_dir, exist_ok=True)
+    os.makedirs(total_sum_dir, exist_ok=True)
+    os.makedirs(npy_dir, exist_ok=True)
 
     # Calculate Hamiltonians and eigenvectors at each theta value, explicitly including endpoint
     hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c_const, R_0, d, theta_vals)
@@ -155,22 +178,43 @@ if __name__ == "__main__":
     for i in range(len(berry_phase)):
         print(f"Berry phase: {berry_phase[i]} for eigenstate {i}")
     
-    # Save results
-    output_dir = f'results_thetamin_{theta_min:.2f}_thetamax_{theta_max:.2f}_{datetime.datetime.now().strftime("%Y%m%d%H%M%S")}'
-    plot_dir = f'{output_dir}/plots'
-    abs_dir = f'{plot_dir}/abs'
-    real_dir = f'{plot_dir}/real'
-    imag_dir = f'{plot_dir}/imag'
-    total_sum_dir = f'{plot_dir}/total_sum'
-    npy_dir = f'{output_dir}/npy'
-    os.makedirs(output_dir, exist_ok=True)
-    os.makedirs(plot_dir, exist_ok=True)
-    os.makedirs(abs_dir, exist_ok=True)
-    os.makedirs(real_dir, exist_ok=True)
-    os.makedirs(imag_dir, exist_ok=True)
-    os.makedirs(total_sum_dir, exist_ok=True)
-    os.makedirs(npy_dir, exist_ok=True)
+    # Calculate overlaps between eigenstates at different theta values
+    overlaps = np.zeros((eigenvectors.shape[2], len(theta_vals)), dtype=complex)
+    for state in range(eigenvectors.shape[2]):
+        for i in range(len(theta_vals)):
+            current_eigenvector = eigenvectors[i, :, state]
+            next_eigenvector = eigenvectors[(i + 1) % len(theta_vals), :, state]
+            # Include endpoint by using the first eigenvector for the last point
+            if i == len(theta_vals) - 1:
+                next_eigenvector = eigenvectors[0, :, state]
+            overlaps[state, i] = np.conj(current_eigenvector).T @ next_eigenvector
+            if i == len(theta_vals): #if we are at the endpoint-1 point, the current eigvec is end-1th and the startpoint will bee the next eigvec
+                next_eigenvector = eigenvectors[0, :, state] # endpoint
+                overlaps[state, i] = np.conj(current_eigenvector).T @ next_eigenvector
 
+    # Save overlaps
+    np.save(f'{npy_dir}/overlaps_{state}.npy', overlaps)
+    #save the overlaps into an overlaps.out file too
+    # Write eigenstate overlaps to file
+    with open(f'{output_dir}/eigenstate_overlaps.out', 'w') as f:
+        f.write('# Eigenstate Overlaps vs Theta\n')
+        f.write('# Theta (degrees)\tState 0\tState 1\tState 2\tState 3\n')
+        for i, theta in enumerate(theta_vals):
+            theta_deg = np.degrees(theta)
+            f.write(f'{theta_deg:.2f}\t')
+            for state in range(eigenvectors.shape[2]):
+                f.write(f'{overlaps[state, i]:.8f}\t')
+            f.write('\n')
+    
+    #plot overlaps
+    plt.figure()
+    for state in range(eigenvectors.shape[2]):
+        plt.plot(theta_vals, overlaps[state])
+    plt.xlabel('Theta')
+    plt.ylabel('Overlap')
+    plt.title('Overlap between eigenstates')
+    plt.savefig(f'{plot_dir}/overlap.png')
+    plt.close()
     
     for state in range(eigvecs_all.shape[2]):
         # Calculate H*v for each theta value
