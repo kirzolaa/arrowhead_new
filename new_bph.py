@@ -94,10 +94,12 @@ class BerryPhaseCalculator:
         self.R_thetas = R_thetas
         self.eigenstates = eigenstates
 
+
+    """
     def calculate_berry_connection(self):
-        """
+        #"#"#"#
         Calculate Berry connection A_n(R_theta) = <n(R_theta)|i∂_R|n(R_theta)>
-        """
+        #"#"#"#
         num_states = self.eigenstates.shape[1]
         A_R = np.zeros((len(self.R_thetas)-1, num_states), dtype=complex)
 
@@ -116,6 +118,34 @@ class BerryPhaseCalculator:
                     A_R[i, n] = np.vdot(np.conj(v), 1j * dv_dR)
 
         return A_R
+    """
+
+    def calculate_berry_connection(self):
+        """
+        Calculate Berry connection A_n(R) ≈ <n(R_i)| i (|n(R_{i+1})> - |n(R_i)>) / (R_{i+1} - R_i)
+        Here, the division by a vector should be interpreted element-wise for each component of dR.
+        The result A_R will be a matrix where A_R[i, n, j] is the j-th component of the Berry connection
+        for the n-th state at the i-th point.
+        """
+        num_points = len(self.R_thetas)
+        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
+        A_R = np.zeros((num_points - 1, num_states, 3), dtype=complex)  # Berry connection is a 3D vector
+
+        for i in range(num_points - 1):
+            dR = self.R_thetas[(i + 1) % num_points] - self.R_thetas[i] #wrapping around the circle
+            for n in range(num_states):
+                v = self.eigenstates[i][:, n]
+                next_v = self.eigenstates[(i + 1) % num_points][:, n]
+                dv = next_v - v
+
+                # Element-wise division by the components of dR
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    dvdR = np.where(dR != 0, dv[:, np.newaxis] / dR, 0) # Shape (4, 3)
+
+                # Project onto the current state
+                A_R[i, n] = np.dot(np.conj(v), 1j * dvdR)
+
+        return A_R
 
     def calculate_berry_phase(self):
         """
@@ -129,6 +159,149 @@ class BerryPhaseCalculator:
         for n in range(num_states):
             berry_phases[n] = np.sum(np.real(A_R[:, n]))
             
+        return berry_phases
+
+class NewBerryPhaseCalculator:
+    def __init__(self, hamiltonian, R_thetas, eigenstates, theta_range):
+        """
+        Initializes the BerryPhaseCalculator with the Hamiltonian,
+        parameter vectors R_thetas, corresponding eigenstates, and the
+        range of the parameter theta.
+
+        Args:
+            hamiltonian: An instance of the Hamiltonian class.
+            R_thetas (list or np.ndarray): A list or array of 3D parameter vectors.
+            eigenstates (np.ndarray): An array of eigenstates corresponding to R_thetas
+                                       (shape: (num_points, num_dimensions, num_states)).
+            theta_range (np.ndarray): An array of theta values used to generate R_thetas.
+        """
+        self.hamiltonian = hamiltonian
+        self.R_thetas = R_thetas
+        self.eigenstates = eigenstates
+        self.theta_range = theta_range
+
+    def calculate_berry_connection(self):
+        """
+        Calculate Berry connection A_n(R) ≈ <n(R_i)| i (|n(R_{i+1})> - |n(R_i)>) / (R_{i+1} - R_i)
+        Here, the division by a vector should be interpreted element-wise for each component of dR.
+        The result A_R will be a matrix where A_R[i, n, j] is the j-th component of the Berry connection
+        for the n-th state at the i-th point.
+        """
+        num_points = len(self.R_thetas)
+        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
+        A_R = np.zeros((num_points - 1, num_states, 3), dtype=complex)  # Berry connection is a 3D vector
+
+        for i in range(num_points - 1):
+            dR = self.R_thetas[(i + 1) % num_points] - self.R_thetas[i] #wrapping around the circle
+            for n in range(num_states):
+                v = self.eigenstates[i][:, n]
+                next_v = self.eigenstates[(i + 1) % num_points][:, n]
+                dv = next_v - v
+
+                # Element-wise division by the components of dR
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    dvdR = np.where(dR != 0, dv[:, np.newaxis] / dR, 0) # Shape (4, 3)
+
+                # Project onto the current state
+                A_R[i, n] = np.dot(np.conj(v), 1j * dvdR)
+
+        return A_R
+
+    def calculate_berry_phase(self):
+        """
+        Calculate Berry phase γ_n = ∫ A_n(R_theta) dR_theta
+        """
+        A_R = self.calculate_berry_connection()
+        # Calculate berry phase for each state by integrating the Berry connection
+        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
+        berry_phases = np.zeros(num_states)
+
+        for n in range(num_states):
+            phase = 0.0
+            for i in range(len(A_R)):
+                dR = self.R_thetas[i + 1] - self.R_thetas[i]
+                phase += np.dot(np.real(A_R[i, n]), dR) # Take real part of Berry connection for dot product
+            berry_phases[n] = phase
+
+        return berry_phases
+
+    def calculate_berry_connection_theta_derivative(self):
+        """
+        Calculates the Berry connection in the basis of the parameter theta
+        by approximating the derivative of the eigenstates with respect to theta
+        using a central difference scheme. It also calculates the derivative
+        of the parameter vector R with respect to theta.
+
+        Returns:
+            tuple: A tuple containing:
+                - A_theta (np.ndarray): A complex array of shape (num_points, num_states)
+                  where A_theta[i, n] is the Berry connection <n(theta_i)|i d/dtheta |n(theta_i)>.
+                - dR_dtheta (np.ndarray): A float array of shape (num_points, 3)
+                  where dR_dtheta[i] is the approximate derivative of the
+                  parameter vector R with respect to theta at theta_i.
+        """
+        num_points = len(self.R_thetas)
+        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
+        A_theta = np.zeros((num_points, num_states), dtype=complex)
+        dR_dtheta = np.zeros((num_points, 3), dtype=float)
+
+        for i in range(num_points):
+            # Use central difference for theta, handling periodic boundary conditions
+            theta_plus = self.theta_range[(i + 1) % num_points]
+            theta_minus = self.theta_range[(i - 1 + num_points) % num_points]
+            d_theta = theta_plus - theta_minus
+
+            # Calculate the approximate derivative of the parameter vector R with respect to theta
+            dR_dtheta[i] = (self.R_thetas[(i + 1) % num_points] - self.R_thetas[(i - 1 + num_points) % num_points]) / d_theta
+
+            for n in range(num_states):
+                # Get the eigenstates at theta_{i+1} and theta_{i-1}
+                v_plus = self.eigenstates[(i + 1) % num_points][:, n]
+                v_minus = self.eigenstates[(i - 1 + num_points) % num_points][:, n]
+
+                # Approximate the derivative of the n-th eigenstate with respect to theta using central difference
+                dv_dtheta = (v_plus - v_minus) / d_theta
+
+                # Calculate the Berry connection A_theta = <n(theta_i)|i d/dtheta |n(theta_i)>
+                A_theta[i, n] = np.vdot(self.eigenstates[i][:, n], 1j * dv_dtheta)
+
+        return A_theta, dR_dtheta
+
+    def calculate_berry_phase_theta_derivative(self):
+        """
+        Calculates the Berry phase by integrating the Berry connection A_theta
+        over the parameter theta. It attempts to relate A_theta to the Berry
+        connection in the R space by projecting the derivative of R with
+        respect to theta onto the approximate tangent of the path in R space.
+
+        Returns:
+            np.ndarray: A float array of shape (num_states) where each element
+                         is the Berry phase for the corresponding eigenstate.
+        """
+        # Calculate the Berry connection in theta basis and dR/dtheta
+        A_theta, dR_dtheta = self.calculate_berry_connection_theta_derivative()
+        num_points = len(self.R_thetas)
+        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
+        berry_phases = np.zeros(num_states, dtype=complex)
+
+        for n in range(num_states):
+            phase = 0.0
+            # Integrate over the discretized theta range
+            for i in range(num_points - 1):
+                # The change in the parameter vector R between consecutive points
+                dR = self.R_thetas[(i + 1) % num_points] - self.R_thetas[i]
+                # The Berry connection component along d/dtheta
+                tangent_component = A_theta[i, n]
+                # Approximate the tangent direction of the path in R space
+                norm_dR = np.linalg.norm(dR)
+                tangent_direction = dR / norm_dR if norm_dR > 1e-12 else np.zeros(3)
+                # Project dR_dtheta onto the approximate tangent direction
+                tangent_dR_dtheta = np.dot(dR_dtheta[i], tangent_direction)
+                # Approximate the integral of A . dR ≈ A_theta * (dtheta/dR) * dR ≈ A_theta * dtheta
+                phase += tangent_component * (self.theta_range[i+1] - self.theta_range[i]) # Integral over dtheta
+            # The Berry phase should be real for a closed path
+            berry_phases[n] = np.real(phase)
+
         return berry_phases
 
 if __name__ == "__main__":
@@ -379,3 +552,18 @@ if __name__ == "__main__":
         with open(f'{plot_dir}/total_sum/total_sum_state_{state}.txt', 'a') as f:
             f.write(f"State {state}\n====================\nSum(H*v) = {S_total}\nSum(lambda*v) = {lambda_total}\n")
 
+    # Calculate Berry phase using the original method
+    berry_phase_calculator_original = NewBerryPhaseCalculator(hamiltonian, r_theta, eigenvectors, theta_vals)
+    berry_phase_original = berry_phase_calculator_original.calculate_berry_phase()
+    print("Berry phases (original method):")
+    for i, phase in enumerate(berry_phase_original):
+        print(f"  Eigenstate {i}: {phase}")
+
+    # Calculate Berry phase using the finite difference with respect to theta
+    berry_phase_calculator_theta = NewBerryPhaseCalculator(hamiltonian, r_theta, eigenvectors, theta_vals)
+    berry_phase_theta = berry_phase_calculator_theta.calculate_berry_phase_theta_derivative()
+    print("\nBerry phases (finite difference w.r.t. theta):")
+    for i, phase in enumerate(berry_phase_theta):
+        print(f"  Eigenstate {i}: {phase}")
+    
+    
