@@ -3,7 +3,7 @@ Berry phase: 0.0 for eigenstate 0
 Berry phase: 0.0 for eigenstate 1
 Berry phase: 0.0 for eigenstate 2
 Berry phase: 0.0 for eigenstate 3
-State 0: Sum(H*v) = (-0.28669549336213296+0j), Sum(lambda*v) = (-0.2866954933621329+0j)
-State 1: Sum(H*v) = (2.600049551308947+0j), Sum(lambda*v) = (2.600049551308947+0j)
-State 2: Sum(H*v) = (2.8000973726273504+0j), Sum(lambda*v) = (2.8000973726273504+0j)
-State 3: Sum(H*v) = (2.8433041628211466+0j), Sum(lambda*v) = (2.8433041628211466+0j)
+State 0: Sum(H*v) = (-91.02927491452415+0j), Sum(lambda*v) = (-91.02927491452414+0j)
+State 1: Sum(H*v) = (318.5718491576507+0j), Sum(lambda*v) = (318.5718491576507+0j)
+State 2: Sum(H*v) = (288.20991662934694+0j), Sum(lambda*v) = (288.20991662934694+0j)
+State 3: Sum(H*v) = (91.06582044088483+0j), Sum(lambda*v) = (91.06582044088482+0j)
