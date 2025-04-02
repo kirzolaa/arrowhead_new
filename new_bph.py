@@ -282,7 +282,7 @@ class NewBerryPhaseCalculator:
         A_theta, dR_dtheta = self.calculate_berry_connection_theta_derivative()
         num_points = len(self.R_thetas)
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states, dtype=complex)
+        berry_phases = np.zeros(num_states)
 
         for n in range(num_states):
             phase = 0.0
@@ -310,7 +310,7 @@ if __name__ == "__main__":
     aVa = 5.0
     c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 1.0  # Shift in x direction
-    d = 0.001  # Radius of the circle
+    d = 1.0  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
@@ -379,16 +379,59 @@ if __name__ == "__main__":
                 f.write(f'{overlaps[state, i]:.8f}\t')
             f.write('\n')
     
-    #plot overlaps
+    #plot overlaps in 2x2 grid
     plt.figure()
     for state in range(eigenvectors.shape[2]):
+        plt.subplot(2, 2, state + 1)
         plt.plot(theta_vals, overlaps[state])
-    plt.xlabel('Theta')
-    plt.ylabel('Overlap')
-    plt.title('Overlap between eigenstates')
+        plt.xlabel('Theta')
+        plt.ylabel('Overlap')
+        plt.title(f'Overlap between eigenstates {state}')
+    plt.tight_layout()
     plt.savefig(f'{plot_dir}/overlap.png')
     plt.close()
     
+    # Plot eigenvector components (4 subplots in a 2x2 grid for each eigenstate)
+    for state in range(eigenvectors.shape[2]):
+        plt.figure(figsize=(12, 12))
+        plt.suptitle(f'Eigenvector Components - State {state}', fontsize=16)  # Overall title
+        
+        plt.subplot(2, 2, 1)  # Top left subplot
+        plt.plot(theta_vals, np.real(eigenvectors[:, 0, state]), label='Re(Comp 0)')
+        plt.plot(theta_vals, np.imag(eigenvectors[:, 0, state]), label='Im(Comp 0)')
+        plt.plot(theta_vals, np.abs(eigenvectors[:, 0, state]), label='Abs(Comp 0)')
+        plt.xlabel('Theta')
+        plt.ylabel('Component 0')
+        plt.legend()
+        
+        plt.subplot(2, 2, 2)  # Top right subplot
+        plt.plot(theta_vals, np.real(eigenvectors[:, 1, state]), label='Re(Comp 1)')
+        plt.plot(theta_vals, np.imag(eigenvectors[:, 1, state]), label='Im(Comp 1)')
+        plt.plot(theta_vals, np.abs(eigenvectors[:, 1, state]), label='Abs(Comp 1)')
+        plt.xlabel('Theta')
+        plt.ylabel('Component 1')
+        plt.legend()
+        
+        plt.subplot(2, 2, 3)  # Bottom left subplot
+        plt.plot(theta_vals, np.real(eigenvectors[:, 2, state]), label='Re(Comp 2)')
+        plt.plot(theta_vals, np.imag(eigenvectors[:, 2, state]), label='Im(Comp 2)')
+        plt.plot(theta_vals, np.abs(eigenvectors[:, 2, state]), label='Abs(Comp 2)')
+        plt.xlabel('Theta')
+        plt.ylabel('Component 2')
+        plt.legend()
+        
+        plt.subplot(2, 2, 4)  # Bottom right subplot
+        plt.plot(theta_vals, np.real(eigenvectors[:, 3, state]), label='Re(Comp 3)')
+        plt.plot(theta_vals, np.imag(eigenvectors[:, 3, state]), label='Im(Comp 3)')
+        plt.plot(theta_vals, np.abs(eigenvectors[:, 3, state]), label='Abs(Comp 3)')
+        plt.xlabel('Theta')
+        plt.ylabel('Component 3')
+        plt.legend()
+        
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+        plt.savefig(f'{plot_dir}/eigenvector_components_state_{state}_2x2.png')
+        plt.close()
+
     for state in range(eigvecs_all.shape[2]):
         # Calculate H*v for each theta value
         Hv_results = np.zeros((len(theta_vals), eigvecs_all.shape[1]), dtype=complex)
