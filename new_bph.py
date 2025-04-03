@@ -63,9 +63,9 @@ class Hamiltonian:
         
         H = np.zeros((4, 4), dtype=complex)
         sumVx = sum(Vx)
-        H[0, 0] = hbar *self.omega + sumVx
+        H[0, 0] = hbar * self.omega + sumVx
         for i in range(1, len(H)):
-            H[i, i] = H[0, 0] + Va[i-1] - Vx[i-1]
+            H[i, i] = H[0, 0] + Va[i-1] - Vx[i-1] #H11 = Vx1 + Vx2 + Vx3 + Va1 - Vx1
             
         eigvals, eigvecs = np.linalg.eigh(H)
         sorted_indices = np.argsort(eigvals)
