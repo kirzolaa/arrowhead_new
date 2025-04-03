@@ -1,29 +1,35 @@
 Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.
-Berry phase: 0.0 for eigenstate 0
-Berry phase: 0.0 for eigenstate 1
-Berry phase: 0.0 for eigenstate 2
-Berry phase: 0.0 for eigenstate 3
+Berry phase: -6734.294611470719j for eigenstate 0
+Berry phase: -3275.9962830694294j for eigenstate 1
+Berry phase: -5304.001640945998j for eigenstate 2
+Berry phase: -6839.999729986189j for eigenstate 3
 Berry phases (original method):
-  Eigenstate 0: 0.0
-  Eigenstate 1: 0.0
-  Eigenstate 2: 0.0
-  Eigenstate 3: 0.0
+  Eigenstate 0: (-4.1164290590553987e-13-11.655787082462338j)
+  Eigenstate 1: (-1.9817755171620223e-13-39.511251561878275j)
+  Eigenstate 2: (-3.218693483990486e-13-47.47627178417644j)
+  Eigenstate 3: (-4.1770566028880174e-13-18.348612625377392j)
 
 Berry phases (finite difference w.r.t. theta):
-  Eigenstate 0: 0.0
-  Eigenstate 1: 0.0
-  Eigenstate 2: 0.0
-  Eigenstate 3: 0.0
-Berry Curvature: [[0. 0. 0. 0.]
- [0. 0. 0. 0.]
- [0. 0. 0. 0.]
+  Eigenstate 0: 0j
+  Eigenstate 1: 0j
+  Eigenstate 2: 0j
+  Eigenstate 3: 0j
+Berry Curvature: [[0.-3.16375388e+09j 0.+0.00000000e+00j 0.+3.49335545e-01j
+  0.-1.75623671e-07j]
+ [0.-7.26243542e-05j 0.-3.16502143e+05j 0.+3.58960336e-05j
+  0.-3.16502143e+05j]
+ [0.+6.33004104e+05j 0.+0.00000000e+00j 0.+1.89583739e-06j
+  0.+0.00000000e+00j]
  ...
- [0. 0. 0. 0.]
- [0. 0. 0. 0.]
- [0. 0. 0. 0.]]
+ [0.+6.33004103e+05j 0.+0.00000000e+00j 0.+1.90433597e-06j
+  0.+0.00000000e+00j]
+ [0.+3.20745890e-05j 0.-3.16628795e+05j 0.-6.88448161e-05j
+  0.-3.16628795e+05j]
+ [0.-3.16375388e+09j 0.+3.16248879e+09j 0.-6.97685669e-01j
+  0.+3.16248879e+09j]]
 (5000, 3)
-Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403024052/vectors directory.
+Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403041355/vectors directory.
 
-Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403024052/vectors/verification_results.txt
+Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403041355/vectors/verification_results.txt
 Va plots saved to figures directory.
 Vx plots saved to figures directory.
