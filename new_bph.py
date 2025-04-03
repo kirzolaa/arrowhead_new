@@ -170,10 +170,14 @@ class BerryPhaseCalculator:
         A_R = self.calculate_berry_connection()
         # Calculate berry phase for each state by integrating the Berry connection
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states)
+        berry_phases = np.zeros(num_states, dtype=complex)
         
         for n in range(num_states):
-            berry_phases[n] = np.sum(np.real(A_R[:, n]))
+            phase = 0.0
+            for i in range(len(A_R)):
+                dR = self.R_thetas[i + 1] - self.R_thetas[i]
+                phase += np.dot(A_R[i, n], dR)
+            berry_phases[n] = phase
             
         return berry_phases
 
@@ -196,6 +200,15 @@ class NewBerryPhaseCalculator:
         self.eigenstates = eigenstates
         self.theta_range = theta_range
 
+    def smooth_gauge(self, previous_eigenstates, current_eigenstates): #aka self, current, next eigenstates
+        num_states = current_eigenstates.shape[1]
+        smoothed_eigenstates = np.copy(current_eigenstates)
+        for n in range(num_states):
+            overlap = np.vdot(previous_eigenstates[:, n], current_eigenstates[:, n])
+            phase_factor = np.exp(-1j * np.angle(overlap))
+            smoothed_eigenstates[:, n] = current_eigenstates[:, n] * phase_factor
+        return smoothed_eigenstates
+
     def calculate_berry_connection(self):
         """
         Calculate Berry connection A_n(R) ≈ <n(R_i)| i (|n(R_{i+1})> - |n(R_i)>) / (R_{i+1} - R_i)
@@ -208,10 +221,12 @@ class NewBerryPhaseCalculator:
         A_R = np.zeros((num_points - 1, num_states, 3), dtype=complex)  # Berry connection is a 3D vector
 
         for i in range(num_points - 1):
+            # Smooth the eigenstates at the next point
+            smoothed_eigenstates = self.smooth_gauge(self.eigenstates[i], self.eigenstates[(i + 1) % num_points])
             dR = self.R_thetas[(i + 1) % num_points] - self.R_thetas[i] #wrapping around the circle
             for n in range(num_states):
                 v = self.eigenstates[i][:, n]
-                next_v = self.eigenstates[(i + 1) % num_points][:, n]
+                next_v = smoothed_eigenstates[:, n]
                 dv = next_v - v
 
                 # Element-wise division by the components of dR
@@ -230,13 +245,13 @@ class NewBerryPhaseCalculator:
         A_R = self.calculate_berry_connection()
         # Calculate berry phase for each state by integrating the Berry connection
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states)
+        berry_phases = np.zeros(num_states, dtype=complex)
 
         for n in range(num_states):
             phase = 0.0
             for i in range(len(A_R)):
                 dR = self.R_thetas[i + 1] - self.R_thetas[i]
-                phase += np.dot(np.real(A_R[i, n]), dR) # Take real part of Berry connection for dot product
+                phase += np.dot(A_R[i, n], dR) # Take full complex Berry connection for dot product
             berry_phases[n] = phase
 
         return berry_phases
@@ -292,7 +307,7 @@ class NewBerryPhaseCalculator:
 
         num_points = len(self.R_thetas)
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_curvature = np.zeros((num_points, num_states), dtype=float)
+        berry_curvature = np.zeros((num_points, num_states), dtype=complex)
         for i in range(num_points):
             for n in range(num_states):
                 # Approximate dA/dR using dA/dtheta and dtheta/dR
@@ -302,7 +317,7 @@ class NewBerryPhaseCalculator:
                 # might involve a pseudo-inverse or regularization.
                 norm_dR_dtheta = np.linalg.norm(dR_dtheta[i])
                 if norm_dR_dtheta > 1e-12:  # Avoid division by very small number
-                    dA_dR = np.gradient(np.real(A_theta[:, n]), self.theta_range)[i] / norm_dR_dtheta
+                    dA_dR = np.gradient(A_theta[:, n], self.theta_range)[i] / norm_dR_dtheta
                     berry_curvature[i, n] = dA_dR
                 else:
                     berry_curvature[i, n] = 0.0  # Or a more sophisticated handling
@@ -342,7 +357,7 @@ class NewBerryPhaseCalculator:
         A_theta, dR_dtheta = self.calculate_berry_connection_theta_derivative()
         num_points = len(self.R_thetas)
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states)
+        berry_phases = np.zeros(num_states, dtype=complex)
 
         for n in range(num_states):
             phase = 0.0
