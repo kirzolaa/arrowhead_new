@@ -29,3 +29,6 @@ Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403042234/vecto
 Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403042234/vectors/verification_results.txt
 Va plots saved to figures directory.
 Vx plots saved to figures directory.
+
+
+Imprtant Note: we need a proper gauge fixing: https://arxiv.org/pdf/1708.03230
