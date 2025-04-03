@@ -658,3 +658,24 @@ if __name__ == "__main__":
 
     # Use berry_curvature (it's a numpy array)
     print("Berry Curvature:", berry_curvature)
+
+    # Save the Berry curvature to a file
+    np.savetxt(f'{output_dir}/berry_curvature.txt', berry_curvature)
+    
+    #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
+    from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle, generate_perfect_orthogonal_circle
+    save_dir = f'{output_dir}/vectors'
+    os.makedirs(save_dir, exist_ok=True)
+    #visualize the R_theta vectors
+    points = multiprocessing_create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max) #we already have a method for this
+    #points = create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max)
+    print(points.shape)
+    visualize_perfect_orthogonal_circle(points, save_dir)
+    verify_circle_properties(d, num_points, points, save_dir)
+
+    with open(f'{output_dir}/eigenvector_diff.out', "a") as log_file:
+        log_file.write('#State Theta Norm_Diff\n')
+        for i in range(1, len(theta_vals)):
+            for j in range(eigenvectors.shape[2]):
+                log_file.write(f"State {j}, Theta {theta_vals[i]:.2f}: {np.linalg.norm(eigenvectors[i, j] - eigenvectors[i-1, j]):.6f}\n")
+        log_file.close()
