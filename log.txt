@@ -1,8 +1,4 @@
 Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.
-Berry phase: -6734.294611470719j for eigenstate 0
-Berry phase: -3275.9962830694294j for eigenstate 1
-Berry phase: -5304.001640945998j for eigenstate 2
-Berry phase: -6839.999729986189j for eigenstate 3
 Berry phases (original method):
   Eigenstate 0: (-4.1164290590553987e-13-11.655787082462338j)
   Eigenstate 1: (-1.9817755171620223e-13-39.511251561878275j)
@@ -28,8 +24,8 @@ Berry Curvature: [[0.-3.16375388e+09j 0.+0.00000000e+00j 0.+3.49335545e-01j
  [0.-3.16375388e+09j 0.+3.16248879e+09j 0.-6.97685669e-01j
   0.+3.16248879e+09j]]
 (5000, 3)
-Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403041355/vectors directory.
+Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403041802/vectors directory.
 
-Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403041355/vectors/verification_results.txt
+Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403041802/vectors/verification_results.txt
 Va plots saved to figures directory.
 Vx plots saved to figures directory.

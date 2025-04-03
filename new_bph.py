@@ -418,13 +418,6 @@ if __name__ == "__main__":
     # Calculate eigenvectors
     eigenvectors = eigvecs_all = np.array([np.linalg.eigh(H)[1] for H in H_theta])
     eigvals_all = np.array([np.linalg.eigh(H)[0] for H in H_theta])
-    # Calculate Berry phase
-    berry_phase_calculator = BerryPhaseCalculator(hamiltonian, r_theta, eigenvectors)
-    berry_phase = berry_phase_calculator.calculate_berry_phase()
-    
-    # Print results for all of the eigenstates
-    for i in range(len(berry_phase)):
-        print(f"Berry phase: {berry_phase[i]} for eigenstate {i}")
     
     # Calculate overlaps between eigenstates at different theta values
     overlaps = np.zeros((eigenvectors.shape[2], len(theta_vals)), dtype=complex)
