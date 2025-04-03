@@ -3,10 +3,6 @@ Berry phase: 0.0 for eigenstate 0
 Berry phase: 0.0 for eigenstate 1
 Berry phase: 0.0 for eigenstate 2
 Berry phase: 0.0 for eigenstate 3
-State 0: Sum(H*v) = (-1772.214810965383+0j), Sum(lambda*v) = (-1772.214810965383+0j)
-State 1: Sum(H*v) = (2014.7224792210595+0j), Sum(lambda*v) = (2014.7224792210595+0j)
-State 2: Sum(H*v) = (3312.827610851614+0j), Sum(lambda*v) = (3312.827610851614+0j)
-State 3: Sum(H*v) = (8496.23328390197+0j), Sum(lambda*v) = (8496.23328390197+0j)
 Berry phases (original method):
   Eigenstate 0: 0.0
   Eigenstate 1: 0.0
@@ -26,6 +22,6 @@ Berry Curvature: [[0. 0. 0. 0.]
  [0. 0. 0. 0.]
  [0. 0. 0. 0.]]
 (5000, 3)
-Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403021259/vectors directory.
+Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403022511/vectors directory.
 
-Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403021259/vectors/verification_results.txt
+Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403022511/vectors/verification_results.txt

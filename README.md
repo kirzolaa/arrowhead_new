@@ -7,6 +7,7 @@ This repository contains a Python script for analyzing Berry phases using the Wi
 - [Usage](#usage)
 - [Parameters](#parameters)
 - [Output](#output)
+- [Documentation](#documentation)
 - [Notes](#notes)
 
 ## Installation
@@ -28,24 +29,23 @@ Clone the repository:
 ```bash
 git clone https://github.com/kirzolaa/Arrowhead.git
 ```
+Note: You need to have the Arrowhead/generalized package installed. You also can just copy-paste the generalized directory to the root folder as well, since the scripts are using the generalized folder directly now.
 
 Run the script:
 
 ```bash
-python berry_phase_analysis.py
+python new_bph.py
 ```
 
 ## Parameters
 
 The script uses the following parameters:
 
-- `c`: Coupling constant
 - `omega`: Frequency
-- `a`: Potential parameter
-- `b`: Potential parameter
+- `aVx`: Potential parameter
+- `aVa`: Potential parameter
 - `c_const`: Potential constant
 - `x_shift`: Shift in x direction
-- `y_shift`: Shift in y direction
 - `d`: Radius of the circle
 - `theta_min`: Minimum angle
 - `theta_max`: Maximum angle
@@ -55,32 +55,14 @@ The script uses the following parameters:
 
 The script generates the following output files in the specified output directory:
 
-- `Hamiltonians.npy`: Contains the Hamiltonians for each theta value.
-- `Va_values.npy`: Contains the potential values for ( V_A ).
-- `Vx_values.npy`: Contains the potential values for ( V_X ).
-- `eigenvalues.npy`: Contains the eigenvalues of the Hamiltonians.
-- `eigenvectors.npy`: Contains the eigenvectors of the Hamiltonians.
-- `berry_phases.dat`: Contains the calculated Berry phases.
-- `accumulated_phases.dat`: Contains the accumulated phases.
-- `phase_log_berry_curvature.out`: Log of phase differences and accumulated phases.
-- `eigenvector_diff.out`: Log of eigenvector differences.
-- `summary.txt`: Summary of the analysis.
+- `plots`: Directory containing the generated plots.
+- `npy`: Directory containing the generated numpy files.
+- `vectors`: Directory containing the generated vector files.
+
+## Documentation
+
+The documentation for the repository can be found in the `docs` directory. I have also written some important notes for the `new_bph.py` script in the docs directory.
 
 ## Notes
 
-The script imports the `create_perfect_orthogonal_vectors` function from the generalized package. If the import fails, the script will fall back to a simple circle implementation.
-
-The script has now multiprocessing implemented.
-The script have been tested for a Dirac cone case. See more in the `test.py` file.
-To run the script, use the following command:
-
-```bash
-python test.py
-```
-WARNING! COMMENT OUT THE `calculate_berry_phase_with_berry_curvature_simplified_multiprocessing` FUNCTION CALL IN THE `berry_phase_analysis.py` TO RUN THE TEST SCRIPT!
-
-The script is currently not working well, since the parameters are not well-chosen.
-The d should be small, and the VA potential should be shifted by the x and y shift parameters well.
-The omega should be a well-chosen value, which is a bit smaller than the y shift parameter.
-I have been too wrong about the y_shift parameter.
-The y_shift should be the c_const parameter, since it is the y axis shifting in the potential.
+I think this implementation is correct both mathematically and physically. Further analysis is needed to confirm this.
