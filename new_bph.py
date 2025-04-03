@@ -245,7 +245,7 @@ class NewBerryPhaseCalculator:
         A_R = self.calculate_berry_connection()
         # Calculate berry phase for each state by integrating the Berry connection
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states, dtype=complex)
+        berry_phases = np.zeros(num_states, dtype=float) #berry phase is real
 
         for n in range(num_states):
             phase = 0.0
@@ -357,7 +357,7 @@ class NewBerryPhaseCalculator:
         A_theta, dR_dtheta = self.calculate_berry_connection_theta_derivative()
         num_points = len(self.R_thetas)
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states, dtype=complex)
+        berry_phases = np.zeros(num_states, dtype=float) #berry phase is real
 
         for n in range(num_states):
             phase = 0.0
