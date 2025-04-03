@@ -88,6 +88,21 @@ class Hamiltonian:
 
     def R_thetas(self):
         return [self.R_theta(theta) for theta in self.theta_range]
+    
+    def Vx_theta_vals(self, R_thetas):
+        #return the potentials in theta_vals
+        #get the R_thetas from the function above
+        if R_thetas is None:
+            R_thetas = np.array(self.R_thetas())
+        return [self.V_x(R_theta) for R_theta in R_thetas]
+    
+    def Va_theta_vals(self, R_thetas):
+        #return the potentials in theta_vals
+        #get the R_thetas from the function above
+        if R_thetas is None: #can be called independently, too
+            R_thetas = np.array(self.R_thetas())
+        return [self.V_a(R_theta) for R_theta in R_thetas]
+        
 
 class BerryPhaseCalculator:
     def __init__(self, hamiltonian, R_thetas, eigenstates):
@@ -383,7 +398,7 @@ if __name__ == "__main__":
     # Calculate Hamiltonians and eigenvectors at each theta value, explicitly including endpoint
     hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c_const, R_0, d, theta_vals)
     H_thetas = H_theta = hamiltonian.H_thetas()
-    r_theta = hamiltonian.R_thetas()
+    r_theta = R_thetas = hamiltonian.R_thetas()
     
     # Calculate eigenvectors
     eigenvectors = eigvecs_all = np.array([np.linalg.eigh(H)[1] for H in H_theta])
@@ -682,3 +697,52 @@ if __name__ == "__main__":
             for j in range(eigenvectors.shape[2]):
                 log_file.write(f"State {j}, Theta {theta_vals[i]:.2f}: {np.linalg.norm(eigenvectors[i, j] - eigenvectors[i-1, j]):.6f}\n")
         log_file.close()
+
+    Va_values = []
+    Vx_values = []
+    Hamiltonians = []
+
+    # Convert lists to numpy arrays
+    Hamiltonians = np.array(H_theta)
+    Va_values = np.array(hamiltonian.Va_theta_vals(R_thetas))
+    Vx_values = np.array(hamiltonian.Vx_theta_vals(R_thetas))
+
+    #create a directory in the output directory for npy files
+    #output_dir = os.path.join(output_dir, 'output_berry_phase_results_thetamin_0.00_thetamax_6.28_20250324150750')
+    npy_dir = os.path.join(output_dir, 'npy')
+
+    # Create the directory if it doesn't exist
+    os.makedirs(npy_dir, exist_ok=True)
+
+    # Save the Hamiltonians, Va and Vx into .npy files
+    np.save(f'{npy_dir}/Hamiltonians.npy', Hamiltonians)
+    np.save(f'{npy_dir}/Va_values.npy', Va_values)
+    np.save(f'{npy_dir}/Vx_values.npy', Vx_values)
+
+    #plot Va potential components
+    plt.figure(figsize=(12, 6))
+    Va_values = np.load(f'{npy_dir}/Va_values.npy')
+    for i in range(3):
+        plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Va Components')
+    plt.title('Va Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Va_components.png')
+    print("Va plots saved to figures directory.")
+
+    #plot Vx potential components
+    plt.figure(figsize=(12, 6))
+    Vx_values = np.load(f'{npy_dir}/Vx_values.npy')
+    for i in range(3):
+        plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Vx Components')
+    plt.title('Vx Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Vx_components.png')
+    print("Vx plots saved to figures directory.")

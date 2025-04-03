@@ -1,6 +1,6 @@
 # Berry Phase Analysis
 
-This repository contains a Python script for analyzing Berry phases using the Wilson loop method. The script calculates Berry phases, Berry curvature, and visualizes the potential components \( V_A \) and \( V_X \) for a given Hamiltonian.
+This repository contains a Python script for analyzing Berry phases using various methods. The script calculates Berry connections, Berry phases, Berry curvature, and visualizes the potential components \( V_A \) and \( V_X \) for a given Hamiltonian.
 
 ## Table of Contents
 - [Installation](#installation)

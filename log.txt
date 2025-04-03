@@ -22,6 +22,8 @@ Berry Curvature: [[0. 0. 0. 0.]
  [0. 0. 0. 0.]
  [0. 0. 0. 0.]]
 (5000, 3)
-Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403022511/vectors directory.
+Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250403024052/vectors directory.
 
-Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403022511/vectors/verification_results.txt
+Verification results saved to results_thetamin_0.00_thetamax_6.28_20250403024052/vectors/verification_results.txt
+Va plots saved to figures directory.
+Vx plots saved to figures directory.
