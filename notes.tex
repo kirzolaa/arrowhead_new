@@ -54,6 +54,66 @@ $$
 \gamma_n \approx \sum_i A_n(\mathbf{R}_i) \cdot (\mathbf{R}_{i+1} - \mathbf{R}_i)
 $$
 
+\section{Berry Curvature}
+
+The Berry curvature, denoted as $\mathbf{\Omega}$, is a fundamental quantity associated with the Berry connection. It measures the "twisting" or non-trivial geometric structure of the eigenstates in the parameter space.
+
+\subsection{Definition}
+
+In a general parameter space with multiple parameters, the Berry curvature is defined as the curl of the Berry connection:
+
+$$
+\mathbf{\Omega} = \nabla \times \mathbf{A}
+$$
+
+where $\mathbf{A}$ is the Berry connection.
+
+\subsection{Calculation in 1D Parameter Space}
+
+In the specific case where the parameter space is one-dimensional (e.g., parameterized by a single parameter $\theta$), the curl simplifies, and the Berry curvature is related to the derivative of the Berry connection with respect to the parameter.
+
+If $A_\theta$ is the Berry connection with respect to the parameter $\theta$, and $R$ represents the parameter vector, then the Berry curvature can be approximated as:
+
+$$
+\Omega \approx \frac{dA}{dR} \approx \frac{dA_\theta}{d\theta} \frac{d\theta}{dR_\theta}
+$$
+
+\subsection{Numerical Approximation}
+
+In numerical calculations, the derivative is approximated using finite difference methods. For example, using a numerical derivative of the Berry connection with respect to $\theta$ and relating it to the derivative with respect to $R$:
+
+$$
+\Omega_i \approx \frac{A_{\theta, i+1} - A_{\theta, i}}{\theta_{i+1} - \theta_i} \left( \frac{dR_{\theta, i}}{d\theta} \right)^{-1}
+$$
+
+Where:
+\begin{itemize}
+\item $\Omega_i$ is the Berry curvature at the $i$-th point.
+\item $A_{\theta, i}$ is the Berry connection with respect to $\theta$ at the $i$-th point.
+\item $\theta_i$ is the value of the parameter $\theta$ at the $i$-th point.
+\item $\frac{dR_{\theta, i}}{d\theta}$ is the derivative of the $i$-th parameter vector $R_{\theta, i}$ with respect to $\theta$.
+\end{itemize}
+
+\subsection{Shape of the Berry Curvature Output}
+
+The Berry curvature, when calculated numerically as described above, is typically represented as a 2D array with a shape of (number of points, number of eigenstates).
+
+\begin{itemize}
+\item $\textbf{Shape:}$ (number of points, number of eigenstates)
+\item For example, if you have calculated the Berry curvature at 5000 different points in your parameter space for a system with 4 eigenstates, the Berry curvature array will have a shape of (5000, 4).
+\end{itemize}
+
+This shape is important because:
+
+\begin{itemize}
+\item The Berry curvature is not a single value for each eigenstate. It's a *local* property that can vary as you move through the parameter space.
+\item $$\text{berry\_curvature}[i, n]$$ represents the Berry curvature for the *n*-th eigenstate at the *i*-th point along the path in your parameter space.
+\end{itemize}
+
+\subsection{Interpretation}
+
+The Berry curvature is a measure of the non-Abelian phase acquired by a quantum system. A non-zero Berry curvature indicates that the eigenstates of the system change in a complex and non-trivial manner as the parameters of the system are varied. It plays a crucial role in various physical phenomena, including topological effects in condensed matter physics.
+
 \section{Code Implementation}
 
 The provided Python code implements the calculation of the Berry phase for a given Hamiltonian, parameter space, and eigenstates. It includes two methods for calculating the Berry phase:
@@ -74,7 +134,7 @@ If the Berry phase calculation consistently yields a trivial result (i.e., $\gam
 \begin{itemize}
     \item   \textbf{System Properties:} The system itself might have a trivial Berry phase due to its inherent symmetries or lack of topological structure.
     \item   \textbf{Parameter Choice:} The chosen parameters for the Hamiltonian might not be in a regime where non-trivial topological phenomena occur.
-    * \textbf{Path in Parameter Space:} The chosen path might not enclose any regions in the parameter space where non-trivial Berry curvature exists.
+    \item   \textbf{Path in Parameter Space:} The chosen path might not enclose any regions in the parameter space where non-trivial Berry curvature exists.
     \item   \textbf{Numerical Precision:} In some cases, numerical limitations or approximations might lead to a trivial result, especially for very small paths or rapidly oscillating Berry curvature.
 \end{itemize}
 

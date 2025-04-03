@@ -267,6 +267,50 @@ class NewBerryPhaseCalculator:
 
         return A_theta, dR_dtheta
 
+    def calculate_berry_curvature_from_connection(self, A_theta, dR_dtheta):
+        """
+        Calculates the Berry curvature from the Berry connection.
+
+        This is a helper function called by `calculate_berry_curvature`.
+        """
+
+        num_points = len(self.R_thetas)
+        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
+        berry_curvature = np.zeros((num_points, num_states), dtype=float)
+        for i in range(num_points):
+            for n in range(num_states):
+                # Approximate dA/dR using dA/dtheta and dtheta/dR
+                # We have dR/dtheta, so we approximate dtheta/dR as the inverse.
+                # Be careful about dividing by zero!  If |dR/dtheta| is small,
+                # the curvature may be ill-defined.  A more robust approach
+                # might involve a pseudo-inverse or regularization.
+                norm_dR_dtheta = np.linalg.norm(dR_dtheta[i])
+                if norm_dR_dtheta > 1e-12:  # Avoid division by very small number
+                    dA_dR = np.gradient(np.real(A_theta[:, n]), self.theta_range)[i] / norm_dR_dtheta
+                    berry_curvature[i, n] = dA_dR
+                else:
+                    berry_curvature[i, n] = 0.0  # Or a more sophisticated handling
+
+        return berry_curvature
+
+    def calculate_berry_curvature(self):
+        """
+        Calculates the Berry curvature.
+
+        The Berry curvature is defined as the curl of the Berry connection.  Since
+        we are working with a 1D parameter space (theta), the "curl" simplifies.
+        In this case, we approximate the derivative of the Berry connection
+        with respect to the parameter R.  Since we have A_theta (derivative with
+        respect to theta), we need to relate d/dR to d/dtheta.
+
+        Returns:
+            np.ndarray: The calculated Berry curvature.
+        """
+
+        A_theta, dR_dtheta = self.calculate_berry_connection_theta_derivative()
+        berry_curvature = self.calculate_berry_curvature_from_connection(A_theta, dR_dtheta)
+        return berry_curvature
+
     def calculate_berry_phase_theta_derivative(self):
         """
         Calculates the Berry phase by integrating the Berry connection A_theta
@@ -609,4 +653,8 @@ if __name__ == "__main__":
     for i, phase in enumerate(berry_phase_theta):
         print(f"  Eigenstate {i}: {phase}")
     
-    
+    # Calculate the Berry curvature
+    berry_curvature = berry_phase_calculator_theta.calculate_berry_curvature()
+
+    # Use berry_curvature (it's a numpy array)
+    print("Berry Curvature:", berry_curvature)
