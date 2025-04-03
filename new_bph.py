@@ -6,6 +6,7 @@ from vector_utils import create_perfect_orthogonal_vectors, multiprocessing_crea
 from main import *
 print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
 import datetime
+from scipy.constants import hbar
 
 class Hamiltonian:
     def __init__(self, omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range):
@@ -62,7 +63,7 @@ class Hamiltonian:
         
         H = np.zeros((4, 4), dtype=complex)
         sumVx = sum(Vx)
-        H[0, 0] = self.omega + sumVx
+        H[0, 0] = hbar *self.omega + sumVx
         for i in range(1, len(H)):
             H[i, i] = H[0, 0] + Va[i-1] - Vx[i-1]
             
@@ -628,6 +629,7 @@ if __name__ == "__main__":
         #print(f"Saved {plot_dir}/imag/H_times_v_sum_components_state_{state}.png")
         plt.close()
 
+        """ Useless thing here
         # Calculate the sum of H*v across all components and theta values
         S_total = np.sum(Hv_results, axis=(1, 0))
 
@@ -638,6 +640,7 @@ if __name__ == "__main__":
         print(f"State {state}: Sum(H*v) = {S_total}, Sum(lambda*v) = {lambda_total}")
         with open(f'{plot_dir}/total_sum/total_sum_state_{state}.txt', 'a') as f:
             f.write(f"State {state}\n====================\nSum(H*v) = {S_total}\nSum(lambda*v) = {lambda_total}\n")
+        """
 
     # Calculate Berry phase using the original method
     berry_phase_calculator_original = NewBerryPhaseCalculator(hamiltonian, r_theta, eigenvectors, theta_vals)
