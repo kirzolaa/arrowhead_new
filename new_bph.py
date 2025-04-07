@@ -8,6 +8,7 @@ print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/ge
 import datetime
 from scipy.constants import hbar
 
+
 class Hamiltonian:
     def __init__(self, omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range):
         self.omega = omega
@@ -39,7 +40,14 @@ class Hamiltonian:
 
     def V_a(self, R_theta_val):
         return self.aVa * ((R_theta_val - self.x_shift)**2 + self.c)
+
+    #define Vx and Va functions, but input _arrays
+    def Vx(self, R_theta_1d_array):
+        return [self.aVx * (R_theta_1d_array[i]**2) for i in range(len(R_theta_1d_array))]
     
+    def Va(self, R_theta_1d_array):
+        return [self.aVa * ((R_theta_1d_array[i] - self.x_shift)**2 + self.c) for i in range(len(R_theta_1d_array))]
+        
     def position_matrix(self, R_theta_val):
         """
         Conceptual example: Creates a position matrix based on R_theta_val.
@@ -94,14 +102,14 @@ class Hamiltonian:
         #get the R_thetas from the function above
         if R_thetas is None:
             R_thetas = np.array(self.R_thetas())
-        return [self.V_x(R_theta) for R_theta in R_thetas]
+        return [self.Vx(R_theta) for R_theta in R_thetas]
     
     def Va_theta_vals(self, R_thetas):
         #return the potentials in theta_vals
         #get the R_thetas from the function above
         if R_thetas is None: #can be called independently, too
             R_thetas = np.array(self.R_thetas())
-        return [self.V_a(R_theta) for R_theta in R_thetas]
+        return [self.Va(R_theta) for R_theta in R_thetas]
         
 
 class BerryPhaseCalculator:
@@ -727,9 +735,52 @@ if __name__ == "__main__":
     np.save(f'{npy_dir}/Va_values.npy', Va_values)
     np.save(f'{npy_dir}/Vx_values.npy', Vx_values)
 
+    # Load potential values
+    Va_values = np.load(f'{npy_dir}/Va_values.npy')
+    Vx_values = np.load(f'{npy_dir}/Vx_values.npy')
+    theta_values = np.linspace(0, 2*np.pi, len(Va_values))
+    
+    # Calculate potential magnitudes
+    Va_magnitudes = np.array([np.linalg.norm(v) for v in Va_values])
+    Vx_magnitudes = np.array([np.linalg.norm(v) for v in Vx_values])
+    
+    # Create potential vs theta plots in 1x2 grid
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
+    
+    # Plot Va potential
+    ax2.plot(theta_values, Va_magnitudes, 'b-', label='Va potential')
+    ax2.set_xlabel('Theta (rad)')
+    ax2.set_ylabel('Potential Magnitude')
+    ax2.set_title('Va Potential vs Theta')
+    ax2.grid(True)
+    ax2.legend()
+    
+    # Plot Vx potential
+    ax1.plot(theta_values, Vx_magnitudes, 'r-', label='Vx potential')
+    ax1.set_xlabel('Theta (rad)')
+    ax1.set_ylabel('Potential Magnitude')
+    ax1.set_title('Vx Potential vs Theta')
+    ax1.grid(True)
+    ax1.legend()
+    
+    # Print diagnostic info about Vx magnitudes
+    print(f"Vx_magnitudes range: {np.min(Vx_magnitudes):.6f} to {np.max(Vx_magnitudes):.6f}")
+    print(f"Values in 6.4-6.5 range: {np.sum((Vx_magnitudes >= 6.4) & (Vx_magnitudes <= 6.5))} points")
+    
+    # Add zoomed-in plot for Vx potential
+    ax1_zoom = ax1.inset_axes([0.4, 0.4, 0.5, 0.5])
+    ax1_zoom.plot(theta_values, Vx_magnitudes, 'r-')
+    ax1_zoom.set_ylim(6.4, 6.5)
+    ax1_zoom.grid(True)
+    ax1_zoom.set_title('Zoomed Vx (y:6.4-6.5)')
+    ax1.indicate_inset_zoom(ax1_zoom)
+    
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Va_Vx_potentials_grid.png')
+    print("Potential vs theta plots (grid) saved to figures directory.")
+    
     #plot Va potential components
     plt.figure(figsize=(12, 6))
-    Va_values = np.load(f'{npy_dir}/Va_values.npy')
     for i in range(3):
         plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i}]')
     plt.xlabel('Theta (θ)')
@@ -743,7 +794,6 @@ if __name__ == "__main__":
 
     #plot Vx potential components
     plt.figure(figsize=(12, 6))
-    Vx_values = np.load(f'{npy_dir}/Vx_values.npy')
     for i in range(3):
         plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i}]')
     plt.xlabel('Theta (θ)')
@@ -754,3 +804,28 @@ if __name__ == "__main__":
     plt.tight_layout()
     plt.savefig(f'{plot_dir}/Vx_components.png')
     print("Vx plots saved to figures directory.")
+
+    #plot Va and Vx potentials in 3D as two subplots
+    fig = plt.figure(figsize=(14, 6))
+    ax1 = fig.add_subplot(121, projection='3d')
+    ax2 = fig.add_subplot(122, projection='3d')
+    
+    # Create 3D parametric plot for Va potential
+    ax2.plot(Va_values[:, 0], Va_values[:, 1], Va_values[:, 2], label='Va potential')
+    ax2.set_xlabel('Va_x')
+    ax2.set_ylabel('Va_y')
+    ax2.set_zlabel('Va_z')
+    ax2.set_title('3D Va Potential')
+    ax2.legend()
+    
+    # Create 3D parametric plot for Vx potential
+    ax1.plot(Vx_values[:, 0], Vx_values[:, 1], Vx_values[:, 2], label='Vx potential')
+    ax1.set_xlabel('Vx_x')
+    ax1.set_ylabel('Vx_y')
+    ax1.set_zlabel('Vx_z')
+    ax1.set_title('3D Vx Potential')
+    ax1.legend()
+    
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Va_Vx_3D.png')
+    print("3D Va and Vx plots saved to figures directory.")
