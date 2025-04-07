@@ -307,7 +307,7 @@ class NewBerryPhaseCalculator:
 
         num_points = len(self.R_thetas)
         num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_curvature = np.zeros((num_points, num_states), dtype=complex)
+        berry_curvature = np.zeros((num_points, num_states))
         for i in range(num_points):
             for n in range(num_states):
                 # Approximate dA/dR using dA/dtheta and dtheta/dR
