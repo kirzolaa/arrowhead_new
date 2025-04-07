@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import sys
-sys.path.append('/home/zoli/arrowhead_new/completely_new/arrowhead_new/generalized')
+sys.path.append('/home/zoltan/arrowhead_new_new/arrowhead_new/generalized')
 from vector_utils import create_perfect_orthogonal_vectors, multiprocessing_create_perfect_orthogonal_circle, create_perfect_orthogonal_circle
 from main import *
 print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
@@ -159,7 +159,7 @@ class BerryPhaseCalculator:
                     dvdR = np.where(dR != 0, dv[:, np.newaxis] / dR, 0) # Shape (4, 3)
 
                 # Project onto the current state
-                A_R[i, n] = np.dot(np.conj(v), 1j * dvdR)
+                A_R[i, n] = np.dot(np.conj(v).T, 1j * dvdR)
 
         return A_R
 
@@ -234,7 +234,7 @@ class NewBerryPhaseCalculator:
                     dvdR = np.where(dR != 0, dv[:, np.newaxis] / dR, 0) # Shape (4, 3)
 
                 # Project onto the current state
-                A_R[i, n] = np.dot(np.conj(v), 1j * dvdR)
+                A_R[i, n] = np.dot(np.conj(v).T, 1j * dvdR)
 
         return A_R
 
@@ -294,7 +294,7 @@ class NewBerryPhaseCalculator:
                 dv_dtheta = (v_plus - v_minus) / d_theta
 
                 # Calculate the Berry connection A_theta = <n(theta_i)|i d/dtheta |n(theta_i)>
-                A_theta[i, n] = np.vdot(self.eigenstates[i][:, n], 1j * dv_dtheta)
+                A_theta[i, n] = np.vdot((self.eigenstates[i][:, n]).T, 1j * dv_dtheta)
 
         return A_theta, dR_dtheta
 
