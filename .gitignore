@@ -29,3 +29,6 @@ Thumbs.db
 # Output files
 deprecated_susnyas/
 new_eszter.py
+ignore.txt
+arithmetics_pandas.xlsx
+arithmetics_polars.xlsx
