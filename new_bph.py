@@ -15,7 +15,7 @@ class Hamiltonian:
         self.aVx = aVx
         self.aVa = aVa
         self.x_shift = x_shift
-        self.c = c_const
+        self.c = c_const #constant in the potential
         self.R_0 = R_0
         self.d = d
         self.theta_range = theta_range
@@ -458,7 +458,7 @@ if __name__ == "__main__":
     #plot overlaps in 2x2 grid
     plt.figure()
     for state in range(eigenvectors.shape[2]):
-        plt.subplot(2, 2, state + 1)
+        plt.subplot(2, 2, state + 1) #add1 to the titles since 1,2,3,4 states
         plt.plot(theta_vals, overlaps[state])
         plt.xlabel('Theta')
         plt.ylabel('Overlap')

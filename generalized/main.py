@@ -475,7 +475,7 @@ def main():
     Main function
     """
     # Check for detailed help command
-    if len(sys.argv) > 1 and sys.argv[1] == 'help':
+    if len(sys.argv) > 1 and sys.argv[1] == '-h':
         display_help()
     
     # Parse command line arguments
