@@ -1,7 +1,7 @@
 import numpy as np
 import os
 import sys
-sys.path.append('/home/zoltan/arrowhead_new_new/arrowhead_new/generalized')
+sys.path.append('/home/zoltan/arrowhead_new/generalized')
 from vector_utils import create_perfect_orthogonal_vectors, multiprocessing_create_perfect_orthogonal_circle, create_perfect_orthogonal_circle
 from main import *
 print("Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.")
@@ -10,7 +10,39 @@ from scipy.constants import hbar
 
 
 class Hamiltonian:
+    """
+    Hamiltonian class for a quantum system with a potentials:
+
+    V(x) = aVx * x^2, and
+    Va(x) = aVa * (x - x_shift)^2 + c
+
+    Creates a 4x4 matrix with an arrowhead structure, where
+    
+    |‾                                                  ‾|
+    |    hbar*omega + Σ Vx(i)  tdm01   tdm02    tdm03    |
+    |    tdm01                 V_e(i)  0        0        |
+    |    tdm02                 0       V_e(i+1) 0        |
+    |    tdm03                 0       0        V_e(i+2) |
+    |_                                                  _|
+    
+    where Σ Vx(i) represents the sum of Vx values from i=0 to N, and
+    V_e(i) represents the potential Σ Vx(i) + Va(i) - Vx(i) at angle i.
+    
+    """
     def __init__(self, omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range):
+        """
+        Initialize the Hamiltonian with parameters.
+        
+        Parameters:
+        omega (float): Angular frequency of the oscillator
+        aVx (float): Parameter of the potential Vx
+        aVa (float): Parameter of the potential Va
+        x_shift (float): Shift in the potential Va
+        c_const (float): Constant in the potential
+        R_0 (float): Radius of the circle
+        d (float): Radius of the circle
+        theta_range (list): List of angles for which the Hamiltonian is calculated
+        """
         self.omega = omega
         self.aVx = aVx
         self.aVa = aVa
@@ -36,35 +68,77 @@ class Hamiltonian:
         return create_perfect_orthogonal_vectors(self.R_0, self.d, theta)
 
     def V_x(self, R_theta_val):
+        """
+        Returns the potential Vx for a given R_theta_val
+        
+        Parameters:
+        R_theta_val (numpy.ndarray): A 3D vector orthogonal to the x=y=z line
+        
+        Returns:
+        float: The potential Vx
+        """
         return self.aVx * (R_theta_val**2)
 
     def V_a(self, R_theta_val):
+        """
+        Returns the potential Va for a given R_theta_val
+        
+        Parameters:
+        R_theta_val (numpy.ndarray): A 3D vector orthogonal to the x=y=z line
+        
+        Returns:
+        float: The potential Va
+        """
         return self.aVa * ((R_theta_val - self.x_shift)**2 + self.c)
 
     #define Vx and Va functions, but input _arrays
     def Vx(self, R_theta_1d_array):
+        """
+        Returns the potential array Vx for an array of R_theta_val
+        
+        Parameters:
+        R_theta_1d_array (numpy.ndarray): An array of 3D vectors orthogonal to the x=y=z line
+        
+        Returns:
+        numpy.ndarray: An array of the components of the potential Vx
+        """
         return [self.aVx * (R_theta_1d_array[i]**2) for i in range(len(R_theta_1d_array))]
     
     def Va(self, R_theta_1d_array):
+        """
+        Returns the potential array Va for an array of R_theta_val
+        
+        Parameters:
+        R_theta_1d_array (numpy.ndarray): An array of 3D vectors orthogonal to the x=y=z line
+        
+        Returns:
+        numpy.ndarray: An array of the components of the potential Va
+        """
         return [self.aVa * ((R_theta_1d_array[i] - self.x_shift)**2 + self.c) for i in range(len(R_theta_1d_array))]
         
-    def position_matrix(self, R_theta_val):
+    def tdm(self, R, R0):
         """
-        Conceptual example: Creates a position matrix based on R_theta_val.
-        This is not physically accurate for most systems.
+        Returns the approximated transitonal dipole moment for a given R and R0
+        
+        Parameters:
+        R (float): The radius of the circle
+        R0 (float): The radius of the circle
+        
+        Returns:
+        float: The approximated transitonal dipole moment
         """
-        x, y, z = R_theta_val
-        return np.array([
-            [0, x, 0, 0],
-            [x, 0, y, 0],
-            [0, y, 0, z],
-            [0, 0, z, 0]
-        ], dtype=complex)
-
-    def transitional_dipole_moment(self, eigvec_i, eigvec_f, position_operator):
-        return np.vdot(eigvec_f, np.dot(position_operator, eigvec_i))
+        return 0.2 + (R - R0) / 100
 
     def construct_matrix(self, theta):
+        """
+        Constructs the Hamiltonian matrix for a given angle theta
+        
+        Parameters:
+        theta (float): The angle parameter
+        
+        Returns:
+        numpy.ndarray: The Hamiltonian matrix
+        """
         R_theta_val = self.R_theta(theta)
         Vx = [self.aVx * (R_theta_val[i] ** 2) for i in range(3)]
         Va = [self.aVa * (R_theta_val[i] ** 2) for i in range(3)]
@@ -75,31 +149,41 @@ class Hamiltonian:
         for i in range(1, len(H)):
             H[i, i] = H[0, 0] + Va[i-1] - Vx[i-1] #H11 = Vx1 + Vx2 + Vx3 + Va1 - Vx1
             
-        eigvals, eigvecs = np.linalg.eigh(H)
-        sorted_indices = np.argsort(eigvals)
-        sorted_eigvals = eigvals[sorted_indices]
-        sorted_eigvecs = eigvecs[:, sorted_indices]
-        
-        pos_mat = self.position_matrix(R_theta_val)
-        c10 = self.transitional_dipole_moment(sorted_eigvecs[:, 0], sorted_eigvecs[:, 1], pos_mat)
-        c20 = self.transitional_dipole_moment(sorted_eigvecs[:, 0], sorted_eigvecs[:, 2], pos_mat)
-        c30 = self.transitional_dipole_moment(sorted_eigvecs[:, 0], sorted_eigvecs[:, 3], pos_mat)
-        
-        H[0, 1] = H[1, 0] = c10
-        H[0, 2] = H[2, 0] = c20
-        H[0, 3] = H[3, 0] = c30
+        for j in range(len(R_theta_val)):
+            H[0, j+1] = H[j+1, 0] = self.tdm(R_theta_val[j], self.R_0[j])
 
         return H
 
     def H_thetas(self):
+        """
+        Returns the Hamiltonian matrix for all angles in a given theta_range
+        
+        Returns:
+        list: A list of Hamiltonian matrices for each angle in the theta_range
+        """
         return [self.construct_matrix(theta) for theta in self.theta_range]
 
     def R_thetas(self):
+        """
+        Returns the radius of the circle for all angles in a given theta_range
+        
+        Returns:
+        list: A list of radius values for each angle in the theta_range
+        """
         return [self.R_theta(theta) for theta in self.theta_range]
     
     def Vx_theta_vals(self, R_thetas):
         #return the potentials in theta_vals
         #get the R_thetas from the function above
+        """
+        Returns the potential Vx for all angles in a given theta_range
+        
+        Parameters:
+        R_thetas (list or np.ndarray): A list or array of 3D parameter vectors
+        
+        Returns:
+        list: A list of potential values for each angle in the theta_range
+        """
         if R_thetas is None:
             R_thetas = np.array(self.R_thetas())
         return [self.Vx(R_theta) for R_theta in R_thetas]
@@ -107,92 +191,24 @@ class Hamiltonian:
     def Va_theta_vals(self, R_thetas):
         #return the potentials in theta_vals
         #get the R_thetas from the function above
+        """
+        Returns the potential Va for all angles in a given theta_range
+        
+        Parameters:
+        R_thetas (list or np.ndarray): A list or array of 3D parameter vectors
+        
+        Returns:
+        list: A list of potential values for each angle in the theta_range
+        """
         if R_thetas is None: #can be called independently, too
             R_thetas = np.array(self.R_thetas())
         return [self.Va(R_theta) for R_theta in R_thetas]
         
 
-class BerryPhaseCalculator:
-    def __init__(self, hamiltonian, R_thetas, eigenstates):
-        self.hamiltonian = hamiltonian
-        self.R_thetas = R_thetas
-        self.eigenstates = eigenstates
-
-
-    """
-    def calculate_berry_connection(self):
-        #"#"#"#
-        Calculate Berry connection A_n(R_theta) = <n(R_theta)|i∂_R|n(R_theta)>
-        #"#"#"#
-        num_states = self.eigenstates.shape[1]
-        A_R = np.zeros((len(self.R_thetas)-1, num_states), dtype=complex)
-
-        for i in range(len(self.R_thetas)-1):
-            if i == len(self.R_thetas) - 1:
-                dR = self.R_thetas[0] - self.R_thetas[i]
-                for n in range(num_states):
-                    v = self.eigenstates[i][:, n] #we use % operator to wrap around the circle
-                    dv_dR = (self.eigenstates[(i + 1) % len(self.R_thetas)][:, n] - v) / np.linalg.norm(dR)
-                    A_R[i, n] = np.vdot(np.conj(v), 1j * dv_dR)
-            if i == len(self.R_thetas)-1:
-                dR = self.R_thetas[len(self.R_thetas)-1] - self.R_thetas[0] #the parameter space is a closed perfect orthogonalcircle
-                for n in range(num_states):
-                    v = self.eigenstates[i][:, n]
-                    dv_dR = (self.eigenstates[(i + 1) % len(self.R_thetas)][:, n] - v) / np.linalg.norm(dR)
-                    A_R[i, n] = np.vdot(np.conj(v), 1j * dv_dR)
-
-        return A_R
-    """
-
-    def calculate_berry_connection(self):
-        """
-        Calculate Berry connection A_n(R) ≈ <n(R_i)| i (|n(R_{i+1})> - |n(R_i)>) / (R_{i+1} - R_i)
-        Here, the division by a vector should be interpreted element-wise for each component of dR.
-        The result A_R will be a matrix where A_R[i, n, j] is the j-th component of the Berry connection
-        for the n-th state at the i-th point.
-        """
-        num_points = len(self.R_thetas)
-        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        A_R = np.zeros((num_points - 1, num_states, 3), dtype=complex)  # Berry connection is a 3D vector
-
-        for i in range(num_points - 1):
-            dR = self.R_thetas[(i + 1) % num_points] - self.R_thetas[i] #wrapping around the circle
-            for n in range(num_states):
-                v = self.eigenstates[i][:, n]
-                next_v = self.eigenstates[(i + 1) % num_points][:, n]
-                dv = next_v - v
-
-                # Element-wise division by the components of dR
-                with np.errstate(divide='ignore', invalid='ignore'):
-                    dvdR = np.where(dR != 0, dv[:, np.newaxis] / dR, 0) # Shape (4, 3)
-
-                # Project onto the current state
-                A_R[i, n] = np.dot(np.conj(v).T, 1j * dvdR)
-
-        return A_R
-
-    def calculate_berry_phase(self):
-        """
-        Calculate Berry phase γ_n = ∫ A_n(R_theta) dR_theta
-        """
-        A_R = self.calculate_berry_connection()
-        # Calculate berry phase for each state by integrating the Berry connection
-        num_states = self.eigenstates.shape[2] if len(self.eigenstates.shape) > 2 else self.eigenstates.shape[1]
-        berry_phases = np.zeros(num_states, dtype=complex)
-        
-        for n in range(num_states):
-            phase = 0.0
-            for i in range(len(A_R)):
-                dR = self.R_thetas[i + 1] - self.R_thetas[i]
-                phase += np.dot(A_R[i, n], dR)
-            berry_phases[n] = phase
-            
-        return berry_phases
-
 class NewBerryPhaseCalculator:
     def __init__(self, hamiltonian, R_thetas, eigenstates, theta_range):
         """
-        Initializes the BerryPhaseCalculator with the Hamiltonian,
+        Initializes the new BerryPhaseCalculator with the Hamiltonian,
         parameter vectors R_thetas, corresponding eigenstates, and the
         range of the parameter theta.
 
@@ -410,6 +426,14 @@ if __name__ == "__main__":
     imag_dir = f'{plot_dir}/imag'
     total_sum_dir = f'{plot_dir}/total_sum'
     npy_dir = f'{output_dir}/npy'
+    save_dir = f'{output_dir}/vectors'
+    combined_dir = f'{plot_dir}/combined'
+    combined_for_states_dir = f'{plot_dir}/combined_for_states'
+    all_types_for_combined_dir = f'{plot_dir}/all_types_for_combined'
+    os.makedirs(all_types_for_combined_dir, exist_ok=True)
+    os.makedirs(combined_for_states_dir, exist_ok=True)
+    os.makedirs(combined_dir, exist_ok=True)
+    os.makedirs(save_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(plot_dir, exist_ok=True)
     os.makedirs(abs_dir, exist_ok=True)
@@ -440,6 +464,31 @@ if __name__ == "__main__":
             if i == len(theta_vals): #if we are at the endpoint-1 point, the current eigvec is end-1th and the startpoint will bee the next eigvec
                 next_eigenvector = eigenvectors[0, :, state] # endpoint
                 overlaps[state, i] = np.conj(current_eigenvector).T @ next_eigenvector
+
+    #create a report of the imag(eigenvectors) into the output_dir
+    with open(f'{output_dir}/imag_eigenvectors.out', 'w') as file:
+        file.write("#Imaginary parts of eigenvectors\n===============================================================\n")
+        file.write("#Theta(degrees)\tState 0\tState 1\tState 2\tState 3\n")
+        for i in range(len(theta_vals)):
+            theta_deg = np.degrees(theta_vals[i])
+            file.write(f'{theta_deg:.2f}\t')
+            for state in range(eigenvectors.shape[2]):
+                file.write('\t'.join(f'{val:.14f}' for val in np.imag(eigenvectors[i, :, state])) + '\t')
+            file.write('\n')
+    # create a raiser for the eigenvec_imag parts if the imag(eigenvector) is above 1e-14 treshold
+    #save the report to a imag_eigenvecs.report file
+    with open(f'{output_dir}/imag_eigenvecs.report', 'w') as file:
+        file.write("#Imaginary parts of eigenvectors\n===============================================================\n")
+        file.write("#Theta(degrees)\tState 0\tState 1\tState 2\tState 3\n")
+        for i in range(len(theta_vals)):
+            theta_deg = np.degrees(theta_vals[i])
+            #create a raiser for the eigenvec_imag parts if the imag(eigenvector) is above 1e-14 treshold
+            for state in range(eigenvectors.shape[2]):
+                # Use np.any() to check if any element exceeds the threshold
+                if np.any(np.abs(np.imag(eigenvectors[i, :, state])) > 1e-14):  
+                    file.write(f'Imaginary part of eigenvector {state} at theta {theta_vals[i]} is above 1e-14 treshold')
+                else:
+                    file.write("All of the imaginary parts of the eigenvector components are zero.")
 
     # Save overlaps
     np.save(f'{npy_dir}/overlaps_{state}.npy', overlaps)
@@ -508,51 +557,175 @@ if __name__ == "__main__":
         plt.savefig(f'{plot_dir}/eigenvector_components_state_{state}_2x2.png')
         plt.close()
 
+    # Calculate H*v for each theta value
+    Hv_results = np.zeros((len(theta_vals), eigvecs_all.shape[1]), dtype=complex)
+    #get eigenvaluesof each H_theta, it is not theta vals
+    #calculate H_thetas array by calculating H_theta, it should be a (num_points, 4, 4) array, like (theta_value, 4, 4)
+    #H_thetas = np.array([hamiltonian(theta, omega, aVx, aVa, c_const, x_shift, d)[0] for theta in theta_vals])
+    #print(H_thetas.shape)
+    # Get all the eigenvalues
+    eigenvalues = np.array([np.linalg.eigvalsh(H) for H in H_thetas])
+    
+    # Get all eigenvalues and eigenvectors separately
+    eigenvals_eigvecs = [np.linalg.eigh(H) for H in H_thetas]
+    eigenvalues_full = np.array([ev[0] for ev in eigenvals_eigvecs])
+
+    # Extract the eigenvalues and eigenvectors
+    eigenvalues = np.array([ev[0] for ev in eigenvals_eigvecs])
+    eigenstates = np.array([ev[1] for ev in eigenvals_eigvecs])
+    #print(eigenstates)
+    plt.plot(theta_vals, eigenvalues[:,0], 'r-')
+    plt.plot(theta_vals, eigenvalues[:,1], 'b-')
+    plt.plot(theta_vals, eigenvalues[:,2], 'g-')
+    plt.plot(theta_vals, eigenvalues[:,3], 'c-')
+    plt.xlabel('Theta')
+    plt.ylabel('Eigenvalue')
+    plt.title(f'Eigenvalues vs Theta')
+    plt.savefig(f'{plot_dir}/eigenvalues.png')
+    plt.close()
+
+    #plot R_thetas 3 components for each R_theta in R_thetas vs theta in theta_vals
+    plt.figure()
+    for i in range(3):
+        plt.plot(theta_vals, np.array(R_thetas)[:, i], label=f'R_theta {i}')
+    plt.xlabel('Theta')
+    plt.ylabel('R_theta')
+    plt.title(f'R_thetas vs Theta')
+    plt.legend()
+    plt.savefig(f'{save_dir}/R_thetas.png')
+    plt.close()
+
     for state in range(eigvecs_all.shape[2]):
-        # Calculate H*v for each theta value
-        Hv_results = np.zeros((len(theta_vals), eigvecs_all.shape[1]), dtype=complex)
-        #get eigenvaluesof each H_theta, it is not theta vals
-        #calculate H_thetas array by calculating H_theta, it should be a (num_points, 4, 4) array, like (theta_value, 4, 4)
-        #H_thetas = np.array([hamiltonian(theta, omega, aVx, aVa, c_const, x_shift, d)[0] for theta in theta_vals])
-        #print(H_thetas.shape)
-        # Get all the eigenvalues
-        eigenvalues = np.array([np.linalg.eigvalsh(H) for H in H_thetas])
-        
-        # Get all eigenvalues and eigenvectors separately
-        eigenvals_eigvecs = [np.linalg.eigh(H) for H in H_thetas]
-        eigenvalues_full = np.array([ev[0] for ev in eigenvals_eigvecs])
-        # Extract the eigenvalues and eigenvectors
-        eigenvalues = np.array([ev[0] for ev in eigenvals_eigvecs])
-        eigenstates = np.array([ev[1] for ev in eigenvals_eigvecs])
-        
         # For reference, H*v = λ*v
         #calculate H*v
         #use H_thetas and eigenstates
         for i, theta in enumerate(theta_vals):
             Hv_results[i] = H_thetas[i] @ eigenstates[i, :, state]
+            if eigenvalues[i,1] < eigenvalues[i,0] or eigenvalues[i,2] < eigenvalues[i,1] or eigenvalues[i,3] < eigenvalues[i,2]:
+                print(f"Error in eigenvalues in theta {theta}, eigenvalues {eigenvalues[i]}")
+            #plot 4db sjt érték 0,2pi
+        
         #calculate λ*v
         lambda_v = eigenvalues[:, state][:, np.newaxis] * eigenstates[:, :, state]
 
-        fig, axs = plt.subplots(2, 2, figsize=(12, 10))
+        # Create separate plots for each type
+        # Magnitude plots
+        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+        axs = axs.flatten()
+        for state in range(4):
+            plot_type = "Magnitude"
+            axs[state].plot(theta_vals, np.abs(Hv_results[:, state]), 'r-', label='|H*v|')
+            axs[state].set_title(f'State {state} - {plot_type}')
+            axs[state].grid(True)
+            if state == 0:
+                axs[state].legend()
+            if state >= 2:  # Only set x-label on bottom rows
+                axs[state].set_xlabel('Theta')
+            if state == 0 or state == 2:  # Only set y-label on left columns
+                axs[state].set_ylabel('Value')
+        plt.tight_layout()
+        plt.suptitle('H*v Magnitudes for All States')
+        plt.subplots_adjust(top=0.92)
+        plt.savefig(f'{plot_dir}/abs/all_states_magnitudes.png')
+        plt.close()
+
+        # Real part plots
+        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+        axs = axs.flatten()
+        for state in range(4):
+            plot_type = "Real"
+            axs[state].plot(theta_vals, np.real(Hv_results[:, state]), 'b-', label='Re(H*v)')
+            axs[state].set_title(f'State {state} - {plot_type}')
+            axs[state].grid(True)
+            if state >= 2:  # Only set x-label on bottom rows
+                axs[state].set_xlabel('Theta')
+            if state == 0 or state == 2:  # Only set y-label on left columns
+                axs[state].set_ylabel('Value')
+        plt.tight_layout()
+        plt.suptitle('H*v Real Parts for All States')
+        plt.subplots_adjust(top=0.92)
+        plt.savefig(f'{plot_dir}/real/all_states_real.png')
+        plt.close()
+
+        # Imaginary part plots
+        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+        axs = axs.flatten()
+        for state in range(4):
+            plot_type = "Imaginary"
+            axs[state].plot(theta_vals, np.imag(Hv_results[:, state]), 'g-', label='Im(H*v)')
+            axs[state].set_title(f'State {state} - {plot_type}')
+            axs[state].grid(True)
+            if state >= 2:  # Only set x-label on bottom rows
+                axs[state].set_xlabel('Theta')
+            if state == 0 or state == 2:  # Only set y-label on left columns
+                axs[state].set_ylabel('Value')
+        plt.tight_layout()
+        plt.suptitle('H*v Imaginary Parts for All States')
+        plt.subplots_adjust(top=0.92)
+        plt.savefig(f'{plot_dir}/imag/all_states_imaginary.png')
+        plt.close()
+
+        # All types plots
+        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+        axs = axs.flatten()
+        for state in range(4):
+            plot_type = "All Types"
+            axs[state].plot(theta_vals, np.abs(Hv_results[:, state]), 'r-', label='|H*v|')
+            axs[state].plot(theta_vals, np.real(Hv_results[:, state]), 'b-', label='Re(H*v)')
+            axs[state].plot(theta_vals, np.imag(Hv_results[:, state]), 'g-', label='Im(H*v)')
+            axs[state].set_title(f'State {state} - {plot_type}')
+            axs[state].grid(True)
+            axs[state].legend()
+            if state >= 2:  # Only set x-label on bottom rows
+                axs[state].set_xlabel('Theta')
+            if state == 0 or state == 2:  # Only set y-label on left columns
+                axs[state].set_ylabel('Value')
+        plt.tight_layout()
+        plt.suptitle('H*v All Types for All States')
+        plt.subplots_adjust(top=0.92)
+        plt.savefig(f'{plot_dir}/all_types_for_combined/all_states_all_types.png')
+        plt.close()
+
+        # Create a single 2x2 grid plot showing all three types of values
+        fig, axs = plt.subplots(2, 2, figsize=(12, 10), sharex=True, sharey=True)
         axs = axs.flatten()
         
+        plot_types = [
+            ("Magnitude", np.abs, "|H*v|"),
+            ("Real", np.real, "Re(H*v)"),
+            ("Imaginary", np.imag, "Im(H*v)")
+        ]
+        
         for j in range(4):  # Just plot components for one state at a time
-            #plot the magnitude of H*v
-            axs[j].plot(theta_vals, np.abs(Hv_results[:, j]), 'ro', label='|H*v|')
-            #plot the magnitude of λ*v
-            axs[j].plot(theta_vals, np.abs(lambda_v[:, j]), 'bo', label='|λ*v|')
-            
-            axs[j].set_title(f'Component {j}')
-            axs[j].set_xlabel('Theta')
-            axs[j].set_ylabel('Value')
-            axs[j].grid(True)
-            axs[j].legend()
+            if j < 3:  # For first three components
+                plot_type, func, label = plot_types[j]
+                axs[j].plot(theta_vals, func(Hv_results[:, j]), 'r-', label=label)
+                
+                axs[j].set_title(f'Component {j} - {plot_type}')
+                axs[j].grid(True)
+                if j == 0 or j == 2:  # Only set y-label on left columns
+                    axs[j].set_ylabel('Value')
+                if j >= 2:  # Only set x-label on bottom rows
+                    axs[j].set_xlabel('Theta')
+                
+                if j == 0:  # Only show legend once
+                    axs[j].legend()
+            else:  # For the fourth component, show all three types in one plot
+                axs[j].plot(theta_vals, np.abs(Hv_results[:, j]), 'r-', label='|H*v|')
+                axs[j].plot(theta_vals, np.real(Hv_results[:, j]), 'b-', label='Re(H*v)')
+                axs[j].plot(theta_vals, np.imag(Hv_results[:, j]), 'g-', label='Im(H*v)')
+                
+                axs[j].set_title(f'Component {j} - All Types')
+                axs[j].grid(True)
+                axs[j].set_ylabel('Value')
+                axs[j].set_xlabel('Theta')
+                axs[j].legend()
         
         plt.tight_layout()
-        plt.suptitle(f'H*v for State {state}')
+        plt.suptitle(f'H*v Components for State {state}')
         plt.subplots_adjust(top=0.92)
         
-        plt.savefig(f'{plot_dir}/abs/H_times_v_state_{state}.png')
+        plt.savefig(f'{plot_dir}/combined/H_times_v_state_{state}_combined.png')
         plt.close()
 
         #save the Hv_results
@@ -560,118 +733,51 @@ if __name__ == "__main__":
         #save the lambda_v
         np.save(f'{npy_dir}/lambda_v_state_{state}', lambda_v)
 
-        #plot the real part of H*v and lambda_v
-        fig, axs = plt.subplots(2, 2, figsize=(12, 10))
-        axs = axs.flatten()
-        for j in range(4):  # Just plot components for one state at a time
-            #plot the real of H*v
-            axs[j].plot(theta_vals, np.real(Hv_results[:, j]), 'ro', label='Re(H*v)')
-            #plot the real of lambda_v
-            axs[j].plot(theta_vals, np.real(lambda_v[:, j]), 'bo', label='Re(λ*v)')
+    # Create combined plot for all states
+    num_states = 4
+    fig, axs = plt.subplots(num_states, 4, figsize=(20, 15))
+    
+    for state in range(num_states):
+        #Hv_results = np.load(f'{npy_dir}/H_times_v_state_{state}.npy')
         
-            axs[j].set_title(f'Component {j}')
-            axs[j].set_xlabel('Theta')
-            axs[j].set_ylabel('Value')
-            axs[j].grid(True)
-            axs[j].legend()
+        # Plot magnitude
+        axs[state, 0].plot(theta_vals, np.abs(Hv_results[:, 0]), 'r-', label='|H*v|')
+        axs[state, 0].set_title(f'State {state} - Magnitude')
+        axs[state, 0].grid(True)
+        if state == 0:
+            axs[state, 0].legend()
         
-        plt.tight_layout()
-        plt.suptitle(f'H*v for State {state}')
-        plt.subplots_adjust(top=0.92)
-            
-        plt.savefig(f'{plot_dir}/real/H_times_v_state_{state}_real.png')
-        plt.close()
-
-        #plot the imaginary part of H*v and lambda_v
-        fig, axs = plt.subplots(2, 2, figsize=(12, 10))
-        axs = axs.flatten()
-        for j in range(4):  # Just plot components for one state at a time
-            #plot the imaginary of H*v
-            axs[j].plot(theta_vals, np.imag(Hv_results[:, j]), 'ro', label='Im(H*v)')
-            #plot the imaginary of lambda_v
-            axs[j].plot(theta_vals, np.imag(lambda_v[:, j]), 'bo', label='Im(λ*v)')
+        # Plot real part
+        axs[state, 1].plot(theta_vals, np.real(Hv_results[:, 0]), 'b-', label='Re(H*v)')
+        axs[state, 1].set_title(f'State {state} - Real')
+        axs[state, 1].grid(True)
         
-            axs[j].set_title(f'Component {j}')
-            axs[j].set_xlabel('Theta')
-            axs[j].set_ylabel('Value')
-            axs[j].grid(True)
-            axs[j].legend()
+        # Plot imaginary part
+        axs[state, 2].plot(theta_vals, np.imag(Hv_results[:, 0]), 'g-', label='Im(H*v)')
+        axs[state, 2].set_title(f'State {state} - Imaginary')
+        axs[state, 2].grid(True)
         
-        plt.tight_layout()
-        plt.suptitle(f'H*v for State {state}')
-        plt.subplots_adjust(top=0.92)
-            
-        plt.savefig(f'{plot_dir}/imag/H_times_v_state_{state}_imag.png')
-        plt.close()
-
-        #sum up Hv ACROSS ALL THE 4 COMPONENTS
-        Hv_sum = np.zeros((4, len(theta_vals)), dtype=complex)
-        for j in range(4):
-            Hv_sum[j] = Hv_results[:, j]
+        # Plot all three types
+        axs[state, 3].plot(theta_vals, np.abs(Hv_results[:, 0]), 'r-', label='|H*v|')
+        axs[state, 3].plot(theta_vals, np.real(Hv_results[:, 0]), 'b-', label='Re(H*v)')
+        axs[state, 3].plot(theta_vals, np.imag(Hv_results[:, 0]), 'g-', label='Im(H*v)')
+        axs[state, 3].set_title(f'State {state} - All Types')
+        axs[state, 3].grid(True)
+        axs[state, 3].legend()
         
-        #plot each component of Hv_sum in a 2x2 grid
-        fig, axs = plt.subplots(2, 2, figsize=(10, 8))
-        axs = axs.ravel()
-        for j in range(4):
-            axs[j].plot(theta_vals, np.abs(Hv_sum[j]), 'ro', label=f'Component {j}')
-            axs[j].set_title(f'Component {j}')
-            axs[j].set_xlabel('Theta')
-            axs[j].set_ylabel('Value')
-            axs[j].grid(True)
-            axs[j].legend()
-        plt.tight_layout()
-        plt.suptitle(f'H*v Sum Components for State {state}')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/abs/H_times_v_sum_components_state_{state}.png')
-        #print(f"Saved {plot_dir}/abs/H_times_v_sum_components_state_{state}.png")
-        plt.close()
+        # Set labels only for bottom row
+        if state == num_states - 1:
+            for i in range(4):
+                axs[state, i].set_xlabel('Theta')
+        
+        # Set y-labels only for first column
+        axs[state, 0].set_ylabel(f'State {state}')
 
-        #plot each component of Hv_sum in a 2x2 grid
-        fig, axs = plt.subplots(2, 2, figsize=(10, 8))
-        axs = axs.ravel()
-        for j in range(4):
-            axs[j].plot(theta_vals, np.real(Hv_sum[j]), 'ro', label=f'Component {j}')
-            axs[j].set_title(f'Component {j}')
-            axs[j].set_xlabel('Theta')
-            axs[j].set_ylabel('Value')
-            axs[j].grid(True)
-            axs[j].legend()
-        plt.tight_layout()
-        plt.suptitle(f'H*v Sum Components for State {state}')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/real/H_times_v_sum_components_state_{state}.png')
-        #print(f"Saved {plot_dir}/real/H_times_v_sum_components_state_{state}.png")
-        plt.close()
-
-        #plot each component of Hv_sum in a 2x2 grid
-        fig, axs = plt.subplots(2, 2, figsize=(10, 8))
-        axs = axs.ravel()
-        for j in range(4):
-            axs[j].plot(theta_vals, np.imag(Hv_sum[j]), 'ro', label=f'Component {j}')
-            axs[j].set_title(f'Component {j}')
-            axs[j].set_xlabel('Theta')
-            axs[j].set_ylabel('Value')
-            axs[j].grid(True)
-            axs[j].legend()
-        plt.tight_layout()
-        plt.suptitle(f'H*v Sum Components for State {state}')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/imag/H_times_v_sum_components_state_{state}.png')
-        #print(f"Saved {plot_dir}/imag/H_times_v_sum_components_state_{state}.png")
-        plt.close()
-
-        """ Useless thing here
-        # Calculate the sum of H*v across all components and theta values
-        S_total = np.sum(Hv_results, axis=(1, 0))
-
-        # Calculate the sum of lambda*v across all components and theta values
-        lambda_total = np.sum(lambda_v, axis=(1, 0))
-
-        # Print the total sums
-        print(f"State {state}: Sum(H*v) = {S_total}, Sum(lambda*v) = {lambda_total}")
-        with open(f'{plot_dir}/total_sum/total_sum_state_{state}.txt', 'a') as f:
-            f.write(f"State {state}\n====================\nSum(H*v) = {S_total}\nSum(lambda*v) = {lambda_total}\n")
-        """
+    plt.tight_layout()
+    plt.suptitle('H*v Components for All States')
+    plt.subplots_adjust(top=0.95)
+    plt.savefig(f'{plot_dir}/combined_for_states/all_states_combined.png')
+    plt.close()
 
     # Calculate Berry phase using the original method
     berry_phase_calculator_original = NewBerryPhaseCalculator(hamiltonian, r_theta, eigenvectors, theta_vals)
@@ -698,8 +804,7 @@ if __name__ == "__main__":
     
     #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
     from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle, generate_perfect_orthogonal_circle
-    save_dir = f'{output_dir}/vectors'
-    os.makedirs(save_dir, exist_ok=True)
+    
     #visualize the R_theta vectors
     points = multiprocessing_create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max) #we already have a method for this
     #points = create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max)
@@ -739,45 +844,6 @@ if __name__ == "__main__":
     Va_values = np.load(f'{npy_dir}/Va_values.npy')
     Vx_values = np.load(f'{npy_dir}/Vx_values.npy')
     theta_values = np.linspace(0, 2*np.pi, len(Va_values))
-    
-    # Calculate potential magnitudes
-    Va_magnitudes = np.array([np.linalg.norm(v) for v in Va_values])
-    Vx_magnitudes = np.array([np.linalg.norm(v) for v in Vx_values])
-    
-    # Create potential vs theta plots in 1x2 grid
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 6))
-    
-    # Plot Va potential
-    ax2.plot(theta_values, Va_magnitudes, 'b-', label='Va potential')
-    ax2.set_xlabel('Theta (rad)')
-    ax2.set_ylabel('Potential Magnitude')
-    ax2.set_title('Va Potential vs Theta')
-    ax2.grid(True)
-    ax2.legend()
-    
-    # Plot Vx potential
-    ax1.plot(theta_values, Vx_magnitudes, 'r-', label='Vx potential')
-    ax1.set_xlabel('Theta (rad)')
-    ax1.set_ylabel('Potential Magnitude')
-    ax1.set_title('Vx Potential vs Theta')
-    ax1.grid(True)
-    ax1.legend()
-    
-    # Print diagnostic info about Vx magnitudes
-    print(f"Vx_magnitudes range: {np.min(Vx_magnitudes):.6f} to {np.max(Vx_magnitudes):.6f}")
-    print(f"Values in 6.4-6.5 range: {np.sum((Vx_magnitudes >= 6.4) & (Vx_magnitudes <= 6.5))} points")
-    
-    # Add zoomed-in plot for Vx potential
-    ax1_zoom = ax1.inset_axes([0.4, 0.4, 0.5, 0.5])
-    ax1_zoom.plot(theta_values, Vx_magnitudes, 'r-')
-    ax1_zoom.set_ylim(6.4, 6.5)
-    ax1_zoom.grid(True)
-    ax1_zoom.set_title('Zoomed Vx (y:6.4-6.5)')
-    ax1.indicate_inset_zoom(ax1_zoom)
-    
-    plt.tight_layout()
-    plt.savefig(f'{plot_dir}/Va_Vx_potentials_grid.png')
-    print("Potential vs theta plots (grid) saved to figures directory.")
     
     #plot Va potential components
     plt.figure(figsize=(12, 6))
