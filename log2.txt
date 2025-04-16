@@ -1,0 +1,26 @@
+Successfully imported create_perfect_orthogonal_vectors from arrowhead/generalized package.
+Berry phases (original method):
+  Eigenstate 0: 0.0
+  Eigenstate 1: -1.1998782772765413e-14
+  Eigenstate 2: -1.0653849862497658e-14
+  Eigenstate 3: -1.0531908477856265e-14
+
+Berry phases (finite difference w.r.t. theta):
+  Eigenstate 0: 0.0
+  Eigenstate 1: 0.0
+  Eigenstate 2: 0.0
+  Eigenstate 3: 0.0
+Berry Curvature: [[0. 0. 0. 0.]
+ [0. 0. 0. 0.]
+ [0. 0. 0. 0.]
+ ...
+ [0. 0. 0. 0.]
+ [0. 0. 0. 0.]
+ [0. 0. 0. 0.]]
+(5000, 3)
+Visualizations saved to results_thetamin_0.00_thetamax_6.28_20250416140302/vectors directory.
+
+Verification results saved to results_thetamin_0.00_thetamax_6.28_20250416140302/vectors/verification_results.txt
+Va plots saved to figures directory.
+Vx plots saved to figures directory.
+3D Va and Vx plots saved to figures directory.
