@@ -486,9 +486,9 @@ if __name__ == "__main__":
             for state in range(eigenvectors.shape[2]):
                 # Use np.any() to check if any element exceeds the threshold
                 if np.any(np.abs(np.imag(eigenvectors[i, :, state])) > 1e-14):  
-                    file.write(f'Imaginary part of eigenvector {state} at theta {theta_vals[i]} is above 1e-14 treshold')
+                    file.write(f'Imaginary part of eigenvector {state} at theta {theta_vals[i]} is above 1e-14 treshold\n')
                 else:
-                    file.write("All of the imaginary parts of the eigenvector components are zero.")
+                    file.write(f"All of the imaginary parts of the eigenvector {state} components at theta {theta_vals[i]} are zero.\n")
 
     # Save overlaps
     np.save(f'{npy_dir}/overlaps_{state}.npy', overlaps)
