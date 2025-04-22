@@ -437,15 +437,15 @@ if __name__ == "__main__":
     combined_for_states_dir = f'{plot_dir}/combined_for_states'
     all_types_for_combined_dir = f'{plot_dir}/all_types_for_combined'
     os.makedirs(all_types_for_combined_dir, exist_ok=True)
-    os.makedirs(combined_for_states_dir, exist_ok=True)
-    os.makedirs(combined_dir, exist_ok=True)
+    # os.makedirs(combined_for_states_dir, exist_ok=True)
+    # os.makedirs(combined_dir, exist_ok=True)
     os.makedirs(save_dir, exist_ok=True)
     os.makedirs(output_dir, exist_ok=True)
     os.makedirs(plot_dir, exist_ok=True)
     os.makedirs(abs_dir, exist_ok=True)
     os.makedirs(real_dir, exist_ok=True)
     os.makedirs(imag_dir, exist_ok=True)
-    os.makedirs(total_sum_dir, exist_ok=True)
+    # os.makedirs(total_sum_dir, exist_ok=True)
     os.makedirs(npy_dir, exist_ok=True)
 
     # Calculate Hamiltonians and eigenvectors at each theta value, explicitly including endpoint
@@ -564,7 +564,9 @@ if __name__ == "__main__":
         plt.close()
 
     # Calculate H*v for each theta value
-    Hv_results = np.zeros((len(theta_vals), eigvecs_all.shape[1]), dtype=complex)
+    num_states = eigvecs_all.shape[2]
+
+    Hv_results = np.zeros((len(theta_vals), num_states), dtype=complex)
     #get eigenvaluesof each H_theta, it is not theta vals
     #calculate H_thetas array by calculating H_theta, it should be a (num_points, 4, 4) array, like (theta_value, 4, 4)
     #H_thetas = np.array([hamiltonian(theta, omega, aVx, aVa, c_const, x_shift, d)[0] for theta in theta_vals])
@@ -575,7 +577,7 @@ if __name__ == "__main__":
     # Get all eigenvalues and eigenvectors separately
     eigenvals_eigvecs = [np.linalg.eigh(H) for H in H_thetas]
     eigenvalues_full = np.array([ev[0] for ev in eigenvals_eigvecs])
-
+    
     # Extract the eigenvalues and eigenvectors
     eigenvalues = np.array([ev[0] for ev in eigenvals_eigvecs])
     eigenstates = np.array([ev[1] for ev in eigenvals_eigvecs])
@@ -601,190 +603,88 @@ if __name__ == "__main__":
     plt.savefig(f'{save_dir}/R_thetas.png')
     plt.close()
 
-    for state in range(eigvecs_all.shape[2]):
-        # For reference, H*v = λ*v
-        #calculate H*v
-        #use H_thetas and eigenstates
-        """
-        for i, theta in enumerate(theta_vals):
-            Hv_results[i] = H_thetas[i] @ eigenstates[i, :, state]
-            if eigenvalues[i,1] < eigenvalues[i,0] or eigenvalues[i,2] < eigenvalues[i,1] or eigenvalues[i,3] < eigenvalues[i,2]:
-                print(f"Error in eigenvalues in theta {theta}, eigenvalues {eigenvalues[i]}")
-            #plot 4db sjt érték 0,2pi
-        """
-        #calculate λ*v
-        #lambda_v = eigenvalues[:, state][:, np.newaxis] * eigenstates[:, :, state]
 
-        # Create separate plots for each type
-        # Magnitude plots
-        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
-        axs = axs.flatten()
-        for states in range(4):
-            plot_type = "Magnitude"
-            axs[states].plot(theta_vals, np.abs(Hv_results[:, states]), 'r-', label='|H*v|')
-            axs[states].set_title(f'State {states} - {plot_type}')
-            axs[states].grid(True)
-            if states == 0:
-                axs[states].legend()
-            if states >= 2:  # Only set x-label on bottom rows
-                axs[states].set_xlabel('Theta')
-            if states == 0 or states == 2:  # Only set y-label on left columns
-                axs[states].set_ylabel('Value')
-        plt.tight_layout()
-        plt.suptitle('H*v Magnitudes for All States')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/abs/all_states_magnitudes.png')
-        plt.close()
-
-        # Real part plots
-        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
-        axs = axs.flatten()
-        for state in range(4):
-            plot_type = "Real"
-            axs[state].plot(theta_vals, np.real(Hv_results[:, state]), 'b-', label='Re(H*v)')
-            axs[state].set_title(f'State {state} - {plot_type}')
-            axs[state].grid(True)
-            if state >= 2:  # Only set x-label on bottom rows
-                axs[state].set_xlabel('Theta')
-            if state == 0 or state == 2:  # Only set y-label on left columns
-                axs[state].set_ylabel('Value')
-        plt.tight_layout()
-        plt.suptitle('H*v Real Parts for All States')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/real/all_states_real.png')
-        plt.close()
-
-        # Imaginary part plots
-        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
-        axs = axs.flatten()
-        for state in range(4):
-            plot_type = "Imaginary"
-            axs[state].plot(theta_vals, np.imag(Hv_results[:, state]), 'g-', label='Im(H*v)')
-            axs[state].set_title(f'State {state} - {plot_type}')
-            axs[state].grid(True)
-            if state >= 2:  # Only set x-label on bottom rows
-                axs[state].set_xlabel('Theta')
-            if state == 0 or state == 2:  # Only set y-label on left columns
-                axs[state].set_ylabel('Value')
-        plt.tight_layout()
-        plt.suptitle('H*v Imaginary Parts for All States')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/imag/all_states_imaginary.png')
-        plt.close()
-
-        # All types plots
-        fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
-        axs = axs.flatten()
-        for state in range(4):
-            plot_type = "All Types"
-            axs[state].plot(theta_vals, np.abs(Hv_results[:, state]), 'r-', label='|H*v|')
-            axs[state].plot(theta_vals, np.real(Hv_results[:, state]), 'b-', label='Re(H*v)')
-            axs[state].plot(theta_vals, np.imag(Hv_results[:, state]), 'g-', label='Im(H*v)')
-            axs[state].set_title(f'State {state} - {plot_type}')
-            axs[state].grid(True)
-            axs[state].legend()
-            if state >= 2:  # Only set x-label on bottom rows
-                axs[state].set_xlabel('Theta')
-            if state == 0 or state == 2:  # Only set y-label on left columns
-                axs[state].set_ylabel('Value')
-        plt.tight_layout()
-        plt.suptitle('H*v All Types for All States')
-        plt.subplots_adjust(top=0.92)
-        plt.savefig(f'{plot_dir}/all_types_for_combined/all_states_all_types.png')
-        plt.close()
-
-        # Create a single 2x2 grid plot showing all three types of values
-        fig, axs = plt.subplots(2, 2, figsize=(12, 10), sharex=True, sharey=True)
-        axs = axs.flatten()
-        
-        plot_types = [
-            ("Magnitude", np.abs, "|H*v|"),
-            ("Real", np.real, "Re(H*v)"),
-            ("Imaginary", np.imag, "Im(H*v)")
-        ]
-        
-        for j in range(4):  # Just plot components for one state at a time
-            if j < 3:  # For first three components
-                plot_type, func, label = plot_types[j]
-                axs[j].plot(theta_vals, func(Hv_results[:, j]), 'r-', label=label)
-                
-                axs[j].set_title(f'Component {j} - {plot_type}')
-                axs[j].grid(True)
-                if j == 0 or j == 2:  # Only set y-label on left columns
-                    axs[j].set_ylabel('Value')
-                if j >= 2:  # Only set x-label on bottom rows
-                    axs[j].set_xlabel('Theta')
-                
-                if j == 0:  # Only show legend once
-                    axs[j].legend()
-            else:  # For the fourth component, show all three types in one plot
-                axs[j].plot(theta_vals, np.abs(Hv_results[:, j]), 'r-', label='|H*v|')
-                axs[j].plot(theta_vals, np.real(Hv_results[:, j]), 'b-', label='Re(H*v)')
-                axs[j].plot(theta_vals, np.imag(Hv_results[:, j]), 'g-', label='Im(H*v)')
-                
-                axs[j].set_title(f'Component {j} - All Types')
-                axs[j].grid(True)
-                axs[j].set_ylabel('Value')
-                axs[j].set_xlabel('Theta')
-                axs[j].legend()
-        
-        plt.tight_layout()
-        plt.suptitle(f'H*v Components for State {state}')
-        plt.subplots_adjust(top=0.92)
-        
-        #plt.savefig(f'{plot_dir}/combined/H_times_v_state_{state}_combined.png')
-        plt.close()
-        """
-        #save the Hv_results
-        np.save(f'{npy_dir}/H_times_v_state_{state}', Hv_results)
-        #save the lambda_v
-        np.save(f'{npy_dir}/lambda_v_state_{state}', lambda_v)
-        """
-    # Create combined plot for all states
-    num_states = 4
-    fig, axs = plt.subplots(num_states, 4, figsize=(20, 15))
-    
     for state in range(num_states):
-        #Hv_results = np.load(f'{npy_dir}/H_times_v_state_{state}.npy')
-        
-        # Plot magnitude
-        axs[state, 0].plot(theta_vals, np.abs(Hv_results[:, 0]), 'r-', label='|H*v|')
-        axs[state, 0].set_title(f'State {state} - Magnitude')
-        axs[state, 0].grid(True)
-        if state == 0:
-            axs[state, 0].legend()
-        
-        # Plot real part
-        axs[state, 1].plot(theta_vals, np.real(Hv_results[:, 0]), 'b-', label='Re(H*v)')
-        axs[state, 1].set_title(f'State {state} - Real')
-        axs[state, 1].grid(True)
-        
-        # Plot imaginary part
-        axs[state, 2].plot(theta_vals, np.imag(Hv_results[:, 0]), 'g-', label='Im(H*v)')
-        axs[state, 2].set_title(f'State {state} - Imaginary')
-        axs[state, 2].grid(True)
-        
-        # Plot all three types
-        axs[state, 3].plot(theta_vals, np.abs(Hv_results[:, 0]), 'r-', label='|H*v|')
-        axs[state, 3].plot(theta_vals, np.real(Hv_results[:, 0]), 'b-', label='Re(H*v)')
-        axs[state, 3].plot(theta_vals, np.imag(Hv_results[:, 0]), 'g-', label='Im(H*v)')
-        axs[state, 3].set_title(f'State {state} - All Types')
-        axs[state, 3].grid(True)
-        axs[state, 3].legend()
-        
-        # Set labels only for bottom row
-        if state == num_states - 1:
-            for i in range(4):
-                axs[state, i].set_xlabel('Theta')
-        
-        # Set y-labels only for first column
-        axs[state, 0].set_ylabel(f'State {state}')
+        for j, theta in enumerate(theta_vals):
+            Hv_results[j] = H_thetas[j] @ eigenstates[j, :, state]
 
+    # MAYBE THIS COULD BE A PROBLEM
+    fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+    axs = axs.flatten()
+    for states in range(4):
+        plot_type = "Magnitude"
+        axs[states].plot(theta_vals, np.abs(Hv_results[:, states]), 'r-', label='|H*v|')
+        axs[states].set_title(f'State {states} - {plot_type}')
+        axs[states].grid(True)
+        if states == 0:
+            axs[states].legend()
+        if states >= 2:  # Only set x-label on bottom rows
+            axs[states].set_xlabel('Theta')
+        if states == 0 or states == 2:  # Only set y-label on left columns
+            axs[states].set_ylabel('Value')
     plt.tight_layout()
-    plt.suptitle('H*v Components for All States')
-    plt.subplots_adjust(top=0.95)
-    #plt.savefig(f'{plot_dir}/combined_for_states/all_states_combined.png')
+    plt.suptitle('H*v Magnitudes for All States')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/abs/all_states_magnitudes.png')
     plt.close()
+
+    # Real part plots
+    fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+    axs = axs.flatten()
+    for state in range(4):
+        plot_type = "Real"
+        axs[state].plot(theta_vals, np.real(Hv_results[:, state]), 'b-', label='Re(H*v)')
+        axs[state].set_title(f'State {state} - {plot_type}')
+        axs[state].grid(True)
+        if state >= 2:  # Only set x-label on bottom rows
+            axs[state].set_xlabel('Theta')
+        if state == 0 or state == 2:  # Only set y-label on left columns
+            axs[state].set_ylabel('Value')
+    plt.tight_layout()
+    plt.suptitle('H*v Real Parts for All States')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/real/all_states_real.png')
+    plt.close()
+
+    # Imaginary part plots
+    fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+    axs = axs.flatten()
+    for state in range(4):
+        plot_type = "Imaginary"
+        axs[state].plot(theta_vals, np.imag(Hv_results[:, state]), 'g-', label='Im(H*v)')
+        axs[state].set_title(f'State {state} - {plot_type}')
+        axs[state].grid(True)
+        if state >= 2:  # Only set x-label on bottom rows
+            axs[state].set_xlabel('Theta')
+        if state == 0 or state == 2:  # Only set y-label on left columns
+            axs[state].set_ylabel('Value')
+    plt.tight_layout()
+    plt.suptitle('H*v Imaginary Parts for All States')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/imag/all_states_imaginary.png')
+    plt.close()
+
+    # All types plots
+    fig, axs = plt.subplots(2, 2, figsize=(15, 10), sharex=True, sharey=True)
+    axs = axs.flatten()
+    for state in range(4):
+        plot_type = "All Types"
+        axs[state].plot(theta_vals, np.abs(Hv_results[:, state]), 'r-', label='|H*v|')
+        axs[state].plot(theta_vals, np.real(Hv_results[:, state]), 'b-', label='Re(H*v)')
+        axs[state].plot(theta_vals, np.imag(Hv_results[:, state]), 'g-', label='Im(H*v)')
+        axs[state].set_title(f'State {state} - {plot_type}')
+        axs[state].grid(True)
+        axs[state].legend()
+        if state >= 2:  # Only set x-label on bottom rows
+            axs[state].set_xlabel('Theta')
+        if state == 0 or state == 2:  # Only set y-label on left columns
+            axs[state].set_ylabel('Value')
+    plt.tight_layout()
+    plt.suptitle('H*v All Types for All States')
+    plt.subplots_adjust(top=0.92)
+    plt.savefig(f'{plot_dir}/all_types_for_combined/all_states_all_types.png')
+    plt.close()
+
 
     # Calculate Berry phase using the original method
     berry_phase_calculator_original = NewBerryPhaseCalculator(hamiltonian, r_theta, eigenvectors, theta_vals)
