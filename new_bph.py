@@ -127,7 +127,7 @@ class Hamiltonian:
         Returns:
         float: The approximated transitonal dipole moment
         """
-        return 0.2 + (R - R0) / 100
+        return 0.2 + (R - R0) / 10
 
     def construct_matrix(self, theta):
         """
@@ -415,7 +415,7 @@ if __name__ == "__main__":
     aVa = 5.0
     c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 1.0  # Shift in x direction
-    d = 1.0  # Radius of the circle, use unit circle for bigger radius
+    d = 0.2  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
@@ -453,9 +453,25 @@ if __name__ == "__main__":
     H_thetas = H_theta = hamiltonian.H_thetas()
     r_theta = R_thetas = hamiltonian.R_thetas()
     
+    def fix_sign(eigvecs, printout):
+        # Ensure positive real part of eigenvectors
+        with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
+            for i in range(eigvecs.shape[0]): #for every theta
+                for j in range(eigvecs.shape[2]): #for every eigvec
+                    s = 0.0
+                    for k in range(eigvecs.shape[1]): #for every component
+                        s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                    if s < 0:
+                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
+                        log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
+                        log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
+                        eigvecs[i, :, j] *= -1
+        return eigvecs
     # Calculate eigenvectors
-    eigenvectors = eigvecs_all = np.array([np.linalg.eigh(H)[1] for H in H_theta])
-    eigvals_all = np.array([np.linalg.eigh(H)[0] for H in H_theta])
+    eigenvectors = eigvecs_all = fix_sign(np.array([np.linalg.eigh(H)[1] for H in H_theta]), printout=0)
+    eigenvectors = fix_sign(eigenvectors, printout=1)
+
+    eigvals_all = np.array([np.linalg.eigh(H)[0] for H in H_theta]) #keruljuk a diagonalizalast megegyszer
     
     # Calculate overlaps between eigenstates at different theta values
     overlaps = np.zeros((eigenvectors.shape[2], len(theta_vals)), dtype=complex)
@@ -493,8 +509,8 @@ if __name__ == "__main__":
                 # Use np.any() to check if any element exceeds the threshold
                 if np.any(np.abs(np.imag(eigenvectors[i, :, state])) > 1e-14):  
                     file.write(f'Imaginary part of eigenvector {state} at theta {theta_vals[i]} is above 1e-14 treshold\n')
-                else:
-                    file.write(f"All of the imaginary parts of the eigenvector {state} components at theta {theta_vals[i]} are zero.\n")
+                #else:
+                #    file.write(f"All of the imaginary parts of the eigenvector {state} components at theta {theta_vals[i]} are zero.\n")
 
     # Save overlaps
     np.save(f'{npy_dir}/overlaps_{state}.npy', overlaps)
@@ -522,47 +538,24 @@ if __name__ == "__main__":
     plt.savefig(f'{plot_dir}/overlap.png')
     plt.close()
     
-    # Plot eigenvector components (4 subplots in a 2x2 grid for each eigenstate)
-    for state in range(eigenvectors.shape[2]):
-        plt.figure(figsize=(12, 12))
-        plt.suptitle(f'Eigenvector Components - State {state}', fontsize=16)  # Overall title
-        
-        plt.subplot(2, 2, 1)  # Top left subplot
-        plt.plot(theta_vals, np.real(eigenvectors[:, 0, state]), label='Re(Comp 0)')
-        plt.plot(theta_vals, np.imag(eigenvectors[:, 0, state]), label='Im(Comp 0)')
-        plt.plot(theta_vals, np.abs(eigenvectors[:, 0, state]), label='Abs(Comp 0)')
-        plt.xlabel('Theta')
-        plt.ylabel('Component 0')
-        plt.legend()
-        
-        plt.subplot(2, 2, 2)  # Top right subplot
-        plt.plot(theta_vals, np.real(eigenvectors[:, 1, state]), label='Re(Comp 1)')
-        plt.plot(theta_vals, np.imag(eigenvectors[:, 1, state]), label='Im(Comp 1)')
-        plt.plot(theta_vals, np.abs(eigenvectors[:, 1, state]), label='Abs(Comp 1)')
-        plt.xlabel('Theta')
-        plt.ylabel('Component 1')
-        plt.legend()
-        
-        plt.subplot(2, 2, 3)  # Bottom left subplot
-        plt.plot(theta_vals, np.real(eigenvectors[:, 2, state]), label='Re(Comp 2)')
-        plt.plot(theta_vals, np.imag(eigenvectors[:, 2, state]), label='Im(Comp 2)')
-        plt.plot(theta_vals, np.abs(eigenvectors[:, 2, state]), label='Abs(Comp 2)')
-        plt.xlabel('Theta')
-        plt.ylabel('Component 2')
-        plt.legend()
-        
-        plt.subplot(2, 2, 4)  # Bottom right subplot
-        plt.plot(theta_vals, np.real(eigenvectors[:, 3, state]), label='Re(Comp 3)')
-        plt.plot(theta_vals, np.imag(eigenvectors[:, 3, state]), label='Im(Comp 3)')
-        plt.plot(theta_vals, np.abs(eigenvectors[:, 3, state]), label='Abs(Comp 3)')
-        plt.xlabel('Theta')
-        plt.ylabel('Component 3')
-        plt.legend()
-        
-        plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
-        plt.savefig(f'{plot_dir}/eigenvector_components_state_{state}_2x2.png')
-        plt.close()
 
+    # Plot eigenvector components (4 subplots in a 2x2 grid for each eigenstate)
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors', fontsize=16)  # Overall title
+    for state in range(eigenvectors.shape[2]):
+        #nest a for loop for vec_comp and use it like: :, state, vect_comp
+        for vect_comp in range(4):
+            plt.subplot(2, 2, vect_comp + 1)  # Top left subplot
+            plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(Comp {vect_comp})')
+            #plt.plot(theta_vals, np.imag(eigenvectors[:, state, vect_comp]), label=f'Im(Comp {vect_comp})')
+            #plt.plot(theta_vals, np.abs(eigenvectors[:, state, vect_comp]), label=f'Abs(Comp {vect_comp})')
+            plt.xlabel('Theta')
+            plt.ylabel(f'Component {vect_comp}')
+            plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{plot_dir}/eigenvector_components_for_eigvec_{state}_2x2.png')
+    plt.close()
+    
     # Calculate H*v for each theta value
     num_states = eigvecs_all.shape[2]
 
@@ -590,6 +583,14 @@ if __name__ == "__main__":
     plt.ylabel('Eigenvalue')
     plt.title(f'Eigenvalues vs Theta')
     plt.savefig(f'{plot_dir}/eigenvalues.png')
+    plt.close()
+    
+    plt.plot(theta_vals, eigenvalues[:,1], 'b-')
+    plt.plot(theta_vals, eigenvalues[:,2], 'g-')
+    plt.xlabel('Theta')
+    plt.ylabel('Eigenvalue')
+    plt.title(f'Eigenvalues vs Theta')
+    plt.savefig(f'{plot_dir}/eigenvalues_middle2.png')
     plt.close()
 
     #plot R_thetas 3 components for each R_theta in R_thetas vs theta in theta_vals

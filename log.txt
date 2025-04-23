@@ -32,3 +32,6 @@ Vx plots saved to figures directory.
 
 
 Imprtant Note: we need a proper gauge fixing: https://arxiv.org/pdf/1708.03230
+
+
+s += np.real(eigvecs[i, j, k]) * np.real(eigvecs[i-1, j, k]) #dot product of current and previous eigvec
