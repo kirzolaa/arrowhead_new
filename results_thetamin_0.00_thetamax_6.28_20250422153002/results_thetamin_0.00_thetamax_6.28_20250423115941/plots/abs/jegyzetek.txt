@@ -1,5 +1,0 @@
-real --> elojelvaltasok --> el kellene vaélahogyan tuntetni
-eigvecs-re --> ne state x legyen, hanem eigenvec x
-2pi v 0 berry fazis
-energia --> rogz theta es d megy
-d --> num_points true or false for theta
