@@ -1,5 +1,5 @@
 from new_bph import Hamiltonian
-
+from threeD_fig_eigenvec_comp_comps import fix_sign
 import numpy as np
 import matplotlib.pyplot as plt
 import os
@@ -7,10 +7,6 @@ import sys
 import cupy as cp
 
 def getting_eigenvalues_gpu_drange(drange, H_thetas_drange):
-    # Convert drange to cupy array for GPU processing
-    d_values = cp.array(drange)
-    
-    # Initialize an array to store all eigenvalues
     num_d = len(drange)
     num_points = H_thetas_drange.shape[1]
     eigvals_all = cp.zeros((num_d, num_points, 4), dtype=cp.float64)  # 4 eigenvalues per Hamiltonian
@@ -18,15 +14,19 @@ def getting_eigenvalues_gpu_drange(drange, H_thetas_drange):
     # Convert all Hamiltonians to cupy arrays once
     H_thetas_gpu = cp.array(H_thetas_drange)
     
-    # Calculate eigenvalues for each d value
-    for i in range(num_d):
-        # Get the Hamiltonians for this d value
+    for i, d in enumerate(drange):
+        print(f"Processing d = {d:.2f}")
         H_thetas_for_d = H_thetas_gpu[i]
         
         # Calculate eigenvalues using cupy
         eigvals_gpu = cp.array([cp.linalg.eigh(H)[0] for H in H_thetas_for_d])
         # Calculate eigenvectors using cupy
         eigvecs_gpu = cp.array([cp.linalg.eigh(H)[1] for H in H_thetas_for_d])
+        
+        # Fix eigenvector signs on GPU
+        eigvecs_gpu = fix_sign(eigvecs_gpu)
+        eigvecs_gpu = fix_sign(eigvecs_gpu)
+        
         # Store the eigenvalues directly in the CuPy array
         eigvals_all[i] = eigvals_gpu
         # Store the eigenvectors directly in the CuPy array
