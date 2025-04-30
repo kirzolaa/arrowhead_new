@@ -18,8 +18,8 @@ def create_perfect_orthogonal_vectors(R_0=(0, 0, 0), d=1, theta=0):
     R_0 = np.array(R_0)
     
     # Define the basis vectors orthogonal to the (1,1,1) direction
-    basis1 = np.array([1, -1/2, -1/2])  # First basis vector
-    basis2 = np.array([0, -1/2, 1/2])   # Second basis vector
+    basis1 = np.array([+2, -1, -1])  # First basis vector
+    basis2 = np.array([ 0, -1, +1])   # Second basis vector
     
     # Normalize the basis vectors
     basis1 = basis1 / np.linalg.norm(basis1)
