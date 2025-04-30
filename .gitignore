@@ -19,6 +19,10 @@ ENV/
 *.swp
 *.swo
 
+# large files
+3D_figures_multiprocessed/eigvecs_sign_flips_0.out
+3D_figures_multiprocessed/eigvecs_sign_flips_1.out
+
 # Repository folder
 Arrowhead/
 

@@ -10,20 +10,26 @@ import sys
 
 def fix_sign(eigvecs, printout):
     # Ensure positive real part of eigenvectors
-    with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
-        for i in range(eigvecs.shape[0]): #for every theta
-            for j in range(eigvecs.shape[2]): #for every eigvec
-                s = 0.0
-                for k in range(eigvecs.shape[1]): #for every component
-                    s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+    #with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
+    for i in range(eigvecs.shape[0]): #for every theta
+        for j in range(eigvecs.shape[2]): #for every eigvec
+            s = 0.0
+            for k in range(eigvecs.shape[1]): #for every component
+                s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                """
                 if s < 0:
                     log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
                     log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
                     log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
                     eigvecs[i, :, j] *= -1
+                """
     return eigvecs
 
 def process_c_x_shift_gpu(c, x_shift, omega, aVx, aVa, R_0, d, theta_vals, output_dir):
+    # Log current parameters on the console, use clear console befor printing
+    os.system('clear')
+    print(f'Processing c={c}, x_shift={x_shift}')
+    
     # Create Hamiltonian with NumPy arrays since vector_utils expects NumPy
     hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c, R_0, d, theta_vals)
     H_thetas = hamiltonian.H_thetas()
@@ -34,11 +40,11 @@ def process_c_x_shift_gpu(c, x_shift, omega, aVx, aVa, R_0, d, theta_vals, outpu
     # Calculate eigenvectors using cupy
     eigenvectors_gpu = cp.array([cp.linalg.eigh(H)[1] for H in H_thetas_gpu])
     eigenvectors_gpu = fix_sign(cp.asnumpy(eigenvectors_gpu), printout=0)
-    eigenvectors_gpu = fix_sign(cp.asnumpy(eigenvectors_gpu), printout=1)
+    eigenvectors_gpu = fix_sign(cp.asnumpy(eigenvectors_gpu), printout=0)
     
     # Convert back to numpy for plotting
     eigenvectors = cp.asnumpy(eigenvectors_gpu)
-    
+    """
     # Plotting remains the same as before
     plt.figure(figsize=(12, 12))
     plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c}, x_shift={x_shift})', fontsize=16)
@@ -54,6 +60,7 @@ def process_c_x_shift_gpu(c, x_shift, omega, aVx, aVa, R_0, d, theta_vals, outpu
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     plt.savefig(f'{output_dir}/2D_figures/c_{c}_x_shift_{x_shift}.png')
     plt.close()
+    """
     
     return np.real(eigenvectors)
 
@@ -105,8 +112,8 @@ if __name__ == "__main__":
 
 
     #add a c and a x_shift parameter range
-    c_range = np.linspace(0.01, 1, 100)
-    x_shift_range = np.linspace(0.01, 1, 100)
+    c_range = np.linspace(0.001, 1, 25)
+    x_shift_range = np.linspace(0.001, 1, 25)
 
     #create a directory for the output
     output_dir = '3D_figures_multiprocessed'
@@ -216,6 +223,21 @@ if __name__ == "__main__":
         
         # Convert results to NumPy arrays
         eigvecs_c_shiftre_gpu = [cp.asnumpy(result) for result in results]
+
+        for (c_val, x_shift_val), eigenvectors in zip(args, eigvecs_c_shiftre_gpu):
+            plt.figure(figsize=(12, 12))
+            plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_val}, x_shift={x_shift_val})', fontsize=16)
+            for state in range(eigenvectors.shape[2]):
+                for vect_comp in range(4):
+                    plt.subplot(2, 2, vect_comp + 1)
+                    plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(State {state})')
+                    plt.xlabel('Theta')
+                    plt.ylabel(f'Component {vect_comp}')
+                    plt.legend()
+            
+            plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+            plt.savefig(f'{output_dir}/2D_figures/c_{c_val}_x_shift_{x_shift_val}.png')
+            plt.close()
         
         # Combine results
         eigvecs_c_shiftre_gpu = np.array(eigvecs_c_shiftre_gpu)
