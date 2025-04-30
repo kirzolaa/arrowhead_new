@@ -526,7 +526,9 @@ class NewBerryPhaseCalculator:
 
     def calculate_berry_connection(self):
         """
-        Calculate Berry connection A_n(R) ≈ <n(R_i)| i (|n(R_{i+1})> - |n(R_i)>) / (R_{i+1} - R_i)
+
+        MODOSITANI
+        Calculate Berry connection A_n(R) ≈ <n(R_i)| i (|n(R_{i-1})> - |n(R_{i-1})>) / (R_{i+1} - R_i)
         Here, the division by a vector should be interpreted element-wise for each component of dR.
         The result A_R will be a matrix where A_R[i, n, j] is the j-th component of the Berry connection
         for the n-th state at the i-th point.
@@ -699,7 +701,7 @@ if __name__ == "__main__":
     aVx = 1.0
     aVa = 5.0
     c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
-    x_shift = 0.1  # Shift in x direction
+    x_shift = 0.01  # Shift in x direction
     d = 0.2  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
