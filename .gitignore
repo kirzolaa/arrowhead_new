@@ -40,3 +40,7 @@ ssh/
 3D_figures/
 3D_figures_multiprocessed/
 eigenvals_vs_basis1_basis2/
+eigenvals_vs_basis1_basis2_centered_R_0/
+eigenvals_vs_basis1_basis2_all_gap_plots/
+energy_gap_plots/
+energy_gap_plots_all/
