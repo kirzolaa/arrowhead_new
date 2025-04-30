@@ -24,8 +24,8 @@ def getting_eigenvalues_gpu_drange(drange, H_thetas_drange):
         eigvecs_gpu = cp.array([cp.linalg.eigh(H)[1] for H in H_thetas_for_d])
         
         # Fix eigenvector signs on GPU
-        eigvecs_gpu = fix_sign(eigvecs_gpu)
-        eigvecs_gpu = fix_sign(eigvecs_gpu)
+        eigvecs_gpu = fix_sign(eigvecs_gpu, 0)
+        eigvecs_gpu = fix_sign(eigvecs_gpu, 0)
         
         # Store the eigenvalues directly in the CuPy array
         eigvals_all[i] = eigvals_gpu
