@@ -1,7 +1,62 @@
-from new_bph import *
+from new_bph import Hamiltonian
 
 import multiprocessing as mp
 from functools import partial
+import cupy as cp
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import sys
+
+def fix_sign(eigvecs, printout):
+    # Ensure positive real part of eigenvectors
+    with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
+        for i in range(eigvecs.shape[0]): #for every theta
+            for j in range(eigvecs.shape[2]): #for every eigvec
+                s = 0.0
+                for k in range(eigvecs.shape[1]): #for every component
+                    s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                if s < 0:
+                    log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
+                    log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
+                    log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
+                    eigvecs[i, :, j] *= -1
+    return eigvecs
+
+def process_c_x_shift_gpu(c, x_shift, omega, aVx, aVa, R_0, d, theta_vals, output_dir):
+    # Create Hamiltonian with NumPy arrays since vector_utils expects NumPy
+    hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c, R_0, d, theta_vals)
+    H_thetas = hamiltonian.H_thetas()
+    
+    # Convert Hamiltonians to cupy arrays
+    H_thetas_gpu = cp.array(H_thetas)
+    
+    # Calculate eigenvectors using cupy
+    eigenvectors_gpu = cp.array([cp.linalg.eigh(H)[1] for H in H_thetas_gpu])
+    eigenvectors_gpu = fix_sign(cp.asnumpy(eigenvectors_gpu), printout=0)
+    eigenvectors_gpu = fix_sign(cp.asnumpy(eigenvectors_gpu), printout=1)
+    
+    # Convert back to numpy for plotting
+    eigenvectors = cp.asnumpy(eigenvectors_gpu)
+    
+    # Plotting remains the same as before
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c}, x_shift={x_shift})', fontsize=16)
+    
+    for state in range(eigenvectors.shape[2]):
+        for vect_comp in range(4):
+            plt.subplot(2, 2, vect_comp + 1)
+            plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(State {state})')
+            plt.xlabel('Theta')
+            plt.ylabel(f'Component {vect_comp}')
+            plt.legend()
+    
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig(f'{output_dir}/2D_figures/c_{c}_x_shift_{x_shift}.png')
+    plt.close()
+    
+    return np.real(eigenvectors)
+
 
 def process_c_x_shift(c, x_shift, omega, aVx, aVa, R_0, d, theta_vals, output_dir):
     hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c, R_0, d, theta_vals)
@@ -118,6 +173,7 @@ if __name__ == "__main__":
 
             eigvecs_c_shiftre.append(np.real(eigenvectors))
     """
+    """
     # Create a pool of processes
     with mp.Pool(processes=mp.cpu_count()) as pool:
         # Create partial function with fixed parameters
@@ -139,10 +195,35 @@ if __name__ == "__main__":
         # Combine results
         eigvecs_c_shiftre = np.array(results)
         print(f"Final shape: {eigvecs_c_shiftre.shape}")
+    """
+    # Create a pool of GPU processes
+    with mp.Pool(processes=1) as pool:  # Use single process for GPU
+        # Create partial function with fixed parameters
+        func = partial(process_c_x_shift_gpu,
+                      omega=omega, 
+                      aVx=aVx, 
+                      aVa=aVa, 
+                      R_0=R_0, 
+                      d=d, 
+                      theta_vals=theta_vals, 
+                      output_dir=output_dir)
+        
+        # Create list of arguments
+        args = [(c, x_shift) for c in c_range for x_shift in x_shift_range]
+        
+        # Process in parallel
+        results = pool.starmap(func, args)
+        
+        # Convert results to NumPy arrays
+        eigvecs_c_shiftre_gpu = [cp.asnumpy(result) for result in results]
+        
+        # Combine results
+        eigvecs_c_shiftre_gpu = np.array(eigvecs_c_shiftre_gpu)
+        print(f"Final shape: {eigvecs_c_shiftre_gpu.shape}")
 
-    eigvecs_c_shiftre = np.array(eigvecs_c_shiftre)  # shape will be (25, 5000, 4, 4)
-    eigvecs_c_shiftre = eigvecs_c_shiftre.reshape(len(c_range), len(x_shift_range), len(theta_vals), 4, 4)
-    print(eigvecs_c_shiftre.shape)
+    # Reshape for plotting
+    eigvecs_c_shiftre_gpu = eigvecs_c_shiftre_gpu.reshape(len(c_range), len(x_shift_range), len(theta_vals), 4, 4)
+    print(eigvecs_c_shiftre_gpu.shape)
     # Now shape: (5, 5, 5000, 4, 4)
 
     # After calculating eigenvectors
@@ -159,7 +240,7 @@ if __name__ == "__main__":
         
         for comp in range(4):
             ax = plt.subplot(2, 2, comp + 1, projection='3d')
-            Z = eigvecs_c_shiftre[:, :, :, state, comp]  # shape: (5, 5, 5000)
+            Z = eigvecs_c_shiftre_gpu[:, :, :, state, comp]  # shape: (5, 5, 5000)
         
             # Note: T, C, Z all have shape (5, 5, 5000), as required
             ax.plot_surface(T[:,0,:], C[:,0,:], Z[:,0,:], cmap='viridis')  # Use slices to plot 2D surface
@@ -183,7 +264,7 @@ if __name__ == "__main__":
 
         for comp in range(4):
             ax = plt.subplot(2, 2, comp + 1, projection='3d')
-            Z = eigvecs_c_shiftre[fixed_c_idx, :, :, state, comp]  # shape: (x_shift, theta)
+            Z = eigvecs_c_shiftre_gpu[fixed_c_idx, :, :, state, comp]  # shape: (x_shift, theta)
             
             ax.plot_surface(T[fixed_c_idx, :, :], X[fixed_c_idx, :, :], Z, cmap='viridis')
             
