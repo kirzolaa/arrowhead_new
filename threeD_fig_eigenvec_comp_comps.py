@@ -1,5 +1,37 @@
 from new_bph import *
 
+import multiprocessing as mp
+from functools import partial
+
+def process_c_x_shift(c, x_shift, omega, aVx, aVa, R_0, d, theta_vals, output_dir):
+    hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c, R_0, d, theta_vals)
+    H_thetas = hamiltonian.H_thetas()
+    r_theta = hamiltonian.R_thetas()
+    
+    # Calculate eigenvectors
+    eigenvectors = fix_sign(np.array([np.linalg.eigh(H)[1] for H in H_thetas]), printout=0)
+    eigenvectors = fix_sign(eigenvectors, printout=1)
+
+    eigvals_all = np.array([np.linalg.eigh(H)[0] for H in H_thetas])
+    
+    # Plot eigenvector components
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c}, x_shift={x_shift})', fontsize=16)
+    
+    for state in range(eigenvectors.shape[2]):
+        for vect_comp in range(4):
+            plt.subplot(2, 2, vect_comp + 1)
+            plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(State {state})')
+            plt.xlabel('Theta')
+            plt.ylabel(f'Component {vect_comp}')
+            plt.legend()
+    
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])
+    plt.savefig(f'{output_dir}/2D_figures/c_{c}_x_shift_{x_shift}.png')
+    plt.close()
+    
+    return np.real(eigenvectors)
+
 if __name__ == "__main__":
     
     #let a be an aVx and an aVa parameter
@@ -18,8 +50,8 @@ if __name__ == "__main__":
 
 
     #add a c and a x_shift parameter range
-    c_range = np.linspace(0.01, 1, 5)
-    x_shift_range = np.linspace(0.01, 1, 5)
+    c_range = np.linspace(0.01, 1, 100)
+    x_shift_range = np.linspace(0.01, 1, 100)
 
     #create a directory for the output
     output_dir = '3D_figures_multiprocessed'
@@ -51,7 +83,7 @@ if __name__ == "__main__":
                         log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
                         eigvecs[i, :, j] *= -1
         return eigvecs
-    
+    """
     #run throgh the c and x_shift ranges
     eigvecs_c_shiftre = []
     for c in c_range:
@@ -85,7 +117,29 @@ if __name__ == "__main__":
             plt.close()
 
             eigvecs_c_shiftre.append(np.real(eigenvectors))
-    
+    """
+    # Create a pool of processes
+    with mp.Pool(processes=mp.cpu_count()) as pool:
+        # Create partial function with fixed parameters
+        func = partial(process_c_x_shift, 
+                      omega=omega, 
+                      aVx=aVx, 
+                      aVa=aVa, 
+                      R_0=R_0, 
+                      d=d, 
+                      theta_vals=theta_vals, 
+                      output_dir=output_dir)
+        
+        # Create list of arguments
+        args = [(c, x_shift) for c in c_range for x_shift in x_shift_range]
+        
+        # Process in parallel
+        results = pool.starmap(func, args)
+        
+        # Combine results
+        eigvecs_c_shiftre = np.array(results)
+        print(f"Final shape: {eigvecs_c_shiftre.shape}")
+
     eigvecs_c_shiftre = np.array(eigvecs_c_shiftre)  # shape will be (25, 5000, 4, 4)
     eigvecs_c_shiftre = eigvecs_c_shiftre.reshape(len(c_range), len(x_shift_range), len(theta_vals), 4, 4)
     print(eigvecs_c_shiftre.shape)

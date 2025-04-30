@@ -698,7 +698,7 @@ if __name__ == "__main__":
     #let a be an aVx and an aVa parameter
     aVx = 1.0
     aVa = 5.0
-    c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
+    c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 0.1  # Shift in x direction
     d = 0.2  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
