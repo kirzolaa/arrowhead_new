@@ -1,0 +1,17 @@
+add eigen to the state titles
+class Molecule: tdm - R
+Vx és Va ---> R szinten (függ)
+formulation ---> ava es avx legyen a helyett, frissiteni a tdm-et is
+
+theta ---> <fi_2| derive_theta |fi_1>
+
+2. TAU MATRIX FELEPITESE: T01 ES T10 EGYMAS MINUS EGYSZERESEI (ELLENORIZNI IS LEHET)
+tsa - ketallapot 12 és 21 tau (T)
+tau12 v tau 21 --> <fi_2| derive_theta |fi_1> --> integrate from 0 to 2*pi tau_12 d_theta
+ha nagyon elter pi egesz szamu tobbszorosetol --> 4x4-es tau matrix kell (pl. 3.05 v smt)
+
+
+todo #1: tau es berry fazis, rogz d-re
+todo #2: rogz c_const es x_shift mellett, egy olyan abra, ahol a harom db R foggvenyeben ki van rajzolva vmi: bazis: metszet meroleges (/home/zoltan/arrowhead_new/results_thetamin_0.00_thetamax_6.28_20250430121802/vectors/perfect_circle_orthogonal_plane.png) ---> bazis x es bazis y, z pedig energia(V_a es V_x fgv) sjt-értékekkel
+-->elvben osszeernek az sjt-ertekek nullanal --> check!!!!!!!!!!
+megnezni sok d-re!!!!!!!!!!!!!!!!
