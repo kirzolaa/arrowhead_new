@@ -1,0 +1,77 @@
+plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_range[0]}...{c_range[-1]}, x_shift={x_shift_range[0]}...{x_shift_range[-1]})', fontsize=16)  # Overall title
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(theta_vals, np.real(eigvecs_c_shiftre[i]))
+        plt.xlabel('Theta')
+        plt.ylabel(f'Component {i}')
+        plt.zlabel('c const')
+        plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{output_dir}/3D_figures/eigenvector_components_theta_comp_const.png')
+    plt.close()
+
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_range[0]}...{c_range[-1]}, x_shift={x_shift_range[0]}...{x_shift_range[-1]})', fontsize=16)  # Overall title
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(theta_vals, np.real(eigvecs_c_shiftre[i]))
+        plt.xlabel('Theta')
+        plt.ylabel(f'Component {i}')
+        plt.zlabel('shift')
+        plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{output_dir}/3D_figures/eigenvector_components_theta_shift.png')
+    plt.close()
+
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_range[0]}...{c_range[-1]}, x_shift={x_shift_range[0]}...{x_shift_range[-1]})', fontsize=16)  # Overall title
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(theta_vals, np.real(eigvecs_c_shiftre[i]))
+        plt.xlabel('c const')
+        plt.ylabel(f'Component {i}')
+        plt.zlabel('Theta')
+        plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{output_dir}/3D_figures/eigenvector_components_c_theta.png')
+    plt.close()
+
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_range[0]}...{c_range[-1]}, x_shift={x_shift_range[0]}...{x_shift_range[-1]})', fontsize=16)  # Overall title
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(theta_vals, np.real(eigvecs_c_shiftre[i]))
+        plt.xlabel('shift')
+        plt.ylabel(f'Component {i}')
+        plt.zlabel('Theta')
+        plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{output_dir}/3D_figures/eigenvector_components_shift_theta.png')
+    plt.close()
+    
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_range[0]}...{c_range[-1]}, x_shift={x_shift_range[0]}...{x_shift_range[-1]})', fontsize=16)  # Overall title
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(theta_vals, np.real(eigvecs_c_shiftre[i]))
+        plt.xlabel('shift')
+        plt.ylabel(f'Component {i}')
+        plt.zlabel('c const')
+        plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{output_dir}/3D_figures/eigenvector_components_shift_c.png')
+    plt.close()
+
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors\n(c={c_range[0]}...{c_range[-1]}, x_shift={x_shift_range[0]}...{x_shift_range[-1]})', fontsize=16)  # Overall title
+    for i in range(4):
+        plt.subplot(2, 2, i + 1)
+        plt.plot(theta_vals, np.real(eigvecs_c_shiftre[i]))
+        plt.xlabel('c const')
+        plt.ylabel(f'Component {i}')
+        plt.zlabel('shift')
+        plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{output_dir}/3D_figures/eigenvector_components_c_shift.png')
+    plt.close()

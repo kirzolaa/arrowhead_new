@@ -115,7 +115,7 @@ class Hamiltonian:
         numpy.ndarray: An array of the components of the potential Va
         """
         return [self.aVa * ((R_theta_1d_array[i] - self.x_shift)**2 + self.c) for i in range(len(R_theta_1d_array))]
-        
+
     def tdm(self, R, R0):
         """
         Returns the approximated transitonal dipole moment for a given R and R0
@@ -140,9 +140,20 @@ class Hamiltonian:
         numpy.ndarray: The Hamiltonian matrix
         """
         R_theta_val = self.R_theta(theta)
+
+
+
+        """
         Vx = [self.aVx * (R_theta_val[i] ** 2) for i in range(3)]
-        Va = [self.aVa * (R_theta_val[i] ** 2) for i in range(3)]
+        Va = [self.aVa * (R_theta_val[i] ** 2) + self.c for i in range(3)] #add a smol c_const eltolas ide
         
+
+        """
+        #Ezekkel valamiert nem igazan kapunk jo eredmenyeket, eddig
+        Vx = self.Vx(R_theta_val)
+        Va = self.Va(R_theta_val)
+        
+
         H = np.zeros((4, 4), dtype=complex)
         sumVx = sum(Vx)
         H[0, 0] = hbar * self.omega + sumVx
@@ -204,6 +215,280 @@ class Hamiltonian:
             R_thetas = np.array(self.R_thetas())
         return [self.Va(R_theta) for R_theta in R_thetas]
         
+class HamiltinianControlledByParameter_dOrThetaRange(Hamiltonian):
+    """
+    Hamiltonian controlled by parameter d or theta range
+    """
+    def __init__(self, omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range, dRange, theta):
+        super().__init__(omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range) #inherit from Hamiltonian
+        self.dRange = dRange
+        self.theta = theta
+
+
+    #lets inherit the construct_matrix, the Vx, Va, tdm, the H_thetas, R_thetas, Vx_theta_vals, Va_theta_vals from Hamiltonian
+    def V_x(self, R_theta_val):
+        """
+        Returns the potential Vx for a given R_theta_val
+        
+        Parameters:
+        R_theta_val (numpy.ndarray): A 3D vector orthogonal to the x=y=z line
+        
+        Returns:
+        float: The potential Vx
+        """
+        return super().V_x(R_theta_val)
+
+    def V_a(self, R_theta_val):
+        """
+        Returns the potential Va for a given R_theta_val
+        
+        Parameters:
+        R_theta_val (numpy.ndarray): A 3D vector orthogonal to the x=y=z line
+        
+        Returns:
+        float: The potential Va
+        """
+        return super().V_a(R_theta_val)
+
+    #define Vx and Va functions, but input _arrays
+    def Vx(self, R_theta_1d_array):
+        """
+        Returns the potential array Vx for an array of R_theta_val
+        
+        Parameters:
+        R_theta_1d_array (numpy.ndarray): An array of 3D vectors orthogonal to the x=y=z line
+        
+        Returns:
+        numpy.ndarray: An array of the components of the potential Vx
+        """
+        return super().Vx(R_theta_1d_array)
+    
+    def Va(self, R_theta_1d_array):
+        """
+        Returns the potential array Va for an array of R_theta_val
+        
+        Parameters:
+        R_theta_1d_array (numpy.ndarray): An array of 3D vectors orthogonal to the x=y=z line
+        
+        Returns:
+        numpy.ndarray: An array of the components of the potential Va
+        """
+        return super().Va(R_theta_1d_array)
+        
+    def tdm(self, R, R0):
+        """
+        Returns the approximated transitonal dipole moment for a given R and R0
+        
+        Parameters:
+        R (float): The radius of the circle
+        R0 (float): The radius of the circle
+        
+        Returns:
+        float: The approximated transitonal dipole moment
+        """
+        return super().tdm(R, R0)
+
+    def construct_matrix(self, theta):
+        """
+        Constructs the Hamiltonian matrix for a given angle theta
+        
+        Parameters:
+        theta (float): The angle parameter
+        
+        Returns:
+        numpy.ndarray: The Hamiltonian matrix
+        """
+        return super().construct_matrix(theta)
+
+    def H_thetas(self):
+        """
+        Returns the Hamiltonian matrix for all angles in a given theta_range
+        
+        Returns:
+        list: A list of Hamiltonian matrices for each angle in the theta_range
+        """
+        return super().H_thetas()
+
+    def R_thetas(self):
+        """
+        Returns the radius of the circle for all angles in a given theta_range
+        
+        Returns:
+        list: A list of radius values for each angle in the theta_range
+        """
+        return super().R_thetas()
+    
+    def Vx_theta_vals(self, R_thetas):
+        #return the potentials in theta_vals
+        #get the R_thetas from the function above
+        """
+        Returns the potential Vx for all angles in a given theta_range
+        
+        Parameters:
+        R_thetas (list or np.ndarray): A list or array of 3D parameter vectors
+        
+        Returns:
+        list: A list of potential values for each angle in the theta_range
+        """
+        return super().Vx_theta_vals(R_thetas)
+    
+    def Va_theta_vals(self, R_thetas):
+        #return the potentials in theta_vals
+        #get the R_thetas from the function above
+        """
+        Returns the potential Va for all angles in a given theta_range
+        
+        Parameters:
+        R_thetas (list or np.ndarray): A list or array of 3D parameter vectors
+        
+        Returns:
+        list: A list of potential values for each angle in the theta_range
+        """
+        return super().Va_theta_vals(R_thetas)
+    
+    def R_theta(self, theta):
+        """
+        Returns the radius of the circle for a given angle theta
+        
+        Parameters:
+        theta (float): The angle parameter
+        
+        Returns:
+        numpy.ndarray: A 3D vector orthogonal to the x=y=z line
+        """
+        return super().R_theta(theta)
+
+    def R_thetaControlledByParameter_d(self, d):
+        """
+        Returns the radius of the circle for a given angle theta
+        
+        Parameters:
+        d (float): The distance parameter
+        
+        Returns:
+        numpy.ndarray: A 3D vector orthogonal to the x=y=z line
+        """
+        return create_perfect_orthogonal_vectors(self.R_0, d, self.theta)
+
+    def R_ds(self, dRange):
+        """
+        Returns the radius of the circle for all angles in a given theta_range
+        
+        Parameters:
+        dRange (list or np.ndarray): A list or array of distance parameters
+        
+        Returns:
+        list: A list of radius values for each angle in the theta_range
+        """
+        return [self.R_thetaControlledByParameter_d(d) for d in dRange]
+
+    def construct_matrixControlledByParameter_d(self, d):
+        """
+        Constructs the Hamiltonian matrix for a given distance parameter d
+        
+        Parameters:
+        d (float): The distance parameter
+        
+        Returns:
+        numpy.ndarray: The Hamiltonian matrix
+        """
+        R_d_val = self.R_thetaControlledByParameter_d(d)
+        Vx = self.VxControlledByParameter_d(R_d_val)
+        Va = self.VaControlledByParameter_d(R_d_val)
+        
+        H = np.zeros((4, 4), dtype=complex)
+        sumVx = sum(Vx)
+        H[0, 0] = hbar * self.omega + sumVx
+        for i in range(1, len(H)):
+            H[i, i] = H[0, 0] + Va[i-1] - Vx[i-1] #H11 = Vx1 + Vx2 + Vx3 + Va1 - Vx1
+            
+        for j in range(len(R_d_val)):
+            H[0, j+1] = H[j+1, 0] = self.tdm(R_d_val[j], self.R_0[j])
+        return H
+    
+    def V_aControlledByParameter_d(self, R_d_val):
+        """
+        Returns the potential Va for a given distance parameter d
+        
+        Parameters:
+        R_d_val (numpy.ndarray): The distance parameter
+        
+        Returns:
+        numpy.ndarray: The potential Va
+        """
+        return self.aVa * ((R_d_val - self.x_shift)**2 + self.c)
+    
+    def V_xControlledByParameter_d(self, R_d_val):
+        """
+        Returns the potential Vx for a given distance parameter d
+        
+        Parameters:
+        R_d_val (numpy.ndarray): The distance parameter
+        
+        Returns:
+        numpy.ndarray: The potential Vx
+        """
+        return self.aVx * (R_d_val**2)
+
+    def Va_ControlledByParameter_d(self, R_d_1d_array):
+        """
+        Returns the potential Va for a given distance parameter d
+        
+        Parameters:
+        R_d_1d_array (numpy.ndarray): The distance parameter
+        
+        Returns:
+        numpy.ndarray: The potential Va
+        """
+        return [self.aVa * ((R_d_1d_array[i] - self.x_shift)**2 + self.c) for i in range(len(R_d_1d_array))]
+    
+    def Vx_ControlledByParameter_d(self, R_d_1d_array):
+        """
+        Returns the potential Vx for a given distance parameter d
+        
+        Parameters:
+        R_d_1d_array (numpy.ndarray): The distance parameter
+        
+        Returns:
+        numpy.ndarray: The potential Vx
+        """
+        return [self.aVx * (R_d_1d_array[i]**2) for i in range(len(R_d_1d_array))]
+    
+    def H_ds(self, dRange):
+        """
+        Returns the Hamiltonian matrix for all angles in a given theta_range
+        
+        Parameters:
+        dRange (list or np.ndarray): A list or array of distance parameters
+        
+        Returns:
+        list: A list of Hamiltonian matrices for each distance parameter in the dRange
+        """
+        return [self.construct_matrixControlledByParameter_d(d) for d in dRange]
+
+    def Vx_ds(self, R_dRange):
+        """
+        Returns the potential Vx for all angles in a given theta_range
+        
+        Parameters:
+        R_dRange (list or np.ndarray): A list or array of distance parameters
+        
+        Returns:
+        list: A list of potential values for each distance parameter in the dRange
+        """
+        return [self.Vx_ControlledByParameter_d(R_d_val) for R_d_val in R_dRange]
+    
+    def Va_ds(self, R_dRange):
+        """
+        Returns the potential Va for all angles in a given theta_range
+        
+        Parameters:
+        R_dRange (list or np.ndarray): A list or array of distance parameters
+        
+        Returns:
+        list: A list of potential values for each distance parameter in the dRange
+        """
+        return [self.Va_ControlledByParameter_d(R_d_val) for R_d_val in R_dRange]
 
 class NewBerryPhaseCalculator:
     def __init__(self, hamiltonian, R_thetas, eigenstates, theta_range):
@@ -413,8 +698,8 @@ if __name__ == "__main__":
     #let a be an aVx and an aVa parameter
     aVx = 1.0
     aVa = 5.0
-    c_const = 1.0  # Potential constant, shifts the 2d parabola on the y axis
-    x_shift = 1.0  # Shift in x direction
+    c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
+    x_shift = 0.1  # Shift in x direction
     d = 0.2  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
@@ -546,14 +831,14 @@ if __name__ == "__main__":
         #nest a for loop for vec_comp and use it like: :, state, vect_comp
         for vect_comp in range(4):
             plt.subplot(2, 2, vect_comp + 1)  # Top left subplot
-            plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(Comp {vect_comp})')
+            plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(State {state})')
             #plt.plot(theta_vals, np.imag(eigenvectors[:, state, vect_comp]), label=f'Im(Comp {vect_comp})')
             #plt.plot(theta_vals, np.abs(eigenvectors[:, state, vect_comp]), label=f'Abs(Comp {vect_comp})')
             plt.xlabel('Theta')
             plt.ylabel(f'Component {vect_comp}')
             plt.legend()
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
-    plt.savefig(f'{plot_dir}/eigenvector_components_for_eigvec_{state}_2x2.png')
+    plt.savefig(f'{plot_dir}/eigenvector_components_for_eigvec_2x2.png')
     plt.close()
     
     # Calculate H*v for each theta value

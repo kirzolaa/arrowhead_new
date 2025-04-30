@@ -33,3 +33,5 @@ ignore.txt
 arithmetics_pandas.xlsx
 arithmetics_polars.xlsx
 ssh/
+3D_figures/
+3D_figures_multiprocessed/
