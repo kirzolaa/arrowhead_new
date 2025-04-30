@@ -233,6 +233,7 @@ if __name__ == "__main__":
                 proj1.append(np.dot(vec, basis1))
                 proj2.append(np.dot(vec, basis2))
             
+            # Plot points
             ax.scatter(
                 proj1,
                 proj2,
@@ -240,6 +241,15 @@ if __name__ == "__main__":
                 label=f'Eigenvalue {j+1}',
                 alpha=0.7,
                 s=10
+            )
+            
+            # Plot lines connecting the points
+            ax.plot(
+                proj1,
+                proj2,
+                eigvals_d[:, j],
+                alpha=0.5,
+                color='gray'
             )
 
         ax.legend()
