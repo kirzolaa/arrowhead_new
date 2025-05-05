@@ -44,3 +44,9 @@ eigenvals_vs_basis1_basis2_centered_R_0/
 eigenvals_vs_basis1_basis2_all_gap_plots/
 energy_gap_plots/
 energy_gap_plots_all/
+eigenvals_vs_basis1_basis2_for_d/plots/surface
+eigenvals_vs_basis1_basis2_for_d/plots/surfaces/combined_surfaces_c_0.1_x_0.1_d_0.2.png
+eigenvals_vs_basis1_basis2_for_d/plots/surfaces/state_0_surface_plot_c_0.1_x_0.1_d_0.2.png
+eigenvals_vs_basis1_basis2_for_d/plots/surfaces/state_1_surface_plot_c_0.1_x_0.1_d_0.2.png
+eigenvals_vs_basis1_basis2_for_d/plots/surfaces/state_2_surface_plot_c_0.1_x_0.1_d_0.2.png
+eigenvals_vs_basis1_basis2_for_d/plots/surfaces/state_3_surface_plot_c_0.1_x_0.1_d_0.2.png
