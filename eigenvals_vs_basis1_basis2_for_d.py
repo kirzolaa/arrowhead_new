@@ -1,9 +1,10 @@
 import numpy as np
 import os
 from new_bph import Hamiltonian
-from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.animation import FuncAnimation
 from scipy.interpolate import griddata
+import matplotlib.pyplot as plt
+from matplotlib import animation
 
 def fix_sign(eigvecs, printout):
     # Ensure positive real part of eigenvectors
@@ -29,7 +30,7 @@ if __name__ == "__main__":
     aVa = 5.0
     c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 0.1  # Shift in x direction
-    d = 0.2  # Radius of the circle, use unit circle for bigger radius
+    d = 0.01  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
@@ -206,3 +207,48 @@ if __name__ == "__main__":
     plt.savefig(combined_path, dpi=150)
     plt.close()
 
+    # Precompute surface data for all 4 states
+    surface_data = []
+    for i in range(4):
+        x = proj_basis1[:, i]
+        y = proj_basis2[:, i]
+        z = eigvals_all[:, i]
+
+        xi = np.linspace(np.min(x), np.max(x), 200)
+        yi = np.linspace(np.min(y), np.max(y), 200)
+        xi, yi = np.meshgrid(xi, yi)
+        zi = griddata((x, y), z, (xi, yi), method='cubic')
+
+        surface_data.append((xi, yi, zi))
+
+    colormaps = ['Reds', 'Greens', 'Blues', 'Purples']
+
+    # Save individual images at different rotation angles
+    rotating_dir = os.path.join(surface_plot_dir, 'combined_rotating')
+    os.makedirs(rotating_dir, exist_ok=True)
+
+    for angle in range(0, 360, 30):  # Adjust step size if needed
+        fig = plt.figure(figsize=(14, 10))
+        ax = fig.add_subplot(111, projection='3d')
+
+        for i in range(4):
+            xi, yi, zi = surface_data[i]
+            ax.plot_surface(
+                xi, yi, zi,
+                cmap=colormaps[i],
+                edgecolor='k',
+                linewidth=0.2,
+                antialiased=True,
+                alpha=0.65
+            )
+
+        ax.set_xlabel('Projection on basis1', fontsize=12)
+        ax.set_ylabel('Projection on basis2', fontsize=12)
+        ax.set_zlabel('Eigenvalue', fontsize=12)
+        ax.set_title(f'View Angle: {angle}°\n(c={c_const}, x_shift={x_shift}, d={d})', fontsize=14)
+        ax.view_init(elev=30, azim=angle)
+
+        save_path = os.path.join(rotating_dir, f'rotated_view_{angle:03d}_deg.png')
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=150)
+        plt.close()
