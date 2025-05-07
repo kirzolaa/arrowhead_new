@@ -85,7 +85,7 @@ def compute_berry_phase_wilson(eigvectors_all):
             psi_curr /= np.linalg.norm(psi_curr)
 
             # Overlap between adjacent eigenstates
-            overlap = np.vdot(psi_prev, psi_curr)
+            overlap = np.vdot(np.conj(psi_prev).T, psi_curr)
             product *= overlap / np.abs(overlap)  # Project to U(1)
 
         berry_phases_all[n] = np.angle(product)
