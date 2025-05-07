@@ -6,22 +6,22 @@ from scipy.interpolate import griddata
 import matplotlib.pyplot as plt
 from matplotlib import animation
 
-def fix_sign(eigvecs, printout):
+def fix_sign(eigvecs, printout, output_dir):
     # Ensure positive real part of eigenvectors
-    #create a directory for the output
-    output_dir = 'eigenvals_vs_basis1_basis2_for_d'
-    os.makedirs(output_dir, exist_ok=True)
     with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
+        sign = +1
         for i in range(eigvecs.shape[0]): #for every theta
             for j in range(eigvecs.shape[2]): #for every eigvec
                 s = 0.0
                 for k in range(eigvecs.shape[1]): #for every component
-                    s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
-                if s < 0 and printout == 1:
-                    log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
-                    log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
-                    log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
-                    eigvecs[i, :, j] *= -1
+                    s += sign * np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                    if s * sign < 0 and printout == 1:
+                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s}, sign={sign})\n")
+                        log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, :]}\n")
+                        log_file.write(f"Current eigvec:  {eigvecs[i, :, :]}\n")
+                        sign = -sign
+                    if sign == -1:
+                        eigvecs[i, :, j] *= -1
     return eigvecs
 
 if __name__ == "__main__":

@@ -3,11 +3,29 @@ import os
 import sys
 import matplotlib.pyplot as plt
 from new_bph import Hamiltonian
-from eigenvals_vs_basis1_basis2_for_d import fix_sign
 
-"""
+
+def fix_sign(eigvecs, printout, output_dir):
+    # Ensure positive real part of eigenvectors
+    with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
+        sign = +1
+        for i in range(eigvecs.shape[0]): #for every theta
+            for j in range(eigvecs.shape[1]): #for every eigvec
+                s = 0.0
+                for k in range(eigvecs.shape[2]): #for every component
+                    s += sign * np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                    if s * sign < 0 and printout == 1:
+                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s}, sign={sign})\n")
+                        log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, :]}\n")
+                        log_file.write(f"Current eigvec:  {eigvecs[i, :, :]}\n")
+                        sign = -sign
+                    if sign == -1:
+                        eigvecs[i, :, j] *= -1
+    return eigvecs
+
+
 def compute_berry_phase(eigvectors_all, R_thetas):
-    #""#
+    """
     Compute Berry phases γ_n for each eigenstate n along a closed path in R-space.
 
     Parameters:
@@ -16,42 +34,44 @@ def compute_berry_phase(eigvectors_all, R_thetas):
 
     Returns:
     - berry_phases: ndarray of shape (M,), Berry phase for each eigenstate in radians
-    #""#
+    """
     N, M, _ = eigvectors_all.shape
     berry_phases = np.zeros(M, dtype=np.float64)
-
+    """
     # Make sure path is closed
     if not np.allclose(R_thetas[0], R_thetas[-1]):
         eigvectors_all = np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
         R_thetas = np.concatenate([R_thetas, R_thetas[:1]], axis=0)
         N += 1
-
-    # Compute gradient dR
-    dR = np.gradient(R_thetas, axis=0)  # shape (N, 3)
+    """
+    
+    tau = np.zeros((M, M, N), dtype=np.complex128)
+    gamma = np.zeros((M, M, N), dtype=np.float64)
 
     for n in range(M):
-        total_phase = 0.0
-        for i in range(1, N):
-            psi_prev = eigvectors_all[i - 1, n, :]
-            psi_curr = eigvectors_all[i, n, :]
+        #total_phase = np.zeros(M, dtype=np.float64), use gamma instead
+        for m in range(M):
+            for i in range(N):
+                psi_prev = eigvectors_all[i - 1, :, n] # (theta_vals, components of the eigvec, eigvec_state)
+                psi_curr = eigvectors_all[i, :, m]
+                psi_next = eigvectors_all[(i + 1) % N, :, n]
 
-            # Normalize for safety
-            psi_prev = psi_prev / np.linalg.norm(psi_prev)
-            psi_curr = psi_curr / np.linalg.norm(psi_curr)
+                # Normalize for safety
+                psi_prev = psi_prev / np.linalg.norm(psi_prev)
+                psi_curr = psi_curr / np.linalg.norm(psi_curr)
+                psi_next = psi_next / np.linalg.norm(psi_next)
 
-            # Finite difference approximation of ∇_R |ψ>
-            delta_psi = psi_curr - psi_prev
-            grad_psi = delta_psi / np.linalg.norm(R_thetas[i] - R_thetas[i - 1])
+                # Finite difference approximation of ∇_theta |ψ>
+                delta_psi = psi_next - psi_prev
+                grad_psi = delta_psi / (theta_vals[i] - theta_vals[i-2])
 
-            # τ = ⟨ψ_i | ∇_R | ψ_{i-1}⟩ · dR
-            tau = np.vdot((psi_curr), grad_psi) * np.linalg.norm(dR[i])
-            total_phase += tau
-
-        berry_phases[n] = total_phase
+                # τ = ⟨ψ_i | ∇_theta | ψ_{i-1}⟩
+                tau[n, m, i] = np.vdot(np.conj(psi_curr).T, grad_psi)
+                # · d_theta to integrate
+                gamma[n, m, i] = gamma[n,m,i-1] + tau[n, m, i] * (theta_vals[i] - theta_vals[i-1])
 
     # Take imaginary part (Berry phase is real-valued in radians)
-    return np.real(berry_phases)
-"""
+    return tau, gamma
 
 import numpy as np
 
@@ -109,7 +129,7 @@ if __name__ == "__main__":
     theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
     
     #create a directory for the output
-    output_dir = 'berry_phase_with_tau'
+    output_dir = 'berry_phase_with_tau_and_gamma'
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the npy files
@@ -125,14 +145,73 @@ if __name__ == "__main__":
     R_thetas = hamiltonian.R_thetas()
     
     # Calculate eigenvectors
-    eigenvectors = fix_sign(np.array([np.linalg.eigh(H)[1] for H in H_thetas]), printout=0)
-    eigenvectors = fix_sign(eigenvectors, printout=0)
+    eigenvectors = fix_sign(np.array([np.linalg.eigh(H)[1] for H in H_thetas]), printout=1, output_dir=output_dir)
+    #eigenvectors = fix_sign(eigenvectors, printout=0)
     
     # Calculate Berry phases
     berry_phases_all = compute_berry_phase_wilson(eigenvectors)
-    print(f"Berry phases: {berry_phases_all}")
+    print(f"Berry phases Wilson-looppal: {berry_phases_all}")
     
     # Save results
     np.save(f'{npy_dir}/berry_phases_all.npy', berry_phases_all)
     
     print("Berry phases computed and saved.")
+
+    # plot the eigenvalues vs theta
+    plt.figure()
+    for i in range(eigenvectors.shape[2]):
+        plt.plot(theta_vals, np.linalg.eigvalsh(H_thetas)[:, i])
+    plt.xlabel('Theta')
+    plt.ylabel('Eigenvalue')
+    plt.title('Eigenvalues vs Theta')
+    plt.savefig(f'{plot_dir}/eigenvalues.png')
+    plt.close()
+
+    tau, gamma = compute_berry_phase(eigenvectors, R_thetas)
+    print(f"Berry phases with tau:\n {gamma[:,:,-1]}")
+    print(f"theta[0]: {theta_vals[0]}")
+    print(f"theta[-1]: {theta_vals[-1]}")
+    # Save results
+    np.save(f'{npy_dir}/tau.npy', tau)
+    np.save(f'{npy_dir}/gamma.npy', gamma)
+    
+    print("Berry phases computed and saved.")
+
+    # plot tau_01, tau_12, tau_23
+    plt.figure()
+    plt.plot(theta_vals, tau[0,1,:])
+    plt.plot(theta_vals, tau[1,2,:])
+    plt.plot(theta_vals, tau[2,0,:])
+    plt.xlabel('Theta')
+    plt.ylabel('tau')
+    plt.title('tau vs Theta')
+    plt.savefig(f'{plot_dir}/tau.png')
+    plt.close()
+
+    # plot gamma_01, gamma_12, gamma_23
+    plt.figure()
+    plt.plot(theta_vals, gamma[0,1,:])
+    plt.plot(theta_vals, gamma[1,2,:])
+    plt.plot(theta_vals, gamma[2,0,:])
+    plt.xlabel('Theta')
+    plt.ylabel('gamma')
+    plt.title('gamma vs Theta')
+    plt.savefig(f'{plot_dir}/gamma.png')
+    plt.close()
+
+    # Plot eigenvector components (4 subplots in a 2x2 grid for each eigenstate)
+    plt.figure(figsize=(12, 12))
+    plt.suptitle(f'Eigenvector Components - All eigenvectors', fontsize=16)  # Overall title
+    for state in range(eigenvectors.shape[2]):
+        #nest a for loop for vec_comp and use it like: :, state, vect_comp
+        for vect_comp in range(4):
+            plt.subplot(2, 2, vect_comp + 1)  # Top left subplot
+            plt.plot(theta_vals, np.real(eigenvectors[:, state, vect_comp]), label=f'Re(State {state})')
+            #plt.plot(theta_vals, np.imag(eigenvectors[:, state, vect_comp]), label=f'Im(Comp {vect_comp})')
+            #plt.plot(theta_vals, np.abs(eigenvectors[:, state, vect_comp]), label=f'Abs(Comp {vect_comp})')
+            plt.xlabel('Theta')
+            plt.ylabel(f'Component {vect_comp}')
+            plt.legend()
+    plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+    plt.savefig(f'{plot_dir}/eigenvector_components_for_eigvec_2x2.png')
+    plt.close()
