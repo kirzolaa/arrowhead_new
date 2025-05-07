@@ -66,7 +66,7 @@ def compute_berry_phase_wilson(eigvectors_all):
     - berry_phases: ndarray of shape (M,), Berry phase for each eigenstate in radians
     """
     N, M, _ = eigvectors_all.shape
-    berry_phases = np.zeros(M)
+    berry_phases_all = np.zeros(M)
 
     # Ensure loop is closed
     if not np.allclose(eigvectors_all[0], eigvectors_all[-1]):
@@ -88,9 +88,9 @@ def compute_berry_phase_wilson(eigvectors_all):
             overlap = np.vdot(psi_prev, psi_curr)
             product *= overlap / np.abs(overlap)  # Project to U(1)
 
-        berry_phases[n] = np.angle(product)
+        berry_phases_all[n] = np.angle(product)
 
-    return berry_phases
+    return berry_phases_all
 
 
 if __name__ == "__main__":
@@ -130,10 +130,10 @@ if __name__ == "__main__":
     eigenvectors = fix_sign(eigenvectors, printout=0)
     
     # Calculate Berry phases
-    berry_phases = compute_berry_phase_wilson(eigenvectors)
-    print(f"Berry phases: {berry_phases}")
+    berry_phases_all = compute_berry_phase_wilson(eigenvectors)
+    print(f"Berry phases: {berry_phases_all}")
     
     # Save results
-    np.save(f'{npy_dir}/berry_phases.npy', berry_phases)
+    np.save(f'{npy_dir}/berry_phases_all.npy', berry_phases_all)
     
     print("Berry phases computed and saved.")
