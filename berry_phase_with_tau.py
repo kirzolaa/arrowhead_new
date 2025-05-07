@@ -10,9 +10,9 @@ def fix_sign(eigvecs, printout, output_dir):
     with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
         sign = +1
         for i in range(eigvecs.shape[0]): #for every theta
-            for j in range(eigvecs.shape[1]): #for every eigvec
+            for j in range(eigvecs.shape[2]): #for every eigvec
                 s = 0.0
-                for k in range(eigvecs.shape[2]): #for every component
+                for k in range(eigvecs.shape[1]): #for every component
                     s += sign * np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
                     if s * sign < 0 and printout == 1:
                         log_file.write(f"Flipping sign of state {j} at theta {i} (s={s}, sign={sign})\n")
