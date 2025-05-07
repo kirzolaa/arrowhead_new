@@ -24,7 +24,7 @@ def fix_sign(eigvecs, printout, output_dir):
     return eigvecs
 
 
-def compute_berry_phase(eigvectors_all, R_thetas):
+def compute_berry_phase(eigvectors_all, R_thetas, theta_vals):
     """
     Compute Berry phases γ_n for each eigenstate n along a closed path in R-space.
 
@@ -33,17 +33,10 @@ def compute_berry_phase(eigvectors_all, R_thetas):
     - R_thetas: ndarray of shape (N, 3), parameter-space path
 
     Returns:
-    - berry_phases: ndarray of shape (M,), Berry phase for each eigenstate in radians
+    - tau: ndarray of shape (M, M, N), Berry connection for each eigenstate in radians
+    - gamma: ndarray of shape (M, M, N), Berry phase for each eigenstate in radians
     """
     N, M, _ = eigvectors_all.shape
-    berry_phases = np.zeros(M, dtype=np.float64)
-    """
-    # Make sure path is closed
-    if not np.allclose(R_thetas[0], R_thetas[-1]):
-        eigvectors_all = np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
-        R_thetas = np.concatenate([R_thetas, R_thetas[:1]], axis=0)
-        N += 1
-    """
     
     tau = np.zeros((M, M, N), dtype=np.complex128)
     gamma = np.zeros((M, M, N), dtype=np.float64)
@@ -74,6 +67,22 @@ def compute_berry_phase(eigvectors_all, R_thetas):
     return tau, gamma
 
 import numpy as np
+
+def fix_sign_og(eigvecs, printout, output_dir):
+        # Ensure positive real part of eigenvectors
+        with open(f'{output_dir}/eigvecs_sign_flips_{printout}.out', "a") as log_file:
+            for i in range(eigvecs.shape[0]): #for every theta
+                for j in range(eigvecs.shape[2]): #for every eigvec
+                    s = 0.0
+                    for k in range(eigvecs.shape[1]): #for every component
+                        s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                    if s < 0:
+                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
+                        log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
+                        log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
+                        eigvecs[i, :, j] *= -1
+        return eigvecs
+
 
 def compute_berry_phase_wilson(eigvectors_all):
     """
@@ -123,7 +132,7 @@ if __name__ == "__main__":
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
-    num_points = 5000
+    num_points = 50000
     R_0 = (0, 0, 0)
     # Generate the arrowhead matrix and Va, Vx
     theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
@@ -145,7 +154,7 @@ if __name__ == "__main__":
     R_thetas = hamiltonian.R_thetas()
     
     # Calculate eigenvectors
-    eigenvectors = fix_sign(np.array([np.linalg.eigh(H)[1] for H in H_thetas]), printout=1, output_dir=output_dir)
+    eigenvectors = fix_sign_og(np.array([np.linalg.eigh(H)[1] for H in H_thetas]), printout=1, output_dir=output_dir)
     #eigenvectors = fix_sign(eigenvectors, printout=0)
     
     # Calculate Berry phases
@@ -167,7 +176,7 @@ if __name__ == "__main__":
     plt.savefig(f'{plot_dir}/eigenvalues.png')
     plt.close()
 
-    tau, gamma = compute_berry_phase(eigenvectors, R_thetas)
+    tau, gamma = compute_berry_phase(eigenvectors, R_thetas, theta_vals)
     print(f"Berry phases with tau:\n {gamma[:,:,-1]}")
     print(f"theta[0]: {theta_vals[0]}")
     print(f"theta[-1]: {theta_vals[-1]}")
@@ -215,3 +224,12 @@ if __name__ == "__main__":
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
     plt.savefig(f'{plot_dir}/eigenvector_components_for_eigvec_2x2.png')
     plt.close()
+
+    berry_phases = np.zeros(4)
+    for n in range(4):
+        berry_phases[n] = np.sum((tau[n, n, :]) * np.diff(np.append(theta_vals[-1]-2*np.pi, theta_vals)))
+    print(f"Berry phases with tau: {berry_phases}")
+    # Save results
+    np.save(f'{npy_dir}/berry_phases_tau.npy', berry_phases)
+    
+    print("Berry phases with and from tau computed and saved.")
