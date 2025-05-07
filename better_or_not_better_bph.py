@@ -1,4 +1,105 @@
 import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+
+def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
+    """
+    Plot the evolution of specific matrix elements (01, 12, 13) for both tau and gamma matrices.
+    
+    Parameters:
+    - tau: 3D array of shape (M, M, N) containing tau values over theta
+    - gamma: 3D array of shape (M, M, N) containing gamma values over theta
+    - theta_vals: 1D array of theta values
+    - output_dir: Directory to save the plots
+    """
+    plt.figure(figsize=(12, 8))
+    
+    # Elements to plot
+    elements = [(0, 1), (1, 2), (1, 3)]
+    
+    # Plot real and imaginary parts of tau
+    plt.subplot(2, 1, 1)
+    for i, j in elements:
+        plt.plot(theta_vals, np.real(tau[i, j, :]), 
+                label=f'Re(τ_{i}{j})', linestyle='-')
+        plt.plot(theta_vals, np.imag(tau[i, j, :]), 
+                label=f'Im(τ_{i}{j})', linestyle='--')
+    plt.xlabel('θ')
+    plt.ylabel('τ')
+    plt.title('Evolution of τ matrix elements')
+    plt.legend()
+    plt.grid(True)
+    
+    # Plot real and imaginary parts of gamma
+    plt.subplot(2, 1, 2)
+    for i, j in elements:
+        plt.plot(theta_vals, np.real(gamma[i, j, :]), 
+                label=f'Re(γ_{i}{j})', linestyle='-')
+        plt.plot(theta_vals, np.imag(gamma[i, j, :]), 
+                label=f'Im(γ_{i}{j})', linestyle='--')
+    plt.xlabel('θ')
+    plt.ylabel('γ')
+    plt.title('Evolution of γ matrix elements')
+    plt.legend()
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(f'{output_dir}/matrix_elements_evolution.png')
+    plt.close()
+    
+    # Create separate plots for each element
+    for i, j in elements:
+        plt.figure(figsize=(10, 6))
+        plt.plot(theta_vals, np.real(tau[i, j, :]), label=f'Re(τ_{i}{j})')
+        plt.plot(theta_vals, np.imag(tau[i, j, :]), label=f'Im(τ_{i}{j})')
+        plt.plot(theta_vals, np.real(gamma[i, j, :]), '--', label=f'Re(γ_{i}{j})')
+        plt.plot(theta_vals, np.imag(gamma[i, j, :]), '--', label=f'Im(γ_{i}{j})')
+        plt.xlabel('θ')
+        plt.ylabel('Value')
+        plt.title(f'Evolution of τ and γ_{i}{j} elements')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig(f'{output_dir}/element_{i}{j}_evolution.png')
+        plt.close()
+
+def format_matrix(matrix, title=None):
+    """Format a matrix with box drawing characters"""
+    n, m = matrix.shape
+    max_len = max(len(f"{x:.4f}") for row in matrix for x in row)
+    
+    # Calculate width based on max number length and matrix dimensions
+    width = (max_len + 3) * m + 1
+    
+    lines = []
+    if title:
+        lines.append(f"    |{title:^{width-2}}|")
+    
+    # Top border
+    lines.append("    |‾" + "‾" * (width-2) + "‾|")
+    
+    # Matrix rows
+    for i in range(n):
+        row = "    |  "
+        for j in range(m):
+            if i == j:
+                # Diagonal elements (γ_nn)
+                row += f"γ_{i}{i} = {matrix[i,j]:.4f}"
+            else:
+                # Off-diagonal elements (γ_nm)
+                row += f"γ_{i}{j} = {matrix[i,j]:.4f}"
+            if j < m - 1:
+                row += "  "
+            else:
+                row += "  |"
+        lines.append(row)
+    
+    # Bottom border
+    lines.append("    |_" + "_" * (width-2) + "_|")
+    
+    return "\n".join(lines)
+
+
 
 def compute_berry_phase(eigvectors_all, theta_vals):
     """
@@ -92,8 +193,53 @@ if __name__ == '__main__':
     tau, gamma = compute_berry_phase(eigvecs, theta_vals)
     #print("Tau:", tau)
     print("Gamma[:,:,-1]:\n", gamma[:,:,-1]) #print the last gamma matrix
+    #create a report on the gamma matrix
+    with open("gamma_report.txt", "w") as f:
+        f.write("Gamma matrix report:\n===========================================\n")
+        for i in range(gamma.shape[0]):
+            for j in range(gamma.shape[1]):
+                f.write(f"Gamma[{i},{j}]: {gamma[i,j,-1]}\n")
+                f.write(f"Tau[{i},{j}]: {tau[i,j,-1]}\n")
+            f.write("\n")
+        f.write("===========================================\n")
+        f.write("\n")
+        f.write(format_matrix(gamma[:,:,-1], "Berry Phase Matrix"))
+        f.write("\n\n")
+        f.write("===========================================\n")
+        f.write("\n")
+        f.write(format_matrix(tau[:,:,-1], "Berry Connection Matrix"))
+        f.write("\n\n")
+        f.write("===========================================\n")
 
+    #print the gamma matrix
     for i in range(gamma.shape[0]):
         for j in range(gamma.shape[1]):
             print(f"Gamma[{i},{j}]: {gamma[i,j,-1]}")
             print(f"Tau[{i},{j}]: {tau[i,j,-1]}")
+    
+    #create a directory for the output
+    output_dir = 'berry_phase_corrected'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    #create a directory for the npy files
+    npy_dir = os.path.join(output_dir, 'npy')
+    os.makedirs(npy_dir, exist_ok=True)
+    
+    #create a directory for the plots
+    plot_dir = os.path.join(output_dir, 'plots')
+    os.makedirs(plot_dir, exist_ok=True)
+
+    #save the tau and gamma matrices
+    np.save(os.path.join(npy_dir, 'tau.npy'), tau)
+    np.save(os.path.join(npy_dir, 'gamma.npy'), gamma)
+
+    #save the eigvecs
+    np.save(os.path.join(npy_dir, 'eigvecs.npy'), eigvecs)
+
+    #save the theta_vals
+    np.save(os.path.join(npy_dir, 'theta_vals.npy'), theta_vals)
+
+
+    #plot the gamma and tau matrices
+    plot_matrix_elements(tau, gamma, theta_vals, output_dir)
+    
