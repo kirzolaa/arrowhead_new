@@ -3,6 +3,7 @@ import os
 import sys
 import matplotlib.pyplot as plt
 from new_bph import Hamiltonian
+from check_tau import compute_berry_phase_overlap
 
 
 def fix_sign(eigvecs, printout, output_dir):
@@ -22,6 +23,63 @@ def fix_sign(eigvecs, printout, output_dir):
                     if sign == -1:
                         eigvecs[i, :, j] *= -1
     return eigvecs
+
+
+def compute_berry_phase_modded(eigvectors_all, R_thetas, theta_vals):
+    """
+    Compute Berry connection and Berry phases γ_n along a closed path in R-space.
+
+    Parameters:
+    - eigvectors_all: ndarray (N, M, M), eigenvectors for each R(θ)
+    - R_thetas: ndarray (N, 3), path in parameter space
+    - theta_vals: ndarray (N,), parameter values
+
+    Returns:
+    - tau: ndarray (M, M, N), Berry connection
+    - gamma: ndarray (M, M), Berry phases (integrated)
+    """
+    N, M, _ = eigvectors_all.shape
+    tau = np.zeros((M, M, N), dtype=np.complex128)
+
+    # If uniform θ spacing, use constant
+    dtheta = theta_vals[1] - theta_vals[0]
+
+    for n in range(M):
+        for m in range(M):
+            for i in range(N):
+                i_minus_1 = (i - 1) % N
+                i_plus_1 = (i + 1) % N
+
+                psi_prev = eigvectors_all[i_minus_1, :, n]
+                psi_next = eigvectors_all[i_plus_1, :, n]
+                psi_curr = eigvectors_all[i, :, m]
+
+                # Normalize defensively
+                psi_prev /= np.linalg.norm(psi_prev)
+                psi_next /= np.linalg.norm(psi_next)
+                psi_curr /= np.linalg.norm(psi_curr)
+
+                # Finite difference approximation of ∇_θ |ψ>
+                grad_psi = (psi_next - psi_prev) / (2 * dtheta)
+
+                # Berry connection τ = ⟨ψ_m | ∇_θ | ψ_n⟩
+                tau[n, m, i] = np.vdot(psi_curr, grad_psi)
+
+    # Integrate τ over θ to get Berry phase
+    gamma = np.zeros((M, M), dtype=np.float64)
+    for n in range(M):
+        for m in range(M):
+            # Trapezoidal integration of τ
+            gamma[n, m] = np.imag(np.sum(tau[n, m, :]) * dtheta)
+
+    # Enforce antisymmetry explicitly: γ_nm = -γ_mn
+    for n in range(M):
+        for m in range(n+1, M):
+            avg = 0.5 * (gamma[n, m] - gamma[m, n])
+            gamma[n, m] = avg
+            gamma[m, n] = -avg
+
+    return tau, gamma
 
 
 def compute_berry_phase(eigvectors_all, R_thetas, theta_vals):
@@ -45,9 +103,23 @@ def compute_berry_phase(eigvectors_all, R_thetas, theta_vals):
         #total_phase = np.zeros(M, dtype=np.float64), use gamma instead
         for m in range(M):
             for i in range(N):
-                psi_prev = eigvectors_all[i - 1, :, n] # (theta_vals, components of the eigvec, eigvec_state)
-                psi_curr = eigvectors_all[i, :, m]
-                psi_next = eigvectors_all[(i + 1) % N, :, n]
+                # Handle boundary conditions for the finite difference
+                if i == 0:
+                    psi_prev = eigvectors_all[N - 1, :, n]  # Use the last point for i=0
+                    psi_next = eigvectors_all[1, :, n]      # Use the next point for i=0
+                    psi_curr = eigvectors_all[i, :, m]
+                    delta_theta = theta_vals[1] - theta_vals[N-1]
+                elif i == N - 1:
+                    psi_prev = eigvectors_all[N - 2, :, n]
+                    psi_next = eigvectors_all[0, :, n]
+                    psi_curr = eigvectors_all[i, :, m]
+                    delta_theta = theta_vals[0] - theta_vals[N-2]
+                else:
+                    psi_prev = eigvectors_all[i - 1, :, n]
+                    psi_next = eigvectors_all[i + 1, :, n]
+                    psi_curr = eigvectors_all[i, :, m]
+                    delta_theta = theta_vals[i + 1] - theta_vals[i - 1]
+
 
                 # Normalize for safety
                 psi_prev = psi_prev / np.linalg.norm(psi_prev)
@@ -56,12 +128,12 @@ def compute_berry_phase(eigvectors_all, R_thetas, theta_vals):
 
                 # Finite difference approximation of ∇_theta |ψ>
                 delta_psi = psi_next - psi_prev
-                grad_psi = delta_psi / (theta_vals[i] - theta_vals[i-2])
+                grad_psi = delta_psi / (delta_theta)
 
                 # τ = ⟨ψ_i | ∇_theta | ψ_{i-1}⟩
                 tau[n, m, i] = np.vdot(np.conj(psi_curr).T, grad_psi)
                 # · d_theta to integrate
-                gamma[n, m, i] = gamma[n,m,i-1] + tau[n, m, i] * (theta_vals[i] - theta_vals[i-1])
+                gamma[n, m, i] = gamma[n,m,i-1] + (tau[n, m, i]) * (delta_theta)
 
     # Take imaginary part (Berry phase is real-valued in radians)
     return tau, gamma
@@ -157,8 +229,12 @@ if __name__ == "__main__":
     eigenvectors = fix_sign_og(np.array([np.linalg.eigh(H)[1] for H in H_thetas]), printout=1, output_dir=output_dir)
     #eigenvectors = fix_sign(eigenvectors, printout=0)
     
-    # Calculate Berry phases
-    berry_phases_all = compute_berry_phase_wilson(eigenvectors)
+
+    #save the eigenvectors
+    np.save(f'{npy_dir}/eigenvectors.npy', eigenvectors)
+    
+    # Calculate Berry phases using check_tau.py
+    berry_phases_all = compute_berry_phase_overlap(eigenvectors)
     print(f"Berry phases Wilson-looppal: {berry_phases_all}")
     
     # Save results
@@ -178,6 +254,7 @@ if __name__ == "__main__":
 
     tau, gamma = compute_berry_phase(eigenvectors, R_thetas, theta_vals)
     print(f"Berry phases with tau:\n {gamma[:,:,-1]}")
+    #print(f"Berry phases with tau:\n {gamma}")
     print(f"theta[0]: {theta_vals[0]}")
     print(f"theta[-1]: {theta_vals[-1]}")
     # Save results
@@ -199,9 +276,9 @@ if __name__ == "__main__":
 
     # plot gamma_01, gamma_12, gamma_23
     plt.figure()
-    plt.plot(theta_vals, gamma[0,1,:])
-    plt.plot(theta_vals, gamma[1,2,:])
-    plt.plot(theta_vals, gamma[2,0,:])
+    plt.plot(theta_vals, gamma[0,1])
+    plt.plot(theta_vals, gamma[1,2])
+    plt.plot(theta_vals, gamma[2,0])
     plt.xlabel('Theta')
     plt.ylabel('gamma')
     plt.title('gamma vs Theta')
@@ -225,9 +302,12 @@ if __name__ == "__main__":
     plt.savefig(f'{plot_dir}/eigenvector_components_for_eigvec_2x2.png')
     plt.close()
 
-    berry_phases = np.zeros(4)
-    for n in range(4):
-        berry_phases[n] = np.sum((tau[n, n, :]) * np.diff(np.append(theta_vals[-1]-2*np.pi, theta_vals)))
+    M = eigenvectors.shape[2]
+    berry_phases = np.zeros(M)
+    dtheta = np.diff(np.append(theta_vals[-1] - 2*np.pi, theta_vals))  # shape (N,)
+
+    for n in range(M):
+        berry_phases[n] = np.sum((tau[n, n, :]) * dtheta)
     print(f"Berry phases with tau: {berry_phases}")
     # Save results
     np.save(f'{npy_dir}/berry_phases_tau.npy', berry_phases)
