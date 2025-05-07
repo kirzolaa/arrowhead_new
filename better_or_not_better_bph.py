@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import os
+from new_bph import Hamiltonian
 
 
 def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
@@ -63,7 +64,7 @@ def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
         plt.savefig(f'{output_dir}/element_{i}{j}_evolution.png')
         plt.close()
 
-def format_matrix(matrix, title=None):
+def format_matrix(matrix, title=None, output_dir=None):
     """Format a matrix with box drawing characters"""
     n, m = matrix.shape
     max_len = max(len(f"{x:.4f}") for row in matrix for x in row)
@@ -84,14 +85,14 @@ def format_matrix(matrix, title=None):
         for j in range(m):
             if i == j:
                 # Diagonal elements (γ_nn)
-                row += f"γ_{i}{i} = {matrix[i,j]:.4f}"
+                row += f"{matrix[i,j]:.4f}"
             else:
                 # Off-diagonal elements (γ_nm)
-                row += f"γ_{i}{j} = {matrix[i,j]:.4f}"
+                row += f"{matrix[i,j]:.4f}"
             if j < m - 1:
                 row += "  "
             else:
-                row += "  |"
+                row += "    |"
         lines.append(row)
     
     # Bottom border
@@ -99,8 +100,156 @@ def format_matrix(matrix, title=None):
     
     return "\n".join(lines)
 
+class Eigenvalues:
+    """
+    Eigenvalues class for a quantum system with a potentials:
 
+    V(x) = aVx * x^2, and
+    Va(x) = aVa * (x - x_shift)^2 + c
 
+    Creates a 4x4 matrix with an arrowhead structure, where
+    
+    |‾                                                  ‾|
+    |    hbar*omega + Σ Vx(i)  tdm01   tdm02    tdm03    |
+    |    tdm01                 V_e(i)  0        0        |
+    |    tdm02                 0       V_e(i+1) 0        |
+    |_                                                  _|
+    
+    where Σ Vx(i) represents the sum of Vx values from i=0 to N, and
+    V_e(i) represents the potential Σ Vx(i) + Va(i) - Vx(i) at angle i.
+    
+    """
+    def __init__(self, H_thetas, output_dir, theta_vals):
+        """
+        Initialize the Eigenvalues with parameters.
+        
+        Parameters:
+        H_thetas (numpy.ndarray): Array of Hamiltonian matrices for each angle theta
+        output_dir (str): Directory to save the plots
+        theta_vals (numpy.ndarray): Array of angle values
+        """
+        self.H_thetas = H_thetas
+        self.output_dir = output_dir
+        self.theta_vals = theta_vals
+        self.eigenvalues = self.compute()
+        
+    def compute(self):
+        """
+        Compute the eigenvalues for each angle theta.
+        
+        Returns:
+        numpy.ndarray: Array of eigenvalues for each angle theta
+        """
+        self.eigenvalues = np.array([np.linalg.eigh(H)[0] for H in self.H_thetas])
+        return self.eigenvalues
+
+    def plot(self):
+        """
+        Plot the eigenvalues for each angle theta.
+        """
+        # Plot the eigenvalues
+        plt.plot(self.theta_vals, self.eigenvalues[:,0], 'r-')
+        plt.plot(self.theta_vals, self.eigenvalues[:,1], 'b-')
+        plt.plot(self.theta_vals, self.eigenvalues[:,2], 'g-')
+        plt.plot(self.theta_vals, self.eigenvalues[:,3], 'c-')
+        plt.xlabel('Theta')
+        plt.ylabel('Eigenvalue')
+        plt.title(f'Eigenvalues vs Theta')
+        plt.savefig(f'{self.output_dir}/eigenvalues.png')
+        plt.close()
+
+class Eigenvectors:
+    """
+    Eigenvectors class for a quantum system with a potentials:
+
+    V(x) = aVx * x^2, and
+    Va(x) = aVa * (x - x_shift)^2 + c
+
+    Creates a 4x4 matrix with an arrowhead structure, where
+    
+    |‾                                                  ‾|
+    |    hbar*omega + Σ Vx(i)  tdm01   tdm02    tdm03    |
+    |    tdm01                 V_e(i)  0        0        |
+    |    tdm02                 0       V_e(i+1) 0        |
+    |_                                                  _|
+    
+    where Σ Vx(i) represents the sum of Vx values from i=0 to N, and
+    V_e(i) represents the potential Σ Vx(i) + Va(i) - Vx(i) at angle i.
+    
+    """
+    def __init__(self, H_thetas, output_dir, theta_vals, printout=0):
+        """
+        Initialize the Eigenvectors with parameters.
+        
+        Parameters:
+        H_thetas (numpy.ndarray): Array of Hamiltonian matrices for each angle theta
+        output_dir (str): Directory to save the plots
+        theta_vals (numpy.ndarray): Array of angle values
+        printout (int): Printout level (default: 0)
+        """
+        self.H_thetas = H_thetas
+        self.output_dir = output_dir
+        self.theta_vals = theta_vals
+        self.printout = printout
+
+    def fix_sign(self, eigvecs):
+        """
+        Fix the sign of the eigenvectors to ensure positive real part.
+        
+        Parameters:
+        eigvecs (numpy.ndarray): Array of eigenvectors for each angle theta
+        
+        Returns:
+        numpy.ndarray: Array of eigenvectors with fixed sign
+        """
+        # Ensure positive real part of eigenvectors
+        with open(f'{self.output_dir}/eigvecs_sign_flips_{self.printout}.out', "a") as log_file:
+            for i in range(eigvecs.shape[0]): #for every theta
+                for j in range(eigvecs.shape[2]): #for every eigvec
+                    s = 0.0
+                    for k in range(eigvecs.shape[1]): #for every component
+                        s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
+                    if s < 0:
+                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
+                        log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
+                        log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
+                        eigvecs[i, :, j] *= -1
+        return eigvecs
+
+    def compute(self):
+        """
+        Compute the eigenvectors for each angle theta.
+        
+        Returns:
+        numpy.ndarray: Array of eigenvectors for each angle theta
+        """
+        eigenvectors = np.array([np.linalg.eigh(H)[1] for H in self.H_thetas])
+        eigenvectors = self.fix_sign(eigenvectors)
+        return eigenvectors
+
+    def plot(self, eigvecs):# Plot eigenvector components (4 subplots in a 2x2 grid for each eigenstate)
+        """
+        Plot the eigenvector components for each eigenstate.
+        
+        Parameters:
+        eigvecs (numpy.ndarray): Array of eigenvectors for each angle theta
+        """
+        plt.figure(figsize=(12, 12))
+        plt.suptitle(f'Eigenvector Components - All eigenvectors', fontsize=16)  # Overall title
+        for state in range(eigvecs.shape[2]):
+            #nest a for loop for vec_comp and use it like: :, state, vect_comp
+            for vect_comp in range(4):
+                plt.subplot(2, 2, vect_comp + 1)  # Top left subplot
+                plt.plot(self.theta_vals, np.real(eigvecs[:, state, vect_comp]), label=f'Re(State {state})')
+                #plt.plot(theta_vals, np.imag(eigenvectors[:, state, vect_comp]), label=f'Im(Comp {vect_comp})')
+                #plt.plot(theta_vals, np.abs(eigenvectors[:, state, vect_comp]), label=f'Abs(Comp {vect_comp})')
+                plt.xlabel('Theta')
+                plt.ylabel(f'Component {vect_comp}')
+                plt.legend()
+        plt.tight_layout(rect=[0, 0.03, 1, 0.95])  # Adjust layout for overall title
+        plt.savefig(f'{self.output_dir}/eigenvector_components_for_eigvec_2x2.png')
+        plt.close()
+        
 def compute_berry_phase(eigvectors_all, theta_vals):
     """
     Compute Berry phases γ_n for each eigenstate n along a closed path in R-space.
@@ -183,12 +332,41 @@ def compute_berry_phase(eigvectors_all, theta_vals):
     return tau, gamma
 
 if __name__ == '__main__':
-    #load the eigvecs.npy file:
-    eigvecs = np.load("/home/zoltan/arrowhead_new/berry_phase_with_tau_and_gamma/npy/eigenvectors.npy")
-    theta_min = 0.0
-    theta_max = 2.0 * np.pi
+    
+    aVx = 1.0
+    aVa = 5.0
+    c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
+    x_shift = 0.1  # Shift in x direction
+    d = 0.1  # Radius of the circle, use unit circle for bigger radius
+    theta_min = 0
+    theta_max = 2 * np.pi
+    omega = 0.1
     num_points = 50000
-    theta_vals = np.linspace(theta_min, theta_max, num_points, endpoint=True)
+    R_0 = (0, 0, 0)
+
+    theta_vals = theta_range = np.linspace(theta_min, theta_max, num_points, endpoint=True)
+
+    hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range)
+    H_thetas = hamiltonian.H_thetas()
+    R_thetas = hamiltonian.R_thetas()
+    
+    
+    #create a directory for the output
+    output_dir = 'berry_phase_corrected_run'
+    os.makedirs(output_dir, exist_ok=True)
+    
+    #create a directory for the plots
+    plot_dir = os.path.join(output_dir, 'plots')
+    os.makedirs(plot_dir, exist_ok=True)
+    
+    npy_dir = os.path.join(output_dir, 'npy')
+    os.makedirs(npy_dir, exist_ok=True)
+    
+    eigenvectors = Eigenvectors(H_thetas, plot_dir, theta_vals)
+    eigvecs = eigenvectors.compute()
+    eigenvectors.plot(eigvecs)
+    eigenvalues = Eigenvalues(H_thetas, plot_dir, theta_vals)
+    eigenvalues.plot()
     
     tau, gamma = compute_berry_phase(eigvecs, theta_vals)
     #print("Tau:", tau)
@@ -203,11 +381,11 @@ if __name__ == '__main__':
             f.write("\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(gamma[:,:,-1], "Berry Phase Matrix"))
+        f.write(format_matrix(gamma[:,:,-1], "Berry Phase Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(tau[:,:,-1], "Berry Connection Matrix"))
+        f.write(format_matrix(tau[:,:,-1], "Tau Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
 
@@ -217,17 +395,6 @@ if __name__ == '__main__':
             print(f"Gamma[{i},{j}]: {gamma[i,j,-1]}")
             print(f"Tau[{i},{j}]: {tau[i,j,-1]}")
     
-    #create a directory for the output
-    output_dir = 'berry_phase_corrected'
-    os.makedirs(output_dir, exist_ok=True)
-    
-    #create a directory for the npy files
-    npy_dir = os.path.join(output_dir, 'npy')
-    os.makedirs(npy_dir, exist_ok=True)
-    
-    #create a directory for the plots
-    plot_dir = os.path.join(output_dir, 'plots')
-    os.makedirs(plot_dir, exist_ok=True)
 
     #save the tau and gamma matrices
     np.save(os.path.join(npy_dir, 'tau.npy'), tau)
@@ -241,5 +408,5 @@ if __name__ == '__main__':
 
 
     #plot the gamma and tau matrices
-    plot_matrix_elements(tau, gamma, theta_vals, output_dir)
+    plot_matrix_elements(tau, gamma, theta_vals, plot_dir)
     
