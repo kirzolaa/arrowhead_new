@@ -67,14 +67,13 @@ def compute_berry_phase_wilson(eigvectors_all):
     """
     N, M, _ = eigvectors_all.shape
     berry_phases_all = np.zeros(M)
-
+    """
     # Ensure loop is closed
     if not np.allclose(eigvectors_all[0], eigvectors_all[-1]):
         eigvectors_all = np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
         N += 1
-
+    """
     for n in range(M):
-        total_phase = 0.0 + 0.0j
         product = 1.0 + 0.0j
         for i in range(1, N):
             psi_prev = eigvectors_all[i - 1, :, n]
@@ -86,7 +85,7 @@ def compute_berry_phase_wilson(eigvectors_all):
 
             # Overlap between adjacent eigenstates
             overlap = np.vdot(np.conj(psi_prev).T, psi_curr)
-            product *= overlap / np.abs(overlap)  # Project to U(1)
+            product *= overlap / np.abs(overlap)
 
         berry_phases_all[n] = np.angle(product)
 
