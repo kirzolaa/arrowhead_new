@@ -75,6 +75,17 @@ if __name__ == "__main__":
         # Get all eigenvalues (already sorted by eigh)
         eigvals_all = np.array([np.linalg.eigh(H)[0] for H in H_thetas])
         
+        #plot the eigvals vs theta into the plot dir
+        plt.plot(theta_vals, eigvals_all[:,0], 'r-')
+        plt.plot(theta_vals, eigvals_all[:,1], 'b-')
+        plt.plot(theta_vals, eigvals_all[:,2], 'g-')
+        plt.plot(theta_vals, eigvals_all[:,3], 'c-')
+        plt.xlabel('Theta')
+        plt.ylabel('Eigenvalue')
+        plt.title(f'Eigenvalues vs Theta')
+        plt.savefig(f'{output_dir}/eigenvalues_d_{d}.png')
+        plt.close()
+
         # Verify all eigenvalues are in ascending order for each theta
         for i in range(len(eigvals_all)):
             if not np.all(np.diff(eigvals_all[i]) >= 0):
