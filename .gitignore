@@ -18,6 +18,8 @@ ENV/
 .vscode/
 *.swp
 *.swo
+*.out
+*.npy
 
 # large files
 3D_figures_multiprocessed/eigvecs_sign_flips_0.out
