@@ -100,7 +100,7 @@ if __name__ == "__main__":
     aVa = 5.0
     c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 0.1  # Shift in x direction
-    d = 0.2  # Radius of the circle, use unit circle for bigger radius
+    d = 0.1  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
