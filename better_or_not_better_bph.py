@@ -332,18 +332,43 @@ def compute_berry_phase(eigvectors_all, theta_vals):
                     #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
     return tau, gamma
 
-def main(d):
-    
-    aVx = 1.0
-    aVa = 5.0
-    c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
-    x_shift = 0.1  # Shift in x direction
-    theta_min = 0
-    theta_max = 2 * np.pi
-    omega = 0.1
-    num_points = 50000
-    R_0 = (0, 0, 0)
+def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals):
+    # Save the Hamiltonians, Va and Vx into .npy files
+    np.save(f'{npy_dir}/Hamiltonians.npy', Hamiltonians)
+    np.save(f'{npy_dir}/Va_values.npy', Va_values)
+    np.save(f'{npy_dir}/Vx_values.npy', Vx_values)
 
+    
+    theta_values = np.linspace(0, 2*np.pi, len(Va_values))
+    
+    #plot Va potential components
+    plt.figure(figsize=(12, 6))
+    for i in range(3):
+        plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Va Components')
+    plt.title('Va Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Va_components.png')
+    print("Va plots saved to figures directory.")
+
+    #plot Vx potential components
+    plt.figure(figsize=(12, 6))
+    for i in range(3):
+        plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Vx Components')
+    plt.title('Vx Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Vx_components.png')
+    print("Vx plots saved to figures directory.")
+
+def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0):
+    
     theta_vals = theta_range = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
     hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range)
@@ -378,7 +403,7 @@ def main(d):
     #print("Tau:", tau)
     print("Gamma[:,:,-1]:\n", gamma[:,:,-1]) #print the last gamma matrix
     #create a report on the gamma matrix
-    with open("gamma_report.txt", "w") as f:
+    with open(f'{output_dir}/gamma_report.txt', "w") as f:
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
@@ -415,10 +440,25 @@ def main(d):
 
     #plot the gamma and tau matrices
     plot_matrix_elements(tau, gamma, theta_vals, plot_dir)
+    # Convert lists to numpy arrays
+    Hamiltonians = np.array(H_thetas)
+    Va_values = np.array(hamiltonian.Va_theta_vals(R_thetas))
+    Vx_values = np.array(hamiltonian.Vx_theta_vals(R_thetas))
+
+    save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals)
     
     return tau, gamma, eigvecs, theta_vals
 
 if __name__ == '__main__':
     d = 0.001 #radius of the circle
-    main(d)
+    aVx = 1.0
+    aVa = 5.0
+    c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
+    x_shift = 0.1  # Shift in x direction
+    theta_min = 0
+    theta_max = 2 * np.pi
+    omega = 0.1
+    num_points = 50000
+    R_0 = (0, 0, 0)
+    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0)
     
