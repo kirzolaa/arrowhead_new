@@ -138,14 +138,14 @@ def compute_berry_phase_other(eigvectors_all, theta_vals):
 if __name__ == "__main__":
     
     #load the tau.npy file:
-    tau = np.load("/home/zoltan/arrowhead_new/berry_phase_with_tau_and_gamma/npy/tau.npy")
+    tau = np.load("/run/user/1000/gvfs/sftp:host=rick.phys.unideb.hu,user=kirzolaa/data/kirzolaa/arrowhead_new/berry_phase_corrected_run/npy/tau.npy")
     print("Tau diagonal:", tau[0,0,:])
     print("Tau diagonal imaginary part:", np.imag(tau[0,0,:]))
     print("Tau diagonal real part:", np.real(tau[0,0,:]))
 
     try:
         #load the theta_vals.npy file:
-        theta_vals = np.load("/home/zoltan/arrowhead_new/berry_phase_with_tau_and_gamma/npy/theta_vals.npy")
+        theta_vals = np.load("/run/user/1000/gvfs/sftp:host=rick.phys.unideb.hu,user=kirzolaa/data/kirzolaa/arrowhead_new/berry_phase_corrected_run/npy/theta_vals.npy")
         print("Theta values:", theta_vals.shape)
     except  FileNotFoundError:
         print("Theta values not found")
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         
     
     #load the eigenvectors.npy file:
-    eigenvectors = np.load("/home/zoltan/arrowhead_new/berry_phase_with_tau_and_gamma/npy/eigenvectors.npy")
+    eigenvectors = np.load("/run/user/1000/gvfs/sftp:host=rick.phys.unideb.hu,user=kirzolaa/data/kirzolaa/arrowhead_new/berry_phase_corrected_run/npy/eigvecs.npy")
     print("Eigenvectors:", eigenvectors.shape)
     
     #compute the berry phases
