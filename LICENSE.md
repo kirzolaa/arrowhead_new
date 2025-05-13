@@ -1,22 +1,55 @@
-# License - written by Copilot, so this is just for displaying purposes only:) - TerminalThor
+# Academic Software License
 
-This repository is licensed under the auspices of the University of Debrecen, Theoretical Physics Department.
+## Copyright Notice
+
+Copyright © 2025 University of Debrecen, Department of Theoretical Physics. All rights reserved.
+
+## License Grant
+
+This Academic Software License ("License") is granted by the University of Debrecen, Department of Theoretical Physics ("Licensor") for the Berry Phase Analysis software and associated documentation ("Software").
+
+Subject to the terms and conditions of this License, Licensor hereby grants you a worldwide, royalty-free, non-exclusive license to use, reproduce, modify, and distribute the Software solely for academic, research, and educational purposes.
 
 ## Permissions
 
-- **Use**: You are granted permission to use the contents of this repository for educational and research purposes.
-- **Modification**: You are allowed to modify the contents for your personal use.
-- **Distribution**: You may distribute the original or modified contents, provided it is for educational and research purposes.
+You are permitted to:
 
-## Conditions
+1. **Use** the Software for academic research and educational purposes.
+2. **Modify** the Software to suit your research needs.
+3. **Distribute** the Software to other academic researchers, provided that this License and all copyright notices are included.
+4. **Publish** research results obtained using the Software, with appropriate citation.
 
-- **Attribution**: Proper credit must be given to the University of Debrecen, Theoretical Physics Department. This can be done by citing this repository in your work.
-- **Non-Commercial**: The contents of this repository may not be used for commercial purposes.
+## Restrictions
 
-## Disclaimer
+You may not:
 
-The contents of this repository are provided "as is", without warranty of any kind, express or implied, including but not limited to the warranties of merchantability, fitness for a particular purpose, and non-infringement. In no event shall the authors or the University of Debrecen be liable for any claim, damages, or other liability, whether in an action of contract, tort, or otherwise, arising from, out of, or in connection with the software or the use or other dealings in the software.
+1. **Use** the Software for any commercial purpose without prior written permission from the Licensor.
+2. **Remove** or **alter** any copyright notices or attributions contained in the Software.
+3. **Patent** or claim any exclusive rights to any algorithms, methods, or processes implemented in the Software.
+
+## Attribution Requirements
+
+Any academic publication that uses results obtained from the Software must include an appropriate citation to:
+
+```
+Kirzolaa et al., "Berry Phase Analysis with Tau Matrix Method", University of Debrecen, Department of Theoretical Physics (2025).
+https://github.com/kirzolaa/arrowhead_new
+```
+
+## Disclaimer of Warranty
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+## Termination
+
+This License is effective until terminated. Your rights under this License will terminate automatically without notice if you fail to comply with any of its terms and conditions.
+
+## Governing Law
+
+This License shall be governed by and construed in accordance with the laws of Hungary, without regard to its conflict of law provisions.
 
 ---
 
-University of Debrecen, Theoretical Physics Department
+University of Debrecen  
+Department of Theoretical Physics  
+Debrecen, Hungary
