@@ -4,10 +4,12 @@ import os
 from new_bph import Hamiltonian
 #import an rk4 integrator
 from scipy.integrate import odeint
-
+from os.path import join
+from generalized.vector_utils import multiprocessing_create_perfect_orthogonal_circle
+from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle
+    
 def visualize_vectorz(R_0, d, num_points, theta_min, theta_max, save_dir):
     #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
-    from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle, generate_perfect_orthogonal_circle
     
     #visualize the R_theta vectors
     points = multiprocessing_create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max) #we already have a method for this
@@ -125,6 +127,7 @@ class Eigenvalues:
     |    hbar*omega + Σ Vx(i)  tdm01   tdm02    tdm03    |
     |    tdm01                 V_e(i)  0        0        |
     |    tdm02                 0       V_e(i+1) 0        |
+    |    tdm03                 0       0        V_e(i+2) |
     |_                                                  _|
     
     where Σ Vx(i) represents the sum of Vx values from i=0 to N, and
@@ -183,6 +186,7 @@ class Eigenvectors:
     |    hbar*omega + Σ Vx(i)  tdm01   tdm02    tdm03    |
     |    tdm01                 V_e(i)  0        0        |
     |    tdm02                 0       V_e(i+1) 0        |
+    |    tdm03                 0       0        V_e(i+2) |
     |_                                                  _|
     
     where Σ Vx(i) represents the sum of Vx values from i=0 to N, and
