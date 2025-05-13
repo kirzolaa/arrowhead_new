@@ -37,45 +37,44 @@ def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
     plt.subplot(2, 1, 1)
     for i, j in elements:
         plt.plot(theta_vals, np.real(tau[i, j, :]), 
-                label=f'Re(τ_{i}{j})', linestyle='-')
+                label=f'Re(τ_{i+1}{j+1})', linestyle='-')
         plt.plot(theta_vals, np.imag(tau[i, j, :]), 
-                label=f'Im(τ_{i}{j})', linestyle='--')
+                label=f'Im(τ_{i+1}{j+1})', linestyle='--')
     plt.xlabel('θ')
     plt.ylabel('τ')
     plt.title('Evolution of τ matrix elements')
     plt.legend()
     plt.grid(True)
+    plt.savefig(f'{output_dir}/tau_matrix_elements.png')
     
-    # Plot real and imaginary parts of gamma
+    
     plt.subplot(2, 1, 2)
     for i, j in elements:
         plt.plot(theta_vals, np.real(gamma[i, j, :]), 
-                label=f'Re(γ_{i}{j})', linestyle='-')
+                label=f'Re(γ_{i+1}{j+1})', linestyle='-')
         plt.plot(theta_vals, np.imag(gamma[i, j, :]), 
-                label=f'Im(γ_{i}{j})', linestyle='--')
+                label=f'Im(γ_{i+1}{j+1})', linestyle='--')
     plt.xlabel('θ')
     plt.ylabel('γ')
     plt.title('Evolution of γ matrix elements')
     plt.legend()
     plt.grid(True)
-    
-    plt.tight_layout()
-    plt.savefig(f'{output_dir}/matrix_elements_evolution.png')
+    plt.savefig(f'{output_dir}/gamma_matrix_elements.png')
     plt.close()
     
     # Create separate plots for each element
     for i, j in elements:
         plt.figure(figsize=(10, 6))
-        plt.plot(theta_vals, np.real(tau[i, j, :]), label=f'Re(τ_{i}{j})')
-        plt.plot(theta_vals, np.imag(tau[i, j, :]), label=f'Im(τ_{i}{j})')
-        plt.plot(theta_vals, np.real(gamma[i, j, :]), '--', label=f'Re(γ_{i}{j})')
-        plt.plot(theta_vals, np.imag(gamma[i, j, :]), '--', label=f'Im(γ_{i}{j})')
+        plt.plot(theta_vals, np.real(tau[i, j, :]), label=f'Re(τ_{i+1}{j+1})')
+        plt.plot(theta_vals, np.imag(tau[i, j, :]), label=f'Im(τ_{i+1}{j+1})')
+        plt.plot(theta_vals, np.real(gamma[i, j, :]), '--', label=f'Re(γ_{i+1}{j+1})')
+        plt.plot(theta_vals, np.imag(gamma[i, j, :]), '--', label=f'Im(γ_{i+1}{j+1})')
         plt.xlabel('θ')
         plt.ylabel('Value')
-        plt.title(f'Evolution of τ and γ_{i}{j} elements')
+        plt.title(f'Evolution of τ and γ_{i+1}{j+1} elements')
         plt.legend()
         plt.grid(True)
-        plt.savefig(f'{output_dir}/element_{i}{j}_evolution.png')
+        plt.savefig(f'{output_dir}/element_{i+1}{j+1}_evolution.png')
         plt.close()
 
 def format_matrix(matrix, title=None, output_dir=None):
@@ -163,13 +162,17 @@ class Eigenvalues:
         Plot the eigenvalues for each angle theta.
         """
         # Plot the eigenvalues
-        plt.plot(self.theta_vals, self.eigenvalues[:,0], 'r-')
-        plt.plot(self.theta_vals, self.eigenvalues[:,1], 'b-')
-        plt.plot(self.theta_vals, self.eigenvalues[:,2], 'g-')
-        plt.plot(self.theta_vals, self.eigenvalues[:,3], 'c-')
+        plt.figure(figsize=(10, 6))
+        plt.plot(self.theta_vals, self.eigenvalues[:,0], 'r-', label='Eigenvalue 1')
+        plt.plot(self.theta_vals, self.eigenvalues[:,1], 'b-', label='Eigenvalue 2')
+        plt.plot(self.theta_vals, self.eigenvalues[:,2], 'g-', label='Eigenvalue 3')
+        plt.plot(self.theta_vals, self.eigenvalues[:,3], 'c-', label='Eigenvalue 4')
         plt.xlabel('Theta')
         plt.ylabel('Eigenvalue')
         plt.title(f'Eigenvalues vs Theta')
+        plt.grid(True)
+        plt.legend(loc='best')
+        plt.tight_layout()
         plt.savefig(f'{self.output_dir}/eigenvalues.png')
         plt.close()
 
@@ -226,7 +229,7 @@ class Eigenvectors:
                     for k in range(eigvecs.shape[1]): #for every component
                         s += np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
                     if s < 0:
-                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s})\n")
+                        log_file.write(f"Flipping sign of state {j+1} at theta {i} (s={s})\n")
                         log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, j]}\n")
                         log_file.write(f"Current eigvec: {eigvecs[i, :, j]}\n")
                         eigvecs[i, :, j] *= -1
@@ -256,7 +259,7 @@ class Eigenvectors:
             #nest a for loop for vec_comp and use it like: :, state, vect_comp
             for vect_comp in range(4):
                 plt.subplot(2, 2, vect_comp + 1)  # Top left subplot
-                plt.plot(self.theta_vals, np.real(eigvecs[:, state, vect_comp]), label=f'Re(State {state})')
+                plt.plot(self.theta_vals, np.real(eigvecs[:, state, vect_comp]), label=f'Re(State {state+1})')
                 #plt.plot(theta_vals, np.imag(eigenvectors[:, state, vect_comp]), label=f'Im(Comp {vect_comp})')
                 #plt.plot(theta_vals, np.abs(eigenvectors[:, state, vect_comp]), label=f'Abs(Comp {vect_comp})')
                 plt.xlabel('Theta')
@@ -332,7 +335,7 @@ def compute_berry_phase(eigvectors_all, theta_vals):
                     #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
     return tau, gamma
 
-def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals):
+def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir):
     # Save the Hamiltonians, Va and Vx into .npy files
     np.save(f'{npy_dir}/Hamiltonians.npy', Hamiltonians)
     np.save(f'{npy_dir}/Va_values.npy', Va_values)
@@ -344,7 +347,7 @@ def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, th
     #plot Va potential components
     plt.figure(figsize=(12, 6))
     for i in range(3):
-        plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i}]')
+        plt.plot(theta_vals, Va_values[:, i], label=f'Va[{i+1}]')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Va Components')
     plt.title('Va Components vs Theta')
@@ -353,11 +356,12 @@ def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, th
     plt.tight_layout()
     plt.savefig(f'{plot_dir}/Va_components.png')
     print("Va plots saved to figures directory.")
+    plt.close()
 
     #plot Vx potential components
     plt.figure(figsize=(12, 6))
     for i in range(3):
-        plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i}]')
+        plt.plot(theta_vals, Vx_values[:, i], label=f'Vx[{i+1}]')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Vx Components')
     plt.title('Vx Components vs Theta')
@@ -366,6 +370,7 @@ def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, th
     plt.tight_layout()
     plt.savefig(f'{plot_dir}/Vx_components.png')
     print("Vx plots saved to figures directory.")
+    plt.close()
 
 def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0):
     
@@ -377,7 +382,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = 'berry_phase_corrected_run'
+    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_run')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -407,8 +412,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
-                f.write(f"Gamma[{i},{j}]: {gamma[i,j,-1]}\n")
-                f.write(f"Tau[{i},{j}]: {tau[i,j,-1]}\n")
+                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}\n")
+                f.write(f"Tau[{i+1},{j+1}]: {tau[i,j,-1]}\n")
             f.write("\n")
         f.write("===========================================\n")
         f.write("\n")
@@ -423,8 +428,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     #print the gamma matrix
     for i in range(gamma.shape[0]):
         for j in range(gamma.shape[1]):
-            print(f"Gamma[{i},{j}]: {gamma[i,j,-1]}")
-            print(f"Tau[{i},{j}]: {tau[i,j,-1]}")
+            print(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}")
+            print(f"Tau[{i+1},{j+1}]: {tau[i,j,-1]}")
     
 
     #save the tau and gamma matrices
@@ -445,7 +450,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     Va_values = np.array(hamiltonian.Va_theta_vals(R_thetas))
     Vx_values = np.array(hamiltonian.Vx_theta_vals(R_thetas))
 
-    save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals)
+    save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir)
     
     return tau, gamma, eigvecs, theta_vals
 
