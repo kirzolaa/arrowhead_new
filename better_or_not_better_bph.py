@@ -5,6 +5,16 @@ from new_bph import Hamiltonian
 #import an rk4 integrator
 from scipy.integrate import odeint
 
+def visualize_vectorz(R_0, d, num_points, theta_min, theta_max, save_dir):
+    #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
+    from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle, generate_perfect_orthogonal_circle
+    
+    #visualize the R_theta vectors
+    points = multiprocessing_create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max) #we already have a method for this
+    #points = create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max)
+    print(points.shape)
+    visualize_perfect_orthogonal_circle(points, save_dir)
+    verify_circle_properties(d, num_points, points, save_dir)
 
 def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
     """
@@ -318,13 +328,12 @@ def compute_berry_phase(eigvectors_all, theta_vals):
                     #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
     return tau, gamma
 
-if __name__ == '__main__':
+def main(d):
     
     aVx = 1.0
     aVa = 5.0
     c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
     x_shift = 0.1  # Shift in x direction
-    d = 0.001  # Radius of the circle, use unit circle for bigger radius
     theta_min = 0
     theta_max = 2 * np.pi
     omega = 0.1
@@ -345,9 +354,15 @@ if __name__ == '__main__':
     #create a directory for the plots
     plot_dir = os.path.join(output_dir, 'plots')
     os.makedirs(plot_dir, exist_ok=True)
+
+    #create a directory for vectors
+    vector_dir = os.path.join(output_dir, 'vectors')
+    os.makedirs(vector_dir, exist_ok=True)
     
     npy_dir = os.path.join(output_dir, 'npy')
     os.makedirs(npy_dir, exist_ok=True)
+
+    visualize_vectorz(R_0, d, num_points, theta_min, theta_max, vector_dir)
     
     eigenvectors = Eigenvectors(H_thetas, plot_dir, theta_vals)
     eigvecs = eigenvectors.compute()
@@ -396,4 +411,10 @@ if __name__ == '__main__':
 
     #plot the gamma and tau matrices
     plot_matrix_elements(tau, gamma, theta_vals, plot_dir)
+    
+    return tau, gamma, eigvecs, theta_vals
+
+if __name__ == '__main__':
+    d = 0.001 #radius of the circle
+    main(d)
     
