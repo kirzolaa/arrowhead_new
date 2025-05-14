@@ -428,11 +428,11 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("===========================================\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(gamma[:,:,-2], "Berry Phase Matrix", output_dir))
+        f.write(format_matrix(gamma[:,:,-2], "The one before last Berry Phase Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(tau[:,:,-2], "Tau Matrix", output_dir))
+        f.write(format_matrix(tau[:,:,-2], "The one before last Tau Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
 
@@ -478,7 +478,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir)
     
     #write the dataset to a file
-    with open(f'{output_dir}/dataset.out', 'w') as f:
+    with open(f'{output_dir}/dataset.arg', 'w') as f:
         f.write(f'd = {d}\n')
         f.write(f'aVx = {aVx}\n')
         f.write(f'aVa = {aVa}\n')
