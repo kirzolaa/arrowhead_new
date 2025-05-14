@@ -1,0 +1,2 @@
+d values where Va-Vx(R0) = Va-Vx(R1) = Va-Vx(R2):
+0.0612000000: 0.0554939200

@@ -1,0 +1,11 @@
+Search parameters:
+d_start = 0.001
+d_end = 1000.0
+small_step = 0.0001
+large_step = 0.01
+aVx = 1.0
+aVa = 5.0
+x_shift = 0.01
+c_const = 0.01
+omega = 0.1
+epsilon = 1e-05
