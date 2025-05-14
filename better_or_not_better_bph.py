@@ -508,13 +508,23 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
                 psi_next = eigvectors_all[i_next, :, n]
                 psi_curr = eigvectors_all[i, :, m]
 
-                grad_psi = (psi_next - psi_prev) / (2 * delta_theta)
+                grad_psi = (psi_next - psi_prev) / (delta_theta)
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
+                """ BAD, VERY BAD
+                if theta_vals[i] == theta_max:
+                    tau_val *= 2
+                elif theta_vals[i] == theta_min:
+                    tau_val *= 2
+                else:
+                    tau_val *= 1
+                """
                 tau[n, m, i] = tau_val
 
                 # Accumulate γ (imaginary part of τ)
                 if i > 0:
-                    gamma[n, m, i] = gamma[n, m, i - 1] + np.imag(tau_val) * delta_theta
+                    # Use trapezoidal rule for more accurate integration
+                    if i > 0:
+                        gamma[n, m, i] = gamma[n, m, i - 1] + 0.5 * np.imag(tau_val + tau[n, m, i - 1]) * delta_theta
 
     # Remove padded τ/γ at final point to keep shape = original
     tau = tau[:, :, :N_orig]
@@ -677,7 +687,6 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     plt.ylabel('Tr(γ)')
     plt.grid(True)
     plt.tight_layout()
-    plt.legend()
     plt.savefig(f'{plot_dir}/Tr_gamma_vs_theta.png')
     plt.close()
 
@@ -719,15 +728,15 @@ if __name__ == '__main__':
     
     elif dataset == 2:
         #let a be an aVx and an aVa parameter
-        d = 0.061200  # Radius of the circle, use unit circle for bigger radius, még egy CI???
+        d = 0.02  # Radius of the circle, use unit circle for bigger radius, még egy CI???
         aVx = 1.0
-        aVa = 5.0
+        aVa = 3.0
         c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
         x_shift = 0.01  # Shift in x direction
         theta_min = 0
         theta_max = 2 * np.pi
         omega = 0.1
-        num_points = 500000
+        num_points = 5000
         R_0 = (0, 0, 0)
 
     
