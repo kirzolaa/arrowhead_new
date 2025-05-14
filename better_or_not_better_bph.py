@@ -499,12 +499,21 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
     eigvectors_all = eigvectors_all / np.linalg.norm(eigvectors_all, axis=1, keepdims=True)
 
     for i in range(N):
-        i_prev = (i - 1) % N
+        i_prev = (i - 1)
         i_next = (i + 1) % N
 
         for n in range(M):
             for m in range(M):
-                psi_prev = eigvectors_all[i_prev, :, n]
+                if i == 0:
+                    i_prev = N - 1
+                else:
+                    i_prev = i - 1
+                if i == N - 1:
+                    i_next = 0
+                else:
+                    i_next = len(eigvectors_all) - 1
+                
+                psi_prev = eigvectors_all[i_prev, :, n] # (THETA, COMPONENT, STATE)
                 psi_next = eigvectors_all[i_next, :, n]
                 psi_curr = eigvectors_all[i, :, m]
 
@@ -594,7 +603,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
                 f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}\n")
-                f.write(f"Tau[{i+1},{j+1}]: {tau[i,j,-1]}\n")
+                f.write(f"Tau[{i+1},{j+1}]: {np.imag(tau[i,j,-1])}\n")
             f.write("\n")
         f.write("===========================================\n")
         f.write("\n")
@@ -602,7 +611,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(tau[:,:,-1], "The last Tau Matrix", output_dir))
+        f.write(format_matrix(np.imag(tau[:,:,-1]), "The last Tau Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("===========================================\n")
@@ -611,15 +620,15 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(tau[:,:,-2], "The one before last Tau Matrix", output_dir))
+        f.write(format_matrix(np.imag(tau[:,:,-2]), "The one before last Tau Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
 
     #print the gamma matrix
     for i in range(gamma.shape[0]):
         for j in range(gamma.shape[1]):
-            print(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-2]}")
-            print(f"Tau[{i+1},{j+1}]: {tau[i,j,-2]}")
+            print(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}")
+            print(f"Tau[{i+1},{j+1}]: {np.imag(tau[i,j,-1])}")
     
 
     #save the tau and gamma matrices
