@@ -519,7 +519,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
                     i_prev = N - 1
                 else:
                     i_prev = i - 1
-                if i == N - 1:
+                if i == N - 1: # at the end of the loop
                     i_next = 0
                 else:
                     i_next = i + 1  # Fixed: this should just be i+1, not len(eigvectors_all)-1
