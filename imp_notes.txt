@@ -23,3 +23,9 @@ todo #4: Vx-Va plots -- searching for a CI, like three communal points:D
 alpha*basis1 + beta*basis2 ---> R0,R1,R2
 Va-Vx(R0) = Va-Vx(R1) = Va-Vx(R2) --> ? (egyik tudjuk, hogy az alpha = beta = 0) --> harom, egymasra szimmetrikus megoldas lesz
 alpha, beta helyett hasznalhato a d,theta is
+
+
+matrix integralast megnezni again!!!!!!!!!!!!!!!
+e^iM --> M matrix integrálása -->  ?
+sjt-értékeivel
+4 elemű bazis
