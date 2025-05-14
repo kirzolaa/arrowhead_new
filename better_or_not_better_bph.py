@@ -531,6 +531,11 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
                 grad_psi = (psi_next - psi_prev) / delta_theta
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
                 
+                # Zero out diagonal elements of tau
+                # This is a common practice in Berry phase calculations
+                if n == m:
+                    tau_val = 0.0
+                
                 # Check for unusually large imaginary values at the end of the loop
                 # This prevents the sudden jump in gamma at 2π
                 if i == N-1 and np.abs(np.imag(tau_val)) > 10.0:
