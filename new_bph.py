@@ -756,7 +756,7 @@ if __name__ == "__main__":
         return eigvecs
     # Calculate eigenvectors
     eigenvectors = eigvecs_all = fix_sign(np.array([np.linalg.eigh(H)[1] for H in H_theta]), printout=0)
-    eigenvectors = fix_sign(eigenvectors, printout=1)
+    #eigenvectors = fix_sign(eigenvectors, printout=1)
 
     eigvals_all = np.array([np.linalg.eigh(H)[0] for H in H_theta]) #keruljuk a diagonalizalast megegyszer
     

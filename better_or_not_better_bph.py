@@ -7,6 +7,7 @@ from scipy.integrate import odeint
 from os.path import join
 from generalized.vector_utils import multiprocessing_create_perfect_orthogonal_circle
 from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle
+from scipy.constants import hbar
     
 def visualize_vectorz(R_0, d, num_points, theta_min, theta_max, save_dir):
     #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
@@ -271,6 +272,8 @@ class Eigenvectors:
         
 def compute_berry_phase(eigvectors_all, theta_vals):
     """
+    Note: the first and the last tau, gamma matrices are seemingly wrong!
+    
     Compute Berry phases γ_n for each eigenstate n along a closed path in R-space.
 
     Parameters:
@@ -288,7 +291,7 @@ def compute_berry_phase(eigvectors_all, theta_vals):
 
     for n in range(M):
         for m in range(M):
-            for i in range(N):
+            for i in range(N): 
                 # Handle boundary conditions for the finite difference
                 # Inside compute_berry_phase
 
@@ -308,7 +311,7 @@ def compute_berry_phase(eigvectors_all, theta_vals):
                     delta_theta_for_grad = theta_vals[i + 1] - theta_vals[i - 1]
 
                 psi_curr = eigvectors_all[i, :, m]
-                # Normalize for safety
+                # Normalize for safety (elvileg 1-gyel osztunk itt, mivel a vektorok eigh-val számolva)
                 psi_prev = psi_prev / np.linalg.norm(psi_prev)
                 psi_next = psi_next / np.linalg.norm(psi_next)
                 psi_curr = psi_curr / np.linalg.norm(psi_curr)
@@ -319,8 +322,7 @@ def compute_berry_phase(eigvectors_all, theta_vals):
 
                 # τ = ⟨ψ_i | ∇_theta | ψ_{i-1}⟩  (Corrected index for tau)
                 tau_val = np.vdot(psi_curr, grad_psi)
-                norm_val = np.linalg.norm(tau_val) if isinstance(tau_val, (np.ndarray, list)) else abs(tau_val)
-                tau[n, m, i] = tau_val / norm_val if norm_val != 0 else 0.0
+                tau[n, m, i] = tau_val
                 # · d_theta to integrate. 
                 if i == 0:
                    gamma[n, m, i] = 0.0
@@ -382,7 +384,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_run')
+    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_run_n_minus_1')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -412,24 +414,33 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
-                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}\n")
-                f.write(f"Tau[{i+1},{j+1}]: {tau[i,j,-1]}\n")
+                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-2]}\n")
+                f.write(f"Tau[{i+1},{j+1}]: {tau[i,j,-2]}\n")
             f.write("\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(gamma[:,:,-1], "Berry Phase Matrix", output_dir))
+        f.write(format_matrix(gamma[:,:,-1], "The last Berry Phase Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(tau[:,:,-1], "Tau Matrix", output_dir))
+        f.write(format_matrix(tau[:,:,-1], "The last Tau Matrix", output_dir))
+        f.write("\n\n")
+        f.write("===========================================\n")
+        f.write("===========================================\n")
+        f.write("\n")
+        f.write(format_matrix(gamma[:,:,-2], "Berry Phase Matrix", output_dir))
+        f.write("\n\n")
+        f.write("===========================================\n")
+        f.write("\n")
+        f.write(format_matrix(tau[:,:,-2], "Tau Matrix", output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
 
     #print the gamma matrix
     for i in range(gamma.shape[0]):
         for j in range(gamma.shape[1]):
-            print(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}")
-            print(f"Tau[{i+1},{j+1}]: {tau[i,j,-1]}")
+            print(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-2]}")
+            print(f"Tau[{i+1},{j+1}]: {tau[i,j,-2]}")
     
 
     #save the tau and gamma matrices
@@ -450,20 +461,53 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     Va_values = np.array(hamiltonian.Va_theta_vals(R_thetas))
     Vx_values = np.array(hamiltonian.Vx_theta_vals(R_thetas))
 
+    #plot the substract of Vx-Va
+    plt.figure(figsize=(12, 6))
+    for i in range(3):
+        plt.plot(theta_vals, (Vx_values[:, i] + omega * hbar) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Vx - Va Components')
+    plt.title('Vx - Va Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Vx_minus_Va_components.png')
+    print("Vx - Va plots saved to figures directory.")
+    plt.close()
+
     save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir)
     
     return tau, gamma, eigvecs, theta_vals
 
 if __name__ == '__main__':
-    d = 0.001 #radius of the circle
-    aVx = 1.0
-    aVa = 5.0
-    c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
-    x_shift = 0.1  # Shift in x direction
-    theta_min = 0
-    theta_max = 2 * np.pi
-    omega = 0.1
-    num_points = 50000
-    R_0 = (0, 0, 0)
+    dataset = 2
+
+    if dataset == 1:
+        d = 0.001 #radius of the circle
+        aVx = 1.0
+        aVa = 5.0
+        c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
+        x_shift = 0.1  # Shift in x direction
+        theta_min = 0
+        theta_max = 2 * np.pi
+        omega = 0.1
+        num_points = 50000
+        R_0 = (0, 0, 0)
+    
+    elif dataset == 2:
+        #let a be an aVx and an aVa parameter
+        d = 0.01  # Radius of the circle, use unit circle for bigger radius, még egy CI???
+        aVx = 1.0
+        aVa = 5.0
+        c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
+        x_shift = 0.01  # Shift in x direction
+        theta_min = 0
+        theta_max = 2 * np.pi
+        omega = 0.1
+        num_points = 5000
+        R_0 = (0, 0, 0)
+
+
+    
     main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0)
     

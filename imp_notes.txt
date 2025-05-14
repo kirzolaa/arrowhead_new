@@ -15,3 +15,11 @@ todo #1: tau es berry fazis, rogz d-re
 todo #2: rogz c_const es x_shift mellett, egy olyan abra, ahol a harom db R foggvenyeben ki van rajzolva vmi: bazis: metszet meroleges (/home/zoltan/arrowhead_new/results_thetamin_0.00_thetamax_6.28_20250430121802/vectors/perfect_circle_orthogonal_plane.png) ---> bazis x es bazis y, z pedig energia(V_a es V_x fgv) sjt-értékekkel
 -->elvben osszeernek az sjt-ertekek nullanal --> check!!!!!!!!!!
 megnezni sok d-re!!!!!!!!!!!!!!!!
+
+
+
+todo #3: Va és Vx+hbar*omega of the molecule
+todo #4: Vx-Va plots -- searching for a CI, like three communal points:D
+alpha*basis1 + beta*basis2 ---> R0,R1,R2
+Va-Vx(R0) = Va-Vx(R1) = Va-Vx(R2) --> ? (egyik tudjuk, hogy az alpha = beta = 0) --> harom, egymasra szimmetrikus megoldas lesz
+alpha, beta helyett hasznalhato a d,theta is

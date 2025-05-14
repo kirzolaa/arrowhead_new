@@ -26,10 +26,10 @@ This document visualizes the array shapes and relationships between the key data
                                      │   N = num_points             │
                                      │   M = num_states (4)         │
                                      │                              │
-                                     │ eigenvectors: (N, M, M)      │
+                                     │ eigenvectors: (N, C, E)      │
                                      │   N = num_points             │
-                                     │   M = matrix_dimension (4)   │
-                                     │   M = num_states (4)         │
+                                     │   C = vector_components (4)  │
+                                     │   E = num_eigenvectors (4)   │
                                      └──────────────────────────────┘
                                                     │
                                                     ▼
