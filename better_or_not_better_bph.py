@@ -8,6 +8,7 @@ from os.path import join
 from generalized.vector_utils import multiprocessing_create_perfect_orthogonal_circle
 from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle
 from scipy.constants import hbar
+import multiprocessing as mp
     
 def visualize_vectorz(R_0, d, num_points, theta_min, theta_max, save_dir):
     #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
@@ -270,7 +271,7 @@ class Eigenvectors:
         plt.savefig(f'{self.output_dir}/eigenvector_components_for_eigvec_2x2.png')
         plt.close()
         
-def compute_berry_phase(eigvectors_all, theta_vals):
+def compute_berry_phase_og(eigvectors_all, theta_vals):
     """
     Note: the first and the last tau, gamma matrices are seemingly wrong!
     
@@ -374,8 +375,174 @@ def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, th
     print("Vx plots saved to figures directory.")
     plt.close()
 
-def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0):
+def compute_berry_phase_maybe_gud(eigvectors_all_, theta_vals, continuity_check=False):
+    """
+    Compute Berry connection (τ) and Berry phase (γ) matrices along a closed path.
+
+    Parameters:
+    - eigvectors_all: ndarray of shape (N, M, M), eigenvectors at each θ (N points, M states)
+    - theta_vals: ndarray of shape (N,), θ values in path
+    - continuity_check: bool, if True, print overlap continuity for debugging
+
+    Returns:
+    - tau: ndarray (M, M, N), complex Berry connection ⟨ψ_m | dψ_n/dθ⟩
+    - gamma: ndarray (M, M, N), Berry phase integral over θ
+    """
+    # Pad one more point to close the loop
+    eigvectors_all_ = np.concatenate([eigvectors_all_, eigvectors_all_[:1]], axis=0)
+    theta_vals_ = np.append(theta_vals, theta_vals[-1])
+    #START WITH THE SECOND THETA_VALUE
+    eigvectors_all_ = eigvectors_all_[1:]
+    theta_vals_ = theta_vals_[1:]
     
+    N, M, _ = eigvectors_all_.shape
+    tau = np.zeros((M, M, N), dtype=np.complex128)
+    gamma = np.zeros((M, M, N), dtype=np.float64)
+
+    # Normalize all eigenvectors (for safety)
+    eigvectors_all_ = eigvectors_all_ / np.linalg.norm(eigvectors_all_, axis=1, keepdims=True)
+
+    delta_theta = theta_vals_[1] - theta_vals_[0]  # assume uniform spacing
+
+    for i in range(N):
+        for n in range(M):
+            for m in range(M):
+                # Get previous and next for central difference
+                psi_prev = eigvectors_all_[i - 1, :, n] if i > 0 else eigvectors_all_[N - 1, :, n]
+                psi_next = eigvectors_all_[(i + 1) % N, :, n]
+                psi_curr = eigvectors_all_[i, :, m]
+
+                # Central difference derivative
+                grad_psi = (psi_next - psi_prev) / (2 * delta_theta)
+
+                # Berry connection τ_{nm} = i⟨ψ_m | dψ_n/dθ⟩
+                tau_val = 1j * np.vdot(psi_curr, grad_psi)
+                tau[n, m, i] = tau_val
+
+                # Accumulate γ_{nm}
+                if i == 0:
+                    gamma[n, m, i] = 0.0
+                else:
+                    gamma[n, m, i] = gamma[n, m, i - 1] + np.imag(tau[n, m, i]) * delta_theta
+
+    if continuity_check:
+        print("Eigenvector continuity (should be ~1):")
+        for i in range(1, N):
+            for n in range(M):
+                overlap = np.abs(np.vdot(eigvectors_all_[i - 1, :, n], eigvectors_all_[i, :, n]))
+                if overlap < 0.99:
+                    print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
+
+    return tau, gamma
+
+def compute_berry_phase_BAD(eigvectors_all_, theta_vals_, theta_max, continuity_check=False):
+    """
+    Compute Berry connection (τ) and Berry phase (γ) matrices along a closed path (ring-like).
+    """
+    # Pad one more point to close the loop
+    eigvectors_all_ = np.concatenate([eigvectors_all_, eigvectors_all_[:1]], axis=0)
+    theta_vals_ = np.append(theta_vals_, theta_vals[-1])
+    N = eigvectors_all_.shape[0]  # now N = original + 1
+    M = eigvectors_all_.shape[1]
+
+    # Now initialize tau and gamma with updated shape
+    tau = np.zeros((M, M, N), dtype=np.complex128)
+    gamma = np.zeros((M, M, N), dtype=np.float64)
+
+    delta_theta = theta_vals_[1] - theta_vals_[0]
+    for i in range(N+1):
+        i_prev = (i - 1) % N
+        i_next = (i + 1) % N
+
+        for n in range(M):
+            for m in range(M):
+                psi_prev = eigvectors_all_[i_prev, :, n]
+                psi_next = eigvectors_all_[i_next, :, n]
+                psi_curr = eigvectors_all_[i, :, m]
+
+                grad_psi = (psi_next - psi_prev) / (2 * delta_theta)
+                tau_val = 1j * np.vdot(psi_curr, grad_psi)
+                tau[n, m, i] = tau_val
+
+                if i > 0:
+                    gamma[n, m, i] = gamma[n, m, i - 1] + np.imag(tau_val) * delta_theta
+
+    if continuity_check:
+        print("Eigenvector continuity (should be ~1):")
+        for i in range(1, N):
+            for n in range(M):
+                overlap = np.abs(np.vdot(eigvectors_all_[i - 1, :, n], eigvectors_all_[i, :, n]))
+                if overlap < 0.99:
+                    print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
+
+    return tau, gamma
+
+
+def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
+    """
+    Compute Berry connection (τ) and Berry phase (γ) matrices using central difference,
+    with ring continuity and stabilized diagonals.
+    """
+
+    N_orig, M, _ = eigvectors_all.shape
+
+    # Extend θ and eigvecs for periodic boundary
+    eigvectors_all = np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
+    theta_vals = np.append(theta_vals, theta_vals[0] + 2 * np.pi)
+    N = N_orig + 1
+    delta_theta = theta_vals[1] - theta_vals[0]
+
+    tau = np.zeros((M, M, N), dtype=np.complex128)
+    gamma = np.zeros((M, M, N), dtype=np.float64)
+
+    # Optional: normalize eigenvectors for safety
+    eigvectors_all = eigvectors_all / np.linalg.norm(eigvectors_all, axis=1, keepdims=True)
+
+    for i in range(N):
+        i_prev = (i - 1) % N
+        i_next = (i + 1) % N
+
+        for n in range(M):
+            for m in range(M):
+                psi_prev = eigvectors_all[i_prev, :, n]
+                psi_next = eigvectors_all[i_next, :, n]
+                psi_curr = eigvectors_all[i, :, m]
+
+                grad_psi = (psi_next - psi_prev) / (2 * delta_theta)
+                tau_val = 1j * np.vdot(psi_curr, grad_psi)
+                tau[n, m, i] = tau_val
+
+                # Accumulate γ (imaginary part of τ)
+                if i > 0:
+                    gamma[n, m, i] = gamma[n, m, i - 1] + np.imag(tau_val) * delta_theta
+
+    # Remove padded τ/γ at final point to keep shape = original
+    tau = tau[:, :, :N_orig]
+    gamma = gamma[:, :, :N_orig]
+    """
+    # Zero out diagonals of τ and γ (optional but helps stability)
+    for n in range(M):
+        tau[n, n, :] = 0.0
+        gamma[n, n, :] = 0.0
+    """
+    if continuity_check:
+        print("Eigenvector continuity (should be ~1):")
+        for i in range(1, N_orig):
+            for n in range(M):
+                overlap = np.abs(np.vdot(eigvectors_all[i - 1, :, n], eigvectors_all[i, :, n]))
+                if overlap < 0.99:
+                    print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
+
+    # Report total Berry phase per eigenstate
+    gamma_closed_loop = gamma[:, :, -1]
+    berry_phase_per_state = np.angle(np.exp(1j * gamma_closed_loop.diagonal()))
+    print("Berry phase per state:", berry_phase_per_state)
+
+    return tau, gamma
+
+
+def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, extended=False):
+    #space theta_vals uniformly
     theta_vals = theta_range = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
     hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c_const, R_0, d, theta_range)
@@ -384,7 +551,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_run_n_minus_1')
+    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_script')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -406,7 +573,9 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     eigenvalues = Eigenvalues(H_thetas, plot_dir, theta_vals)
     eigenvalues.plot()
     
-    tau, gamma = compute_berry_phase(eigvecs, theta_vals)
+    with mp.Pool(processes=(mp.cpu_count()-1)) as pool:
+        results = pool.apply_async(compute_berry_phase, (eigvecs, theta_vals))
+        tau, gamma = results.get()
     #print("Tau:", tau)
     print("Gamma[:,:,-1]:\n", gamma[:,:,-1]) #print the last gamma matrix
     #create a report on the gamma matrix
@@ -414,8 +583,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
-                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-2]}\n")
-                f.write(f"Tau[{i+1},{j+1}]: {tau[i,j,-2]}\n")
+                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}\n")
+                f.write(f"Tau[{i+1},{j+1}]: {tau[i,j,-1]}\n")
             f.write("\n")
         f.write("===========================================\n")
         f.write("\n")
@@ -455,7 +624,15 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
 
 
     #plot the gamma and tau matrices
-    plot_matrix_elements(tau, gamma, theta_vals, plot_dir)
+    # Use the extended theta_vals or truncate tau and gamma to match original theta_vals
+    if extended:
+        # Option 1: Use extended theta_vals
+        extended_theta_vals = np.append(theta_vals, theta_max)
+        plot_matrix_elements(tau, gamma, extended_theta_vals, plot_dir)
+    else:
+        # Option 2: Truncate tau and gamma to match original theta_vals
+        extended_theta_vals = theta_vals
+        plot_matrix_elements(tau, gamma, extended_theta_vals, plot_dir)
     # Convert lists to numpy arrays
     Hamiltonians = np.array(H_thetas)
     Va_values = np.array(hamiltonian.Va_theta_vals(R_thetas))
@@ -490,6 +667,39 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write(f'num_points = {num_points}\n')
         f.write(f'R_0 = {R_0}\n')
 
+    #plot the trace of gamma
+    plt.figure(figsize=(12, 6))
+    trace_gamma = np.trace(gamma[:, :, :], axis1=0, axis2=1)
+    # Use the same extended_theta_vals to match dimensions
+    plt.plot(extended_theta_vals, trace_gamma)
+    plt.title("Tr(γ) vs θ")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Tr(γ)')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.legend()
+    plt.savefig(f'{plot_dir}/Tr_gamma_vs_theta.png')
+    plt.close()
+
+    with open(f'{output_dir}/overlap_report.txt', 'w') as f:
+        f.write("Overlap report:\n")
+        for i in range(1, len(eigvecs)):
+            for n in range(eigvecs.shape[2]):
+                overlap = np.vdot(eigvecs[i - 1, :, n], eigvecs[i, :, n])
+                f.write(f"Overlap (state {n+1}, θ={i}): {overlap:.6f}\n")
+    
+    
+    plt.figure(figsize=(12, 6))
+    # Use extended_theta_vals to match dimensions with tau
+    plt.plot(extended_theta_vals, np.imag(tau[1,2,:]), label="Im(τ₁₂)")
+    plt.scatter(extended_theta_vals[0], np.imag(tau[1,2,0]), color='green', label="First Point")
+    plt.scatter(extended_theta_vals[-1], np.imag(tau[1,2,-1]), color='red', label="Last Point")
+    plt.legend()
+    plt.title("Tau continuity check (should be smooth)")
+    plt.savefig(f'{plot_dir}/tau_continuity_check.png')
+    plt.close()
+
+
     return tau, gamma, eigvecs, theta_vals
 
 if __name__ == '__main__':
@@ -509,7 +719,7 @@ if __name__ == '__main__':
     
     elif dataset == 2:
         #let a be an aVx and an aVa parameter
-        d = 0.01  # Radius of the circle, use unit circle for bigger radius, még egy CI???
+        d = 0.061200  # Radius of the circle, use unit circle for bigger radius, még egy CI???
         aVx = 1.0
         aVa = 5.0
         c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
@@ -517,11 +727,11 @@ if __name__ == '__main__':
         theta_min = 0
         theta_max = 2 * np.pi
         omega = 0.1
-        num_points = 5000
+        num_points = 500000
         R_0 = (0, 0, 0)
 
     
     
     #run the main function
-    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0)
+    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, extended=False)
     
