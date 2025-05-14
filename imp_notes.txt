@@ -29,3 +29,4 @@ matrix integralast megnezni again!!!!!!!!!!!!!!!
 e^iM --> M matrix integrálása -->  ?
 sjt-értékeivel
 4 elemű bazis
+keresni olyan cikket, ahol D matrix integrálása van
