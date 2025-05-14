@@ -865,7 +865,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     # Calculate Berry phase from trace
     berry_phase_from_trace = raw_trace[-1] - raw_trace[0]
-    print(f"Berry phase calculated from trace: {berry_phase_from_trace}")
+    print(f"Berry phase matrix calculated trace: {berry_phase_from_trace}")
     
     # Also create a plot showing just the trace with annotations
     plt.figure(figsize=(12, 6))
