@@ -23,6 +23,12 @@ ENV/
 # large files
 3D_figures_multiprocessed/eigvecs_sign_flips_0.out
 3D_figures_multiprocessed/eigvecs_sign_flips_1.out
+# Large files exceeding GitHub limits
+berry_phase_corrected_script/npy/Hamiltonians.npy
+berry_phase_corrected_script/npy/eigvecs.npy
+berry_phase_corrected_script/npy/tau.npy
+berry_phase_corrected_script/npy/gamma.npy
+berry_phase_corrected_script/overlap_report.txt
 
 # Repository folder
 Arrowhead/
