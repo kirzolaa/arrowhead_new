@@ -477,6 +477,19 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
 
     save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir)
     
+    #write the dataset to a file
+    with open(f'{output_dir}/dataset.out', 'w') as f:
+        f.write(f'd = {d}\n')
+        f.write(f'aVx = {aVx}\n')
+        f.write(f'aVa = {aVa}\n')
+        f.write(f'c_const = {c_const}\n')
+        f.write(f'x_shift = {x_shift}\n')
+        f.write(f'theta_min = {theta_min}\n')
+        f.write(f'theta_max = {theta_max}\n')
+        f.write(f'omega = {omega}\n')
+        f.write(f'num_points = {num_points}\n')
+        f.write(f'R_0 = {R_0}\n')
+
     return tau, gamma, eigvecs, theta_vals
 
 if __name__ == '__main__':
@@ -507,7 +520,8 @@ if __name__ == '__main__':
         num_points = 5000
         R_0 = (0, 0, 0)
 
-
     
+    
+    #run the main function
     main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0)
     
