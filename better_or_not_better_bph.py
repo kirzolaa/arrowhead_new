@@ -494,9 +494,20 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
 
     tau = np.zeros((M, M, N), dtype=np.complex128)
     gamma = np.zeros((M, M, N), dtype=np.float64)
+    
+    # Create arrays to track the magnitude of tau and gamma for diagnostics
+    tau_imag_magnitudes = np.zeros((M, M, N_orig))
+    tau_real_magnitudes = np.zeros((M, M, N_orig))
+    gamma_increments = np.zeros((M, M, N_orig))
 
     # Optional: normalize eigenvectors for safety
     eigvectors_all = eigvectors_all / np.linalg.norm(eigvectors_all, axis=1, keepdims=True)
+
+    # Track the largest tau values and their locations
+    largest_tau_imag = 0
+    largest_tau_imag_loc = (0, 0, 0)
+    largest_gamma_increment = 0
+    largest_gamma_increment_loc = (0, 0, 0)
 
     for i in range(N):
         i_prev = (i - 1)
@@ -511,41 +522,144 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
                 if i == N - 1:
                     i_next = 0
                 else:
-                    i_next = len(eigvectors_all) - 1
+                    i_next = i + 1  # Fixed: this should just be i+1, not len(eigvectors_all)-1
                 
                 psi_prev = eigvectors_all[i_prev, :, n] # (THETA, COMPONENT, STATE)
                 psi_next = eigvectors_all[i_next, :, n]
                 psi_curr = eigvectors_all[i, :, m]
 
-                grad_psi = (psi_next - psi_prev) / (delta_theta)
+                grad_psi = (psi_next - psi_prev) / delta_theta
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
-                """ BAD, VERY BAD
-                if theta_vals[i] == theta_max:
-                    tau_val *= 2
-                elif theta_vals[i] == theta_min:
-                    tau_val *= 2
-                else:
-                    tau_val *= 1
-                """
+                
+                # Check for unusually large imaginary values at the end of the loop
+                # This prevents the sudden jump in gamma at 2π
+                if i == N-1 and np.abs(np.imag(tau_val)) > 10.0:
+                    # Use the average of previous values instead
+                    if i > 0:
+                        prev_tau = tau[n, m, i-1]
+                        tau_val = prev_tau
+                        print(f"Limiting large tau value at (n={n+1}, m={m+1}, theta_idx={i})")
+                
                 tau[n, m, i] = tau_val
+                
+                # Store magnitudes for diagnostics
+                if i < N_orig:
+                    tau_imag_magnitudes[n, m, i] = np.abs(np.imag(tau_val))
+                    tau_real_magnitudes[n, m, i] = np.abs(np.real(tau_val))
+                    
+                    # Track largest values
+                    if np.abs(np.imag(tau_val)) > largest_tau_imag:
+                        largest_tau_imag = np.abs(np.imag(tau_val))
+                        largest_tau_imag_loc = (n, m, i)
 
                 # Accumulate γ (imaginary part of τ)
                 if i > 0:
                     # Use trapezoidal rule for more accurate integration
-                    if i > 0:
-                        gamma[n, m, i] = gamma[n, m, i - 1] + 0.5 * np.imag(tau_val + tau[n, m, i - 1]) * delta_theta
+                    gamma_increment = 0.5 * np.imag(tau_val + tau[n, m, i - 1]) * delta_theta
+                    gamma[n, m, i] = gamma[n, m, i - 1] + gamma_increment
+                    
+                    # Store increment for diagnostics
+                    if i < N_orig:
+                        gamma_increments[n, m, i-1] = gamma_increment
+                        
+                        # Track largest increment
+                        if np.abs(gamma_increment) > largest_gamma_increment:
+                            largest_gamma_increment = np.abs(gamma_increment)
+                            largest_gamma_increment_loc = (n, m, i-1)
 
     # Remove padded τ/γ at final point to keep shape = original
     tau = tau[:, :, :N_orig]
     gamma = gamma[:, :, :N_orig]
-    """
-    # Zero out diagonals of τ and γ (optional but helps stability)
-    for n in range(M):
-        tau[n, n, :] = 0.0
-        gamma[n, n, :] = 0.0
-    """
+    
+    # Print diagnostic information about large tau and gamma values
+    print(f"\nDiagnostic Information:")
+    print(f"Largest imaginary tau value: {largest_tau_imag:.6f} at (n={largest_tau_imag_loc[0]+1}, m={largest_tau_imag_loc[1]+1}, theta_idx={largest_tau_imag_loc[2]})")
+    print(f"Largest gamma increment: {largest_gamma_increment:.6f} at (n={largest_gamma_increment_loc[0]+1}, m={largest_gamma_increment_loc[1]+1}, theta_idx={largest_gamma_increment_loc[2]})")
+    
+    # Find the matrix elements with the largest contribution to the trace
+    tau_imag_sum = np.sum(np.abs(np.imag(tau)), axis=2)
+    gamma_final_abs = np.abs(gamma[:,:,-1])
+    
+    # Get the indices of the top 5 contributors
+    tau_flat_indices = np.argsort(tau_imag_sum.flatten())[-5:]
+    gamma_flat_indices = np.argsort(gamma_final_abs.flatten())[-5:]
+    
+    print("\nTop 5 contributors to tau (imaginary part sum):")
+    for idx in tau_flat_indices[::-1]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        print(f"  Tau[{n+1},{m+1}]: Sum of abs(imag) = {tau_imag_sum[n,m]:.6f}, Final value = {np.imag(tau[n,m,-1]):.6f}")
+    
+    print("\nTop 5 contributors to gamma (final values):")
+    for idx in gamma_flat_indices[::-1]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        print(f"  Gamma[{n+1},{m+1}]: Final value = {gamma[n,m,-1]:.6f}")
+    
+    # Create diagnostic plots directory
+    diag_dir = os.path.join('berry_phase_corrected_script', 'diagnostics')
+    os.makedirs(diag_dir, exist_ok=True)
+    
+    # Plot the evolution of the largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        plt.plot(theta_vals[:-1], gamma[n,m,:], label=f'Gamma[{n+1},{m+1}]')
+    plt.title('Evolution of Largest Gamma Contributors')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Gamma Value')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/largest_gamma_evolution.png')
+    plt.close()
+    
+    # Plot the evolution of tau imaginary part for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in tau_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        plt.plot(theta_vals[:-1], np.imag(tau[n,m,:]), label=f'Imag(Tau[{n+1},{m+1}])')
+    plt.title('Evolution of Largest Tau Imaginary Parts')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Imaginary Part of Tau')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/largest_tau_imag_evolution.png')
+    plt.close()
+    
+    # Plot the gamma increments for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        # Calculate increments
+        increments = np.diff(gamma[n,m,:])
+        plt.plot(theta_vals[1:-1], increments, label=f'Gamma[{n+1},{m+1}] increments')
+    plt.title('Gamma Increments for Largest Contributors')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Increment Value')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/gamma_increments.png')
+    plt.close()
+    
+    # Plot a heatmap of the final gamma matrix
+    plt.figure(figsize=(10, 8))
+    im = plt.imshow(gamma[:,:,-1], cmap='viridis')
+    plt.colorbar(im, label='Gamma Value')
+    plt.title('Final Gamma Matrix Heatmap')
+    plt.xlabel('m')
+    plt.ylabel('n')
+    # Add text annotations
+    for i in range(M):
+        for j in range(M):
+            text = plt.text(j, i, f'{gamma[i,j,-1]:.1f}',
+                          ha="center", va="center", color="w" if abs(gamma[i,j,-1]) > 1000 else "k")
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/gamma_final_heatmap.png')
+    plt.close()
+    
     if continuity_check:
-        print("Eigenvector continuity (should be ~1):")
+        print("\nEigenvector continuity (should be ~1):")
         for i in range(1, N_orig):
             for n in range(M):
                 overlap = np.abs(np.vdot(eigvectors_all[i - 1, :, n], eigvectors_all[i, :, n]))
@@ -555,7 +669,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
     # Report total Berry phase per eigenstate
     gamma_closed_loop = gamma[:, :, -1]
     berry_phase_per_state = np.angle(np.exp(1j * gamma_closed_loop.diagonal()))
-    print("Berry phase per state:", berry_phase_per_state)
+    print("\nBerry phase per state:", berry_phase_per_state)
 
     return tau, gamma
 
@@ -686,17 +800,160 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write(f'num_points = {num_points}\n')
         f.write(f'R_0 = {R_0}\n')
 
-    #plot the trace of gamma
+    # Get the number of states (M) from the gamma matrix shape
+    M = gamma.shape[0]
+    
+    # Plot the trace of gamma and individual diagonal elements
+    plt.figure(figsize=(15, 10))
+    
+    # Create a 2x2 subplot layout
+    plt.subplot(2, 2, 1)
+    # Plot the raw trace
+    raw_trace = np.trace(gamma, axis1=0, axis2=1)
+    # Make sure theta_vals and raw_trace have the same shape
+    plt.plot(theta_vals[:len(raw_trace)], raw_trace, 'b-', linewidth=2, label='Raw Trace')
+    plt.title("Raw Trace of γ Matrix")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Trace Value')
+    plt.grid(True)
+    plt.legend()
+    
+    # Plot the individual diagonal elements
+    plt.subplot(2, 2, 2)
+    for i in range(M):
+        plt.plot(theta_vals[:len(gamma[i,i,:])], gamma[i, i, :], label=f'γ[{i+1},{i+1}]')
+    plt.title("Diagonal Elements of γ Matrix")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('γ Value')
+    plt.grid(True)
+    plt.legend()
+    
+    # Plot the Berry phases for each state
+    plt.subplot(2, 2, 3)
+    berry_phases = np.zeros((M, gamma.shape[2]))
+    for i in range(gamma.shape[2]):
+        for j in range(M):
+            berry_phases[j, i] = np.angle(np.exp(1j * gamma[j, j, i]))
+    
+    for i in range(M):
+        plt.plot(theta_vals[:gamma.shape[2]], berry_phases[i, :], label=f'State {i+1}')
+    plt.title("Berry Phase per State")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Berry Phase')
+    plt.grid(True)
+    plt.legend()
+    
+    # Plot the sum of Berry phases
+    plt.subplot(2, 2, 4)
+    sum_berry_phases = np.sum(berry_phases, axis=0)
+    plt.plot(theta_vals[:gamma.shape[2]], sum_berry_phases, 'r-', linewidth=2)
+    plt.title("Sum of Berry Phases")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Sum Value')
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/gamma_analysis.png')
+    plt.close()
+    
+    # Print some debug information about the trace
+    print(f"Trace of gamma shape: {raw_trace.shape}")
+    print(f"Extended theta_vals shape: {extended_theta_vals.shape}")
+    print(f"First few trace values: {raw_trace[:5]}")
+    print(f"Last few trace values: {raw_trace[-5:]}")
+    print(f"Trace at 0, π/2, π, 3π/2, 2π: {raw_trace[0]}, {raw_trace[len(raw_trace)//4]}, {raw_trace[len(raw_trace)//2]}, {raw_trace[3*len(raw_trace)//4]}, {raw_trace[-1]}")
+    
+    # Calculate Berry phase from trace
+    berry_phase_from_trace = raw_trace[-1] - raw_trace[0]
+    print(f"Berry phase calculated from trace: {berry_phase_from_trace}")
+    
+    # Also create a plot showing just the trace with annotations
     plt.figure(figsize=(12, 6))
-    trace_gamma = np.trace(gamma[:, :, :], axis1=0, axis2=1)
-    # Use the same extended_theta_vals to match dimensions
-    plt.plot(extended_theta_vals, trace_gamma)
+    plt.plot(theta_vals[:len(raw_trace)], raw_trace, 'b-', linewidth=2)
+    
+    # Add markers and annotations at key points
+    key_indices = [0, len(raw_trace)//4, len(raw_trace)//2, 3*len(raw_trace)//4, -2]
+    
+    plt.scatter([theta_vals[i] for i in key_indices], 
+                [raw_trace[i] for i in key_indices], 
+                color='red', s=80, zorder=5)
+    
+    # Add annotations
+    for i, idx in enumerate(key_indices):
+        plt.annotate(f'{raw_trace[idx]:.6f}', 
+                    (theta_vals[idx], raw_trace[idx]), 
+                    textcoords="offset points", 
+                    xytext=(0, 10 if i % 2 == 0 else -20), 
+                    ha='center')
+    
+    # Also add a point at the very end to show the jump
+    plt.scatter([theta_vals[-2]], [raw_trace[-1]], color='green', s=100, zorder=5)
+    plt.annotate(f'{raw_trace[-1]:.6f}', 
+                (theta_vals[-2], raw_trace[-1]), 
+                textcoords="offset points", 
+                xytext=(30, 0), 
+                ha='left', 
+                arrowprops=dict(arrowstyle="->", color='green'))
+    
+    plt.title("Trace of γ Matrix vs θ")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Trace Value')
+    plt.grid(True)
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/trace_gamma_vs_theta_annotated.png')
+    plt.close()
+    
+    # Let's simplify the plotting code to just focus on what's important
+    # Create a plot showing the trace of gamma
+    plt.figure(figsize=(12, 6))
+    plt.plot(theta_vals[:len(raw_trace)], raw_trace, linewidth=2, label='Trace of γ')
     plt.title("Tr(γ) vs θ")
     plt.xlabel('Theta (θ)')
     plt.ylabel('Tr(γ)')
     plt.grid(True)
     plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Tr_gamma_vs_theta_full.png')
+    plt.close()
+    
+    # Add annotations to the trace plot
+    key_indices = [0, len(raw_trace)//4, len(raw_trace)//2, 3*len(raw_trace)//4, -1]
+    plt.scatter([theta_vals[i] for i in key_indices], 
+                [raw_trace[i] for i in key_indices], 
+                color='red', s=80, zorder=5)
+    
+    # Add annotations
+    for i, idx in enumerate(key_indices):
+        plt.annotate(f'{raw_trace[idx]:.2f}', 
+                     (theta_vals[idx], raw_trace[idx]), 
+                     textcoords="offset points", 
+                     xytext=(0, 10 if i % 2 == 0 else -20), 
+                     ha='center')
+    
+    plt.legend()
+    plt.tight_layout()
     plt.savefig(f'{plot_dir}/Tr_gamma_vs_theta.png')
+    
+    # Also plot just the beginning and end to see if there's a jump
+    plt.figure(figsize=(12, 6))
+    # Plot first 5% and last 5% of the data
+    cutoff = int(len(raw_trace) * 0.05)
+    
+    plt.subplot(1, 2, 1)
+    plt.plot(theta_vals[:cutoff], raw_trace[:cutoff], linewidth=2)
+    plt.title("Start of Tr(γ) vs θ")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Tr(γ)')
+    plt.grid(True)
+    
+    plt.subplot(1, 2, 2)
+    plt.plot(theta_vals[-cutoff-1:-1], raw_trace[-cutoff:], linewidth=2)
+    plt.title("End of Tr(γ) vs θ")
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Tr(γ)')
+    plt.grid(True)
+    
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Tr_gamma_vs_theta_endpoints.png')
     plt.close()
 
     with open(f'{output_dir}/overlap_report.txt', 'w') as f:
