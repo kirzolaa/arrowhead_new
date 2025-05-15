@@ -2,35 +2,35 @@
   "platform": "Linux-6.11.0-25-generic-x86_64-with-glibc2.39",
   "python_version": "3.12.3",
   "memory": {
-    "total": 16051998720,
-    "available": 10076680192,
-    "percent": 37.2,
-    "used": 5267836928,
-    "free": 1766105088
+    "total": 16051982336,
+    "available": 11314180096,
+    "percent": 29.5,
+    "used": 4307640320,
+    "free": 7349329920
   },
   "cpu": {
     "count": 12,
-    "percent": 4.4,
+    "percent": 0.4,
     "freq": {
-      "current": 913.3027500000002,
+      "current": 923.9512500000001,
       "min": 400.0,
       "max": 4056.0
     },
     "load_avg": [
-      1.0986328125,
-      1.58935546875,
-      1.525390625
+      1.578125,
+      1.3798828125,
+      1.212890625
     ]
   },
-  "Runned at": "2025-05-15 12:34:44",
-  "runtime": "0:00:58.796545",
-  "runtime_seconds": 58.79654502868652,
+  "Runned at": "2025-05-15 15:59:14",
+  "runtime": "0:01:02.443934",
+  "runtime_seconds": 62.443933963775635,
   "gpu": null,
   "temperatures": {
     "acpitz": [
       {
         "label": "",
-        "current": 79.0,
+        "current": 81.0,
         "high": null,
         "critical": null
       }
@@ -38,13 +38,13 @@
     "nvme": [
       {
         "label": "Composite",
-        "current": 34.85,
+        "current": 33.85,
         "high": 86.85,
         "critical": 89.85
       },
       {
         "label": "Sensor 1",
-        "current": 34.85,
+        "current": 33.85,
         "high": 65261.85,
         "critical": 65261.85
       }
@@ -52,7 +52,7 @@
     "k10temp": [
       {
         "label": "Tctl",
-        "current": 85.25,
+        "current": 81.625,
         "high": null,
         "critical": null
       }
@@ -60,14 +60,14 @@
     "amdgpu": [
       {
         "label": "edge",
-        "current": 58.0,
+        "current": 56.0,
         "high": null,
         "critical": null
       }
     ]
   },
   "output_dir_sizes": {
-    "total": 9558642,
+    "total": 9558555,
     "totalh": "9.6 MB",
     "files": 8
   }

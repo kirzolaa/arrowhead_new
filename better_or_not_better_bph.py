@@ -18,6 +18,7 @@ import platform
 import datetime
 import subprocess
 import humanize
+import copy
 try:
     import torch
 except ImportError:
@@ -310,22 +311,29 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
                 # Handle boundary conditions for the finite difference
                 # Inside compute_berry_phase
 
-                if i == 1:
-                    psi_prev = eigvectors_all[N - 1, :, n]  # Vector at theta_max (which is theta_0 if path is closed)
-                                                            # OR eigvectors_all[N-2,:,n] if using N-1 points to define the distinct loop points (0 to N-2) and N-1 is same as 0
-                                                            # Let's assume N points, theta_vals[N-1] is distinct from theta_vals[0] but psi(theta_vals[N-1]) is "before" psi(theta_vals[0])
-                    psi_next = eigvectors_all[1, :, n]
-                    delta_theta_for_grad = 2 * (theta_vals[1] - theta_vals[0]) # Assuming constant step
-                elif i == N - 2:
-                    psi_prev = eigvectors_all[N - 2, :, n]
-                    psi_next = eigvectors_all[0, :, n] # Vector at theta_0 (which is theta_N-1 + step if path is closed)
-                    delta_theta_for_grad = 2 * (theta_vals[1] - theta_vals[0]) # Assuming constant step
-                else:
-                    psi_prev = eigvectors_all[i - 1, :, n]
-                    psi_next = eigvectors_all[i + 1, :, n]
-                    delta_theta_for_grad = theta_vals[i + 1] - theta_vals[i - 1]
+                im1 = i - 1
+                ip1 = i + 1
 
+                if i == 0: # at the start of the loop, 0 and 2pi has mutual geometry, so we add one to i_prev
+                    im1=-2
+                if i == N - 1: # at the end of the loop, 2pi and 0 has mutual geometry, so we add one to i_next
+                    ip1 = 1
+                    
+                psi_prev = eigvectors_all[im1, :, n] # (THETA, COMPONENT, STATE)
+                psi_next = eigvectors_all[ip1, :, n]
+
+                delta_theta_for_grad = theta_vals[2] - theta_vals[0]
+                
+                if ip1 - im1 != 2:
+                    if np.vdot(psi_prev, psi_next).real < 0:
+                        print("Negative overlap between previous and next eigenvector at theta index", im1, "and", ip1)
+                        if i == 0:
+                            psi_prev = -1 * copy.deepcopy(psi_prev)
+                        else:
+                            psi_next = -1 * copy.deepcopy(psi_next)
+                
                 psi_curr = eigvectors_all[i, :, m]
+
                 # Normalize for safety (elvileg 1-gyel osztunk itt, mivel a vektorok eigh-val számolva)
                 psi_prev = psi_prev / np.linalg.norm(psi_prev)
                 psi_next = psi_next / np.linalg.norm(psi_next)
@@ -358,7 +366,7 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
     plt.figure(figsize=(12, 8))
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
-        plt.plot(theta_vals[:-1], gamma[n,m,:], label=f'Gamma[{n+1},{m+1}]')
+        plt.plot(theta_vals[1:], gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
     plt.title('Evolution of Largest Gamma Contributors')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Gamma Value')
@@ -372,7 +380,7 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
     plt.figure(figsize=(12, 8))
     for idx in tau_flat_indices[-3:]:
         n, m = np.unravel_index(idx, tau_imag_sum.shape)
-        plt.plot(theta_vals[:-1], np.imag(tau[n,m,:]), label=f'Imag(Tau[{n+1},{m+1}])')
+        plt.plot(theta_vals[1:], np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
     plt.title('Evolution of Largest Tau Imaginary Parts')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Imaginary Part of Tau')
@@ -387,7 +395,7 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
         # Calculate increments
-        increments = np.diff(gamma[n,m,:])
+        increments = np.diff(gamma[n,m,1:])
         plt.plot(theta_vals[1:-1], increments, label=f'Gamma[{n+1},{m+1}] increments')
     plt.title('Gamma Increments for Largest Contributors')
     plt.xlabel('Theta (θ)')
@@ -565,9 +573,9 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     N_orig, M, _ = eigvectors_all.shape
 
     # Extend θ and eigvecs for periodic boundary
-    eigvectors_all = np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
-    theta_vals = np.append(theta_vals, theta_vals[0] + 2 * np.pi)
-    N = N_orig + 1
+    eigvectors_all = eigvectors_all.copy() # np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
+    theta_vals = theta_vals.copy() #np.append(theta_vals, theta_vals[0] + 2 * np.pi)
+    N = N_orig # + 1
     delta_theta = theta_vals[1] - theta_vals[0]
 
     tau = np.zeros((M, M, N), dtype=np.complex128)
@@ -593,17 +601,27 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
 
         for n in range(M):
             for m in range(M):
+
+                im1 = i - 1
+                ip1 = i + 1
+
                 if i == 0: # at the start of the loop, 0 and 2pi has mutual geometry, so we add one to i_prev
-                    i_prev = N - 2
-                else:
-                    i_prev = i - 1
+                    im1=-2
                 if i == N - 1: # at the end of the loop, 2pi and 0 has mutual geometry, so we add one to i_next
-                    i_next = 1
-                else:
-                    i_next = i + 1  # Fixed: this should just be i+1, not len(eigvectors_all)-1
+                    ip1 = 1
                 
-                psi_prev = eigvectors_all[i_prev, :, n] # (THETA, COMPONENT, STATE)
-                psi_next = eigvectors_all[i_next, :, n]
+                
+                
+                psi_prev = eigvectors_all[im1, :, n] # (THETA, COMPONENT, STATE)
+                psi_next = eigvectors_all[ip1, :, n]
+                delta_theta_for_grad = theta_vals[2] - theta_vals[0]
+                if ip1 - im1 != 2:
+                    if np.vdot(psi_prev, psi_next).real < 0:
+                        print("Negative overlap between previous and next eigenvector at theta index", im1, "and", ip1)
+                        if i == 0:
+                            psi_prev = -1 * copy.deepcopy(psi_prev)
+                        else:
+                            psi_next = -1 * copy.deepcopy(psi_next)
                 psi_curr = eigvectors_all[i, :, m]
 
                 grad_psi = (psi_next - psi_prev) / delta_theta
@@ -651,8 +669,8 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                             largest_gamma_increment_loc = (n, m, i-1)
 
     # Remove padded τ/γ at final point to keep shape = original
-    tau = tau[:, :, :N_orig]
-    gamma = gamma[:, :, :N_orig]
+    #tau = tau[:, :, :N_orig]
+    #gamma = gamma[:, :, :N_orig]
     
     # Print diagnostic information about large tau and gamma values
     print(f"\nDiagnostic Information:")
@@ -685,7 +703,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     plt.figure(figsize=(12, 8))
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
-        plt.plot(theta_vals[:-1], gamma[n,m,:], label=f'Gamma[{n+1},{m+1}]')
+        plt.plot(theta_vals[1:], gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
     plt.title('Evolution of Largest Gamma Contributors')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Gamma Value')
@@ -699,7 +717,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     plt.figure(figsize=(12, 8))
     for idx in tau_flat_indices[-3:]:
         n, m = np.unravel_index(idx, tau_imag_sum.shape)
-        plt.plot(theta_vals[:-1], np.imag(tau[n,m,:]), label=f'Imag(Tau[{n+1},{m+1}])')
+        plt.plot(theta_vals[1:], np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
     plt.title('Evolution of Largest Tau Imaginary Parts')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Imaginary Part of Tau')
@@ -714,7 +732,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
         # Calculate increments
-        increments = np.diff(gamma[n,m,:])
+        increments = np.diff(gamma[n,m,1:])
         plt.plot(theta_vals[1:-1], increments, label=f'Gamma[{n+1},{m+1}] increments')
     plt.title('Gamma Increments for Largest Contributors')
     plt.xlabel('Theta (θ)')
