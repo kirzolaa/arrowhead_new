@@ -1,4 +1,6 @@
 import numpy as np
+import matplotlib
+matplotlib.use('Agg')  # Use a backend that does not require a display
 import matplotlib.pyplot as plt
 import os
 from new_bph import Hamiltonian
@@ -9,6 +11,18 @@ from generalized.vector_utils import multiprocessing_create_perfect_orthogonal_c
 from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle
 from scipy.constants import hbar
 import multiprocessing as mp
+import time
+import psutil
+import json
+import platform
+import datetime
+import subprocess
+import humanize
+try:
+    import torch
+except ImportError:
+    torch = None
+    print("torch not found")
     
 def visualize_vectorz(R_0, d, num_points, theta_min, theta_max, save_dir):
     #use the perfect_orthogonal_circle.py script to visualize the R_theta vectors
@@ -296,13 +310,13 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
                 # Handle boundary conditions for the finite difference
                 # Inside compute_berry_phase
 
-                if i == 0:
+                if i == 1:
                     psi_prev = eigvectors_all[N - 1, :, n]  # Vector at theta_max (which is theta_0 if path is closed)
                                                             # OR eigvectors_all[N-2,:,n] if using N-1 points to define the distinct loop points (0 to N-2) and N-1 is same as 0
                                                             # Let's assume N points, theta_vals[N-1] is distinct from theta_vals[0] but psi(theta_vals[N-1]) is "before" psi(theta_vals[0])
                     psi_next = eigvectors_all[1, :, n]
                     delta_theta_for_grad = 2 * (theta_vals[1] - theta_vals[0]) # Assuming constant step
-                elif i == N - 1:
+                elif i == N - 2:
                     psi_prev = eigvectors_all[N - 2, :, n]
                     psi_next = eigvectors_all[0, :, n] # Vector at theta_0 (which is theta_N-1 + step if path is closed)
                     delta_theta_for_grad = 2 * (theta_vals[1] - theta_vals[0]) # Assuming constant step
@@ -336,6 +350,70 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
                     # Option 2: Using trapezoidal rule (generally more accurate)
                     #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
                     #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
+    # Create diagnostic plots directory
+    diag_dir = os.path.join('berry_phase_corrected_script', 'diagnostics')
+    os.makedirs(diag_dir, exist_ok=True)
+    
+    # Plot the evolution of the largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        plt.plot(theta_vals[:-1], gamma[n,m,:], label=f'Gamma[{n+1},{m+1}]')
+    plt.title('Evolution of Largest Gamma Contributors')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Gamma Value')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/largest_gamma_evolution.png')
+    plt.close()
+    
+    # Plot the evolution of tau imaginary part for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in tau_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        plt.plot(theta_vals[:-1], np.imag(tau[n,m,:]), label=f'Imag(Tau[{n+1},{m+1}])')
+    plt.title('Evolution of Largest Tau Imaginary Parts')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Imaginary Part of Tau')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/largest_tau_imag_evolution.png')
+    plt.close()
+    
+    # Plot the gamma increments for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        # Calculate increments
+        increments = np.diff(gamma[n,m,:])
+        plt.plot(theta_vals[1:-1], increments, label=f'Gamma[{n+1},{m+1}] increments')
+    plt.title('Gamma Increments for Largest Contributors')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Increment Value')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/gamma_increments.png')
+    plt.close()
+    
+    # Plot a heatmap of the final gamma matrix
+    plt.figure(figsize=(10, 8))
+    im = plt.imshow(gamma[:,:,-1], cmap='viridis')
+    plt.colorbar(im, label='Gamma Value')
+    plt.title('Final Gamma Matrix Heatmap')
+    plt.xlabel('m')
+    plt.ylabel('n')
+    # Add text annotations
+    for i in range(M):
+        for j in range(M):
+            text = plt.text(j, i, f'{gamma[i,j,-1]:.1f}',
+                          ha="center", va="center", color="w" if abs(gamma[i,j,-1]) > 1000 else "k")
+    plt.tight_layout()
+    plt.savefig(f'{diag_dir}/gamma_final_heatmap.png')
+    plt.close()
+    
     return tau, gamma
 
 def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir):
@@ -478,7 +556,7 @@ def compute_berry_phase_BAD(eigvectors_all_, theta_vals_, theta_max, continuity_
     return tau, gamma
 
 
-def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
+def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_DIR=None):
     """
     Compute Berry connection (τ) and Berry phase (γ) matrices using central difference,
     with ring continuity and stabilized diagonals.
@@ -515,12 +593,12 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
 
         for n in range(M):
             for m in range(M):
-                if i == 0:
-                    i_prev = N - 1
+                if i == 0: # at the start of the loop, 0 and 2pi has mutual geometry, so we add one to i_prev
+                    i_prev = N - 2
                 else:
                     i_prev = i - 1
-                if i == N - 1: # at the end of the loop
-                    i_next = 0
+                if i == N - 1: # at the end of the loop, 2pi and 0 has mutual geometry, so we add one to i_next
+                    i_next = 1
                 else:
                     i_next = i + 1  # Fixed: this should just be i+1, not len(eigvectors_all)-1
                 
@@ -533,8 +611,8 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
                 
                 # Zero out diagonal elements of tau
                 # This is a common practice in Berry phase calculations
-                if n == m:
-                    tau_val = 0.0
+                #if n == m:
+                #    tau_val = 0.0 AI MADE THIS CHANGE
                 
                 # Check for unusually large imaginary values at the end of the loop
                 # This prevents the sudden jump in gamma at 2π
@@ -600,7 +678,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
         print(f"  Gamma[{n+1},{m+1}]: Final value = {gamma[n,m,-1]:.6f}")
     
     # Create diagnostic plots directory
-    diag_dir = os.path.join('berry_phase_corrected_script', 'diagnostics')
+    diag_dir = os.path.join(OUT_DIR, 'diagnostics')
     os.makedirs(diag_dir, exist_ok=True)
     
     # Plot the evolution of the largest contributors
@@ -671,15 +749,12 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False):
                 if overlap < 0.99:
                     print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
 
-    # Report total Berry phase per eigenstate
-    gamma_closed_loop = gamma[:, :, -1]
-    berry_phase_per_state = np.angle(np.exp(1j * gamma_closed_loop.diagonal()))
-    print("\nBerry phase per state:", berry_phase_per_state)
-
     return tau, gamma
 
 
 def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, extended=False):
+    start_time = time.time()
+    
     #space theta_vals uniformly
     theta_vals = theta_range = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
@@ -689,7 +764,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_script')
+    output_dir = os.path.join(os.path.dirname(__file__), f'berry_phase_AROUND_d_{d:.8f}')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -712,8 +787,10 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     eigenvalues.plot()
     
     with mp.Pool(processes=(mp.cpu_count()-1)) as pool:
-        results = pool.apply_async(compute_berry_phase, (eigvecs, theta_vals))
+        results = pool.apply_async(compute_berry_phase, (eigvecs, theta_vals, False, output_dir))
         tau, gamma = results.get()
+
+
     #print("Tau:", tau)
     print("Gamma[:,:,-1]:\n", gamma[:,:,-1]) #print the last gamma matrix
     #create a report on the gamma matrix
@@ -780,6 +857,49 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     plt.figure(figsize=(12, 6))
     for i in range(3):
         plt.plot(theta_vals, (Vx_values[:, i] + omega * hbar) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Vx + omega*hbar - Va Components')
+    plt.title('Vx + omega*hbar - Va Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Vx_plus_omega_hbar_minus_Va_components.png')
+    print("Vx - Va plots saved to figures directory.")
+    plt.close()
+
+
+    #plot the substract of Vx-Va
+    plt.figure(figsize=(12, 6))
+    for i in range(3):
+        plt.plot(theta_vals, -(Vx_values[:, i] + omega * hbar) + Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Va - Vx Components + omega*hbar')
+    plt.title('Va - Vx Components + omega*hbar vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Va_minus_Vx_components_plus_omega_hbar.png')
+    print("Va - Vx plots saved to figures directory.")
+    plt.close()
+
+    #plot the differences withouut the hbar*omega
+    plt.figure(figsize=(12, 6))
+    for i in range(3):
+        plt.plot(theta_vals, -(Vx_values[:, i]) + Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ)')
+    plt.ylabel('Va - Vx Components')
+    plt.title('Va - Vx Components vs Theta')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{plot_dir}/Va_minus_Vx_components.png')
+    print("Va - Vx plots saved to figures directory.")
+    plt.close()
+
+    #plot the differences withouut the hbar*omega
+    plt.figure(figsize=(12, 6))
+    for i in range(3):
+        plt.plot(theta_vals, (Vx_values[:, i]) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
     plt.xlabel('Theta (θ)')
     plt.ylabel('Vx - Va Components')
     plt.title('Vx - Va Components vs Theta')
@@ -979,39 +1099,148 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     plt.savefig(f'{plot_dir}/tau_continuity_check.png')
     plt.close()
 
+    #put it here: 
+    stat_dir = os.path.join(output_dir, 'statistics')
+    os.makedirs(stat_dir, exist_ok=True)
 
+    # --- System resource and runtime statistics ---
+    
+    stats = {}
+    stats['platform'] = platform.platform()
+    stats['python_version'] = platform.python_version()
+    
+    # Memory info
+    vm = psutil.virtual_memory()
+    stats['memory'] = {
+        'total': vm.total,
+        'available': vm.available,
+        'percent': vm.percent,
+        'used': vm.used,
+        'free': vm.free
+    }
+
+    # CPU info
+    stats['cpu'] = {
+        'count': psutil.cpu_count(),
+        'percent': psutil.cpu_percent(interval=1),
+        'freq': psutil.cpu_freq()._asdict() if psutil.cpu_freq() else None,
+        'load_avg': psutil.getloadavg() if hasattr(psutil, 'getloadavg') else None
+    }
+
+    # Runtime info (if you want to measure total runtime, wrap main() calls with time.time())
+    # Here, just save current timestamp
+    stats['Runned at'] = time.strftime('%Y-%m-%d %H:%M:%S')
+    current_time = time.time()
+    elapsed = current_time - start_time
+    stats['runtime'] = str(datetime.timedelta(seconds=elapsed))
+    stats['runtime_seconds'] = elapsed  # also save the raw float if you want
+    
+    # GPU/VRAM/Temperature (try torch, fallback to nvidia-smi, else skip)
+    gpu_stats = []
+    try:
+        import torch
+        if torch.cuda.is_available():
+            for i in range(torch.cuda.device_count()):
+                gpu_stats.append({
+                    'name': torch.cuda.get_device_name(i),
+                    'vram_total': torch.cuda.get_device_properties(i).total_memory,
+                    'vram_allocated': torch.cuda.memory_allocated(i),
+                    'vram_reserved': torch.cuda.memory_reserved(i),
+                    'vram_free': torch.cuda.get_device_properties(i).total_memory - torch.cuda.memory_allocated(i),
+                    'temperature': torch.cuda.get_device_properties(i).temperature if hasattr(torch.cuda.get_device_properties(i), 'temperature') else None
+                })
+    except ImportError:
+        # Try nvidia-smi via subprocess
+        try:
+            import subprocess
+            result = subprocess.run(['nvidia-smi', '--query-gpu=name,memory.total,memory.used,memory.free,temperature.gpu', '--format=csv,noheader,nounits'],
+                                   capture_output=True, text=True, check=True)
+            for line in result.stdout.strip().split('\n'):
+                name, mem_total, mem_used, mem_free, temp = line.split(', ')
+                gpu_stats.append({
+                    'name': name,
+                    'vram_total': int(mem_total)*1024*1024,
+                    'vram_used': int(mem_used)*1024*1024,
+                    'vram_free': int(mem_free)*1024*1024,
+                    'temperature': float(temp)
+                })
+        except Exception:
+            gpu_stats = None
+    except Exception:
+        gpu_stats = None
+    stats['gpu'] = gpu_stats
+
+    # Temperatures (CPU, etc.)
+    try:
+        temps = psutil.sensors_temperatures()
+        stats['temperatures'] = {k: [t._asdict() for t in v] for k, v in temps.items()}
+    except Exception:
+        stats['temperatures'] = None
+    
+    # output_dir sizes
+    # get the size of the output_dir in bytes
+    # make it the human readable format
+    # and also the number of files in the output_dir
+    try:
+        total_size = sum(
+            os.path.getsize(os.path.join(output_dir, f))
+            for f in os.listdir(output_dir)
+            if os.path.isfile(os.path.join(output_dir, f))
+        )
+        stats['output_dir_sizes'] = {
+            'total': total_size,
+            'totalh': humanize.naturalsize(total_size),
+            'files': len(os.listdir(output_dir))
+        }
+    except Exception:
+        stats['output_dir_sizes'] = None
+
+    # Save to output_dir as .arg file
+    try:
+        output_dir = locals().get('output_dir', 'statistics')
+        stats_file = os.path.join(output_dir, 'statistics/run_statistics.arg')
+        with open(stats_file, 'w') as f:
+            json.dump(stats, f, indent=2)
+        print(f"System statistics saved to {stats_file}")
+    except Exception as e:
+        print(f"Failed to save system statistics: {e}")
+    
     return tau, gamma, eigvecs, theta_vals
 
 if __name__ == '__main__':
-    dataset = 2
-
-    if dataset == 1:
-        d = 0.001 #radius of the circle
-        aVx = 1.0
-        aVa = 5.0
-        c_const = 0.1  # Potential constant, shifts the 2d parabola on the y axis
-        x_shift = 0.1  # Shift in x direction
-        theta_min = 0
-        theta_max = 2 * np.pi
-        omega = 0.1
-        num_points = 50000
-        R_0 = (0, 0, 0)
+    def dataset(val):
+        if val == 1:
+            return {
+                'd': 0.06125,
+                'aVx': 1.0,
+                'aVa': 3.0,
+                'c_const': 0.1,
+                'x_shift': 0.1,
+                'theta_min': 0,
+                'theta_max': 2 * np.pi,
+                'omega': 0.1,
+                'num_points': 50000,
+                'R_0': (0, 0, 0)
+            }
     
-    elif dataset == 2:
-        #let a be an aVx and an aVa parameter
-        d = 0.02  # Radius of the circle, use unit circle for bigger radius, még egy CI???
-        aVx = 1.0
-        aVa = 3.0
-        c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
-        x_shift = 0.01  # Shift in x direction
-        theta_min = 0
-        theta_max = 2 * np.pi
-        omega = 0.1
-        num_points = 5000
-        R_0 = (0, 0, 0)
-
-    
+        elif val == 2:
+            #let a be an aVx and an aVa parameter
+            return {
+                'd': 0.06120,
+                'aVx': 1.0,
+                'aVa': 3.0,
+                'c_const': 0.01,
+                'x_shift': 0.01,
+                'theta_min': 0,
+                'theta_max': 2 * np.pi,
+                'omega': 0.1,
+                'num_points': 50000,
+                'R_0': (0, 0, 0)
+            }    
     
     #run the main function
-    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, extended=False)
+    main(dataset(1)['d'], dataset(1)['aVx'], dataset(1)['aVa'], dataset(1)['c_const'], dataset(1)['x_shift'], dataset(1)['theta_min'], dataset(1)['theta_max'], dataset(1)['omega'], dataset(1)['num_points'], dataset(1)['R_0'], extended=False)
+    
+    main(dataset(2)['d'], dataset(2)['aVx'], dataset(2)['aVa'], dataset(2)['c_const'], dataset(2)['x_shift'], dataset(2)['theta_min'], dataset(2)['theta_max'], dataset(2)['omega'], dataset(2)['num_points'], dataset(2)['R_0'], extended=False)
+
     
