@@ -3,34 +3,34 @@
   "python_version": "3.12.3",
   "memory": {
     "total": 16051982336,
-    "available": 11314180096,
-    "percent": 29.5,
-    "used": 4307640320,
-    "free": 7349329920
+    "available": 9861971968,
+    "percent": 38.6,
+    "used": 5696196608,
+    "free": 3786297344
   },
   "cpu": {
     "count": 12,
-    "percent": 0.4,
+    "percent": 10.2,
     "freq": {
-      "current": 923.9512500000001,
+      "current": 2026.12375,
       "min": 400.0,
       "max": 4056.0
     },
     "load_avg": [
-      1.578125,
-      1.3798828125,
-      1.212890625
+      1.486328125,
+      1.603515625,
+      1.5166015625
     ]
   },
-  "Runned at": "2025-05-15 15:59:14",
-  "runtime": "0:01:02.443934",
-  "runtime_seconds": 62.443933963775635,
+  "Runned at": "2025-05-16 16:04:22",
+  "runtime": "0:01:00.578309",
+  "runtime_seconds": 60.578309059143066,
   "gpu": null,
   "temperatures": {
     "acpitz": [
       {
         "label": "",
-        "current": 81.0,
+        "current": 73.0,
         "high": null,
         "critical": null
       }
@@ -52,7 +52,7 @@
     "k10temp": [
       {
         "label": "Tctl",
-        "current": 81.625,
+        "current": 80.375,
         "high": null,
         "critical": null
       }
@@ -60,15 +60,15 @@
     "amdgpu": [
       {
         "label": "edge",
-        "current": 56.0,
+        "current": 55.0,
         "high": null,
         "critical": null
       }
     ]
   },
   "output_dir_sizes": {
-    "total": 9558555,
+    "total": 9558648,
     "totalh": "9.6 MB",
-    "files": 8
+    "files": 9
   }
 }

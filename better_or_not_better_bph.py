@@ -94,7 +94,7 @@ def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
         plt.savefig(f'{output_dir}/element_{i+1}{j+1}_evolution.png')
         plt.close()
 
-def format_matrix(matrix, title=None, output_dir=None):
+def format_matrix(isgamma=False, matrix=None, title=None, output_dir=None):
     """Format a matrix with box drawing characters"""
     n, m = matrix.shape
     max_len = max(len(f"{x:.4f}") for row in matrix for x in row)
@@ -110,20 +110,36 @@ def format_matrix(matrix, title=None, output_dir=None):
     lines.append("    |‾" + "‾" * (width-2) + "‾|")
     
     # Matrix rows
-    for i in range(n):
-        row = "    |  "
-        for j in range(m):
-            if i == j:
-                # Diagonal elements (γ_nn)
-                row += f"{matrix[i,j]:.4f}"
-            else:
-                # Off-diagonal elements (γ_nm)
-                row += f"{matrix[i,j]:.4f}"
-            if j < m - 1:
-                row += "  "
-            else:
-                row += "    |"
-        lines.append(row)
+    if isgamma:
+        for i in range(n):
+            row = "    |  "
+            for j in range(m):
+                if i == j:
+                    # Diagonal elements (γ_nn)
+                    row += f"{matrix[i,j]:.4f}π"
+                else:
+                    # Off-diagonal elements (γ_nm)
+                    row += f"{matrix[i,j]:.4f}π"
+                if j < m - 1:
+                    row += "  "
+                else:
+                    row += "    |"
+            lines.append(row)
+    else:
+        for i in range(n):
+            row = "    |  "
+            for j in range(m):
+                if i == j:
+                    # Diagonal elements (γ_nn)
+                    row += f"{matrix[i,j]:.4f}"
+                else:
+                    # Off-diagonal elements (γ_nm)
+                    row += f"{matrix[i,j]:.4f}"
+                if j < m - 1:
+                    row += "  "
+                else:
+                    row += "    |"
+            lines.append(row)
     
     # Bottom border
     lines.append("    |_" + "_" * (width-2) + "_|")
@@ -461,109 +477,6 @@ def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, th
     print("Vx plots saved to figures directory.")
     plt.close()
 
-def compute_berry_phase_maybe_gud(eigvectors_all_, theta_vals, continuity_check=False):
-    """
-    Compute Berry connection (τ) and Berry phase (γ) matrices along a closed path.
-
-    Parameters:
-    - eigvectors_all: ndarray of shape (N, M, M), eigenvectors at each θ (N points, M states)
-    - theta_vals: ndarray of shape (N,), θ values in path
-    - continuity_check: bool, if True, print overlap continuity for debugging
-
-    Returns:
-    - tau: ndarray (M, M, N), complex Berry connection ⟨ψ_m | dψ_n/dθ⟩
-    - gamma: ndarray (M, M, N), Berry phase integral over θ
-    """
-    # Pad one more point to close the loop
-    eigvectors_all_ = np.concatenate([eigvectors_all_, eigvectors_all_[:1]], axis=0)
-    theta_vals_ = np.append(theta_vals, theta_vals[-1])
-    #START WITH THE SECOND THETA_VALUE
-    eigvectors_all_ = eigvectors_all_[1:]
-    theta_vals_ = theta_vals_[1:]
-    
-    N, M, _ = eigvectors_all_.shape
-    tau = np.zeros((M, M, N), dtype=np.complex128)
-    gamma = np.zeros((M, M, N), dtype=np.float64)
-
-    # Normalize all eigenvectors (for safety)
-    eigvectors_all_ = eigvectors_all_ / np.linalg.norm(eigvectors_all_, axis=1, keepdims=True)
-
-    delta_theta = theta_vals_[1] - theta_vals_[0]  # assume uniform spacing
-
-    for i in range(N):
-        for n in range(M):
-            for m in range(M):
-                # Get previous and next for central difference
-                psi_prev = eigvectors_all_[i - 1, :, n] if i > 0 else eigvectors_all_[N - 1, :, n]
-                psi_next = eigvectors_all_[(i + 1) % N, :, n]
-                psi_curr = eigvectors_all_[i, :, m]
-
-                # Central difference derivative
-                grad_psi = (psi_next - psi_prev) / (2 * delta_theta)
-
-                # Berry connection τ_{nm} = i⟨ψ_m | dψ_n/dθ⟩
-                tau_val = 1j * np.vdot(psi_curr, grad_psi)
-                tau[n, m, i] = tau_val
-
-                # Accumulate γ_{nm}
-                if i == 0:
-                    gamma[n, m, i] = 0.0
-                else:
-                    gamma[n, m, i] = gamma[n, m, i - 1] + np.imag(tau[n, m, i]) * delta_theta
-
-    if continuity_check:
-        print("Eigenvector continuity (should be ~1):")
-        for i in range(1, N):
-            for n in range(M):
-                overlap = np.abs(np.vdot(eigvectors_all_[i - 1, :, n], eigvectors_all_[i, :, n]))
-                if overlap < 0.99:
-                    print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
-
-    return tau, gamma
-
-def compute_berry_phase_BAD(eigvectors_all_, theta_vals_, theta_max, continuity_check=False):
-    """
-    Compute Berry connection (τ) and Berry phase (γ) matrices along a closed path (ring-like).
-    """
-    # Pad one more point to close the loop
-    eigvectors_all_ = np.concatenate([eigvectors_all_, eigvectors_all_[:1]], axis=0)
-    theta_vals_ = np.append(theta_vals_, theta_vals[-1])
-    N = eigvectors_all_.shape[0]  # now N = original + 1
-    M = eigvectors_all_.shape[1]
-
-    # Now initialize tau and gamma with updated shape
-    tau = np.zeros((M, M, N), dtype=np.complex128)
-    gamma = np.zeros((M, M, N), dtype=np.float64)
-
-    delta_theta = theta_vals_[1] - theta_vals_[0]
-    for i in range(N+1):
-        i_prev = (i - 1) % N
-        i_next = (i + 1) % N
-
-        for n in range(M):
-            for m in range(M):
-                psi_prev = eigvectors_all_[i_prev, :, n]
-                psi_next = eigvectors_all_[i_next, :, n]
-                psi_curr = eigvectors_all_[i, :, m]
-
-                grad_psi = (psi_next - psi_prev) / (2 * delta_theta)
-                tau_val = 1j * np.vdot(psi_curr, grad_psi)
-                tau[n, m, i] = tau_val
-
-                if i > 0:
-                    gamma[n, m, i] = gamma[n, m, i - 1] + np.imag(tau_val) * delta_theta
-
-    if continuity_check:
-        print("Eigenvector continuity (should be ~1):")
-        for i in range(1, N):
-            for n in range(M):
-                overlap = np.abs(np.vdot(eigvectors_all_[i - 1, :, n], eigvectors_all_[i, :, n]))
-                if overlap < 0.99:
-                    print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
-
-    return tau, gamma
-
-
 def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_DIR=None):
     """
     Compute Berry connection (τ) and Berry phase (γ) matrices using central difference,
@@ -571,7 +484,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     """
 
     N_orig, M, _ = eigvectors_all.shape
-
+    output_dir = OUT_DIR
     # Extend θ and eigvecs for periodic boundary
     eigvectors_all = eigvectors_all.copy() # np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
     theta_vals = theta_vals.copy() #np.append(theta_vals, theta_vals[0] + 2 * np.pi)
@@ -703,9 +616,9 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     plt.figure(figsize=(12, 8))
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
-        plt.plot(theta_vals[1:], gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
+        plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
     plt.title('Evolution of Largest Gamma Contributors')
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Gamma Value')
     plt.grid(True)
     plt.legend()
@@ -717,9 +630,9 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     plt.figure(figsize=(12, 8))
     for idx in tau_flat_indices[-3:]:
         n, m = np.unravel_index(idx, tau_imag_sum.shape)
-        plt.plot(theta_vals[1:], np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
+        plt.plot(theta_vals[1:]/np.pi, np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
     plt.title('Evolution of Largest Tau Imaginary Parts')
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Imaginary Part of Tau')
     plt.grid(True)
     plt.legend()
@@ -733,9 +646,9 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
         # Calculate increments
         increments = np.diff(gamma[n,m,1:])
-        plt.plot(theta_vals[1:-1], increments, label=f'Gamma[{n+1},{m+1}] increments')
+        plt.plot(theta_vals[1:-1]/np.pi, increments, label=f'Gamma[{n+1},{m+1}] increments')
     plt.title('Gamma Increments for Largest Contributors')
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Increment Value')
     plt.grid(True)
     plt.legend()
@@ -745,18 +658,132 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     
     # Plot a heatmap of the final gamma matrix
     plt.figure(figsize=(10, 8))
-    im = plt.imshow(gamma[:,:,-1], cmap='viridis')
+    im = plt.imshow(gamma[:,:,-1], cmap='coolwarm')
     plt.colorbar(im, label='Gamma Value')
     plt.title('Final Gamma Matrix Heatmap')
     plt.xlabel('m')
     plt.ylabel('n')
+    # DISPLAY THE INDEXES ON THE PLOT
+    plt.xticks(range(M), range(1, M+1))
+    plt.yticks(range(M), range(1, M+1))
     # Add text annotations
     for i in range(M):
         for j in range(M):
-            text = plt.text(j, i, f'{gamma[i,j,-1]:.1f}',
+            text = plt.text(j, i, f'{gamma[i,j,-1]:.3f}',
                           ha="center", va="center", color="w" if abs(gamma[i,j,-1]) > 1000 else "k")
     plt.tight_layout()
     plt.savefig(f'{diag_dir}/gamma_final_heatmap.png')
+    plt.close()
+    
+    final_plotz_from_bph_func_folder = os.path.join(OUT_DIR, 'final_plots_from_bph_func')
+    os.makedirs(final_plotz_from_bph_func_folder, exist_ok=True)
+    # /np.pi and plot these diagnostics plots
+    # Plot the evolution of the largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
+    plt.title('Evolution of Largest Gamma Contributors')
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Gamma Value')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/largest_gamma_evolution.png')
+    plt.close()
+    
+    # Plot the evolution of tau imaginary part for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in tau_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        plt.plot(theta_vals[1:]/np.pi, np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
+    plt.title('Evolution of Largest Tau Imaginary Parts')
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Imaginary Part of Tau')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/largest_tau_imag_evolution.png')
+    plt.close()
+    
+    # Plot the gamma increments for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        # Calculate increments
+        increments = np.diff(gamma[n,m,1:])
+        plt.plot(theta_vals[1:-1]/np.pi, increments, label=f'Gamma[{n+1},{m+1}] increments')
+    plt.title('Gamma Increments for Largest Contributors')
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Increment Value')
+    plt.grid(True)
+    plt.legend(fontsize=10,loc='upper center', bbox_to_anchor=(0.5, -0.1))
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/gamma_increments.png')
+    plt.close()
+    
+    # Plot a heatmap of the final gamma matrix
+    plt.figure(figsize=(12, 10))
+    
+    # Convert gamma values to multiples of pi
+    gamma_pi = gamma[:,:,-1]/np.pi
+    im = plt.imshow(gamma_pi, cmap='coolwarm')
+    
+    # Create colorbar with π units
+    cbar = plt.colorbar(im, label='Gamma Value (×π)')
+    cbar.set_ticks([-2, -1, -0.5, 0, 0.5, 1, 2])  # Common fractions of pi
+    cbar.set_ticklabels(['-2π', '-π', '-π/2', '0', 'π/2', 'π', '2π'])
+    
+    plt.title('Final Gamma Matrix Heatmap')
+    plt.xlabel('m')
+    plt.ylabel('n')
+    # DISPLAY THE INDEXES ON THE PLOT
+    plt.xticks(range(M), range(1, M+1))
+    plt.yticks(range(M), range(1, M+1))
+    
+    # Function to format values as fractions of pi
+    def format_pi(val):
+        if val == 0:
+            return '0'
+        
+        # Common fractions
+        fractions = {
+            1.0: 'π',
+            -1.0: '-π',
+            0.5: 'π/2',
+            -0.5: '-π/2',
+            0.333: 'π/3',
+            -0.333: '-π/3',
+            0.666: '2π/3',
+            -0.666: '-2π/3',
+            0.25: 'π/4',
+            -0.25: '-π/4',
+            0.75: '3π/4',
+            -0.75: '-3π/4',
+            2.0: '2π',
+            -2.0: '-2π'
+        }
+        
+        # Check for common fractions first
+        for frac, label in fractions.items():
+            if abs(val - frac) < 0.001:  # Allow for small floating point errors
+                return label.format(val)
+        
+        # For other values, show as decimal * π
+        return f'{val:.3f}'
+    
+    # Add text annotations with formatted values
+    for i in range(M):
+        for j in range(M):
+            val = gamma_pi[i,j]
+            text_label = format_pi(val)
+            text = plt.text(j, i, text_label,
+                          ha="center", va="center", 
+                          color="w" if abs(val) > 0.5 else "k",
+                          fontsize=10)
+    
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/gamma_final_heatmap.png', dpi=150, bbox_inches='tight')
     plt.close()
     
     if continuity_check:
@@ -816,25 +843,25 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
-                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}\n")
+                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]/np.pi}π\n")
                 f.write(f"Tau[{i+1},{j+1}]: {np.imag(tau[i,j,-1])}\n")
             f.write("\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(gamma[:,:,-1], "The last Berry Phase Matrix", output_dir))
+        f.write(format_matrix(isgamma=True,matrix=gamma[:,:,-1]/np.pi, title="The last Berry Phase Matrix", output_dir=output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(np.imag(tau[:,:,-1]), "The last Tau Matrix", output_dir))
+        f.write(format_matrix(isgamma=False,matrix=np.imag(tau[:,:,-1]), title="The last Tau Matrix", output_dir=output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(gamma[:,:,-2], "The one before last Berry Phase Matrix", output_dir))
+        f.write(format_matrix(isgamma=True,matrix=gamma[:,:,-2]/np.pi, title="The one before last Berry Phase Matrix", output_dir=output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
         f.write("\n")
-        f.write(format_matrix(np.imag(tau[:,:,-2]), "The one before last Tau Matrix", output_dir))
+        f.write(format_matrix(isgamma=False,matrix=np.imag(tau[:,:,-2]), title="The one before last Tau Matrix", output_dir=output_dir))
         f.write("\n\n")
         f.write("===========================================\n")
 
@@ -874,8 +901,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     #plot the substract of Vx-Va
     plt.figure(figsize=(12, 6))
     for i in range(3):
-        plt.plot(theta_vals, (Vx_values[:, i] + omega * hbar) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
-    plt.xlabel('Theta (θ)')
+        plt.plot(theta_vals/np.pi, (Vx_values[:, i] + omega * hbar) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Vx + omega*hbar - Va Components')
     plt.title('Vx + omega*hbar - Va Components vs Theta')
     plt.grid(True)
@@ -889,8 +916,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     #plot the substract of Vx-Va
     plt.figure(figsize=(12, 6))
     for i in range(3):
-        plt.plot(theta_vals, -(Vx_values[:, i] + omega * hbar) + Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
-    plt.xlabel('Theta (θ)')
+        plt.plot(theta_vals/np.pi, -(Vx_values[:, i] + omega * hbar) + Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Va - Vx Components + omega*hbar')
     plt.title('Va - Vx Components + omega*hbar vs Theta')
     plt.grid(True)
@@ -903,8 +930,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     #plot the differences withouut the hbar*omega
     plt.figure(figsize=(12, 6))
     for i in range(3):
-        plt.plot(theta_vals, -(Vx_values[:, i]) + Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
-    plt.xlabel('Theta (θ)')
+        plt.plot(theta_vals/np.pi, -(Vx_values[:, i]) + Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Va - Vx Components')
     plt.title('Va - Vx Components vs Theta')
     plt.grid(True)
@@ -917,8 +944,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     #plot the differences withouut the hbar*omega
     plt.figure(figsize=(12, 6))
     for i in range(3):
-        plt.plot(theta_vals, (Vx_values[:, i]) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
-    plt.xlabel('Theta (θ)')
+        plt.plot(theta_vals/np.pi, (Vx_values[:, i]) - Va_values[:, i], label=f'Vx[{i+1}] - Va[{i+1}]')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Vx - Va Components')
     plt.title('Vx - Va Components vs Theta')
     plt.grid(True)
@@ -954,9 +981,9 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     # Plot the raw trace
     raw_trace = np.trace(gamma, axis1=0, axis2=1)
     # Make sure theta_vals and raw_trace have the same shape
-    plt.plot(theta_vals[:len(raw_trace)], raw_trace, 'b-', linewidth=2, label='Raw Trace')
+    plt.plot(theta_vals[:len(raw_trace)]/np.pi, raw_trace, 'b-', linewidth=2, label='Raw Trace')
     plt.title("Raw Trace of γ Matrix")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Trace Value')
     plt.grid(True)
     plt.legend()
@@ -964,9 +991,9 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     # Plot the individual diagonal elements
     plt.subplot(2, 2, 2)
     for i in range(M):
-        plt.plot(theta_vals[:len(gamma[i,i,:])], gamma[i, i, :], label=f'γ[{i+1},{i+1}]')
+        plt.plot(theta_vals[:len(gamma[i,i,:])]/np.pi, gamma[i, i, :], label=f'γ[{i+1},{i+1}]')
     plt.title("Diagonal Elements of γ Matrix")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('γ Value')
     plt.grid(True)
     plt.legend()
@@ -979,9 +1006,9 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
             berry_phases[j, i] = np.angle(np.exp(1j * gamma[j, j, i]))
     
     for i in range(M):
-        plt.plot(theta_vals[:gamma.shape[2]], berry_phases[i, :], label=f'State {i+1}')
+        plt.plot(theta_vals[:gamma.shape[2]]/np.pi, berry_phases[i, :], label=f'State {i+1}')
     plt.title("Berry Phase per State")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Berry Phase')
     plt.grid(True)
     plt.legend()
@@ -989,9 +1016,9 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     # Plot the sum of Berry phases
     plt.subplot(2, 2, 4)
     sum_berry_phases = np.sum(berry_phases, axis=0)
-    plt.plot(theta_vals[:gamma.shape[2]], sum_berry_phases, 'r-', linewidth=2)
+    plt.plot(theta_vals[:gamma.shape[2]]/np.pi, sum_berry_phases, 'r-', linewidth=2)
     plt.title("Sum of Berry Phases")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Sum Value')
     plt.grid(True)
     
@@ -1012,34 +1039,34 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     # Also create a plot showing just the trace with annotations
     plt.figure(figsize=(12, 6))
-    plt.plot(theta_vals[:len(raw_trace)], raw_trace, 'b-', linewidth=2)
+    plt.plot(theta_vals[:len(raw_trace)]/np.pi, raw_trace, 'b-', linewidth=2)
     
     # Add markers and annotations at key points
     key_indices = [0, len(raw_trace)//4, len(raw_trace)//2, 3*len(raw_trace)//4, -2]
     
-    plt.scatter([theta_vals[i] for i in key_indices], 
+    plt.scatter([theta_vals[i]/np.pi for i in key_indices], 
                 [raw_trace[i] for i in key_indices], 
                 color='red', s=80, zorder=5)
     
     # Add annotations
     for i, idx in enumerate(key_indices):
         plt.annotate(f'{raw_trace[idx]:.6f}', 
-                    (theta_vals[idx], raw_trace[idx]), 
+                    (theta_vals[idx]/np.pi, raw_trace[idx]), 
                     textcoords="offset points", 
                     xytext=(0, 10 if i % 2 == 0 else -20), 
                     ha='center')
     
     # Also add a point at the very end to show the jump
-    plt.scatter([theta_vals[-2]], [raw_trace[-1]], color='green', s=100, zorder=5)
+    plt.scatter([theta_vals[-2]/np.pi], [raw_trace[-1]], color='green', s=100, zorder=5)
     plt.annotate(f'{raw_trace[-1]:.6f}', 
-                (theta_vals[-2], raw_trace[-1]), 
+                (theta_vals[-2]/np.pi, raw_trace[-1]), 
                 textcoords="offset points", 
                 xytext=(30, 0), 
                 ha='left', 
                 arrowprops=dict(arrowstyle="->", color='green'))
     
     plt.title("Trace of γ Matrix vs θ")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Trace Value')
     plt.grid(True)
     plt.tight_layout()
@@ -1049,9 +1076,9 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     # Let's simplify the plotting code to just focus on what's important
     # Create a plot showing the trace of gamma
     plt.figure(figsize=(12, 6))
-    plt.plot(theta_vals[:len(raw_trace)], raw_trace, linewidth=2, label='Trace of γ')
+    plt.plot(theta_vals[:len(raw_trace)]/np.pi, raw_trace, linewidth=2, label='Trace of γ')
     plt.title("Tr(γ) vs θ")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Tr(γ)')
     plt.grid(True)
     plt.tight_layout()
@@ -1060,14 +1087,14 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     # Add annotations to the trace plot
     key_indices = [0, len(raw_trace)//4, len(raw_trace)//2, 3*len(raw_trace)//4, -1]
-    plt.scatter([theta_vals[i] for i in key_indices], 
+    plt.scatter([theta_vals[i]/np.pi for i in key_indices], 
                 [raw_trace[i] for i in key_indices], 
                 color='red', s=80, zorder=5)
     
     # Add annotations
     for i, idx in enumerate(key_indices):
         plt.annotate(f'{raw_trace[idx]:.2f}', 
-                     (theta_vals[idx], raw_trace[idx]), 
+                     (theta_vals[idx]/np.pi, raw_trace[idx]), 
                      textcoords="offset points", 
                      xytext=(0, 10 if i % 2 == 0 else -20), 
                      ha='center')
@@ -1082,16 +1109,16 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     cutoff = int(len(raw_trace) * 0.05)
     
     plt.subplot(1, 2, 1)
-    plt.plot(theta_vals[:cutoff], raw_trace[:cutoff], linewidth=2)
+    plt.plot(theta_vals[:cutoff]/np.pi, raw_trace[:cutoff], linewidth=2)
     plt.title("Start of Tr(γ) vs θ")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Tr(γ)')
     plt.grid(True)
     
     plt.subplot(1, 2, 2)
-    plt.plot(theta_vals[-cutoff-1:-1], raw_trace[-cutoff:], linewidth=2)
+    plt.plot(theta_vals[-cutoff-1:-1]/np.pi, raw_trace[-cutoff:], linewidth=2)
     plt.title("End of Tr(γ) vs θ")
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Tr(γ)')
     plt.grid(True)
     
@@ -1109,11 +1136,15 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     plt.figure(figsize=(12, 6))
     # Use extended_theta_vals to match dimensions with tau
-    plt.plot(extended_theta_vals, np.imag(tau[1,2,:]), label="Im(τ₁₂)")
-    plt.scatter(extended_theta_vals[0], np.imag(tau[1,2,0]), color='green', label="First Point")
-    plt.scatter(extended_theta_vals[-1], np.imag(tau[1,2,-1]), color='red', label="Last Point")
+    plt.plot(extended_theta_vals/np.pi, np.imag(tau[1,2,:]), label="Im(τ₁₂)")
+    plt.scatter(extended_theta_vals[0]/np.pi, np.imag(tau[1,2,0]), color='green', label="First Point")
+    plt.scatter(extended_theta_vals[-1]/np.pi, np.imag(tau[1,2,-1]), color='red', label="Last Point")
     plt.legend()
     plt.title("Tau continuity check (should be smooth)")
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Im(τ₁₂)')
+    plt.grid(True)
+    plt.tight_layout()
     plt.savefig(f'{plot_dir}/tau_continuity_check.png')
     plt.close()
 
@@ -1229,9 +1260,9 @@ if __name__ == '__main__':
     def dataset(val):
         if val == 1:
             return {
-                'd': 0.06125,
+                'd': 0.06123724356957945,
                 'aVx': 1.0,
-                'aVa': 3.0,
+                'aVa': 5.0,
                 'c_const': 0.1,
                 'x_shift': 0.1,
                 'theta_min': 0,
@@ -1259,6 +1290,6 @@ if __name__ == '__main__':
     #run the main function
     main(dataset(1)['d'], dataset(1)['aVx'], dataset(1)['aVa'], dataset(1)['c_const'], dataset(1)['x_shift'], dataset(1)['theta_min'], dataset(1)['theta_max'], dataset(1)['omega'], dataset(1)['num_points'], dataset(1)['R_0'], extended=False)
     
-    main(dataset(2)['d'], dataset(2)['aVx'], dataset(2)['aVa'], dataset(2)['c_const'], dataset(2)['x_shift'], dataset(2)['theta_min'], dataset(2)['theta_max'], dataset(2)['omega'], dataset(2)['num_points'], dataset(2)['R_0'], extended=False)
+    #main(dataset(2)['d'], dataset(2)['aVx'], dataset(2)['aVa'], dataset(2)['c_const'], dataset(2)['x_shift'], dataset(2)['theta_min'], dataset(2)['theta_max'], dataset(2)['omega'], dataset(2)['num_points'], dataset(2)['R_0'], extended=False)
 
     

@@ -1,0 +1,74 @@
+{
+  "platform": "Linux-6.11.0-25-generic-x86_64-with-glibc2.39",
+  "python_version": "3.12.3",
+  "memory": {
+    "total": 16051982336,
+    "available": 9869922304,
+    "percent": 38.5,
+    "used": 5683728384,
+    "free": 3515551744
+  },
+  "cpu": {
+    "count": 12,
+    "percent": 2.5,
+    "freq": {
+      "current": 955.1615833333332,
+      "min": 400.0,
+      "max": 4056.0
+    },
+    "load_avg": [
+      1.45751953125,
+      1.5029296875,
+      1.5029296875
+    ]
+  },
+  "Runned at": "2025-05-16 16:11:08",
+  "runtime": "0:01:01.494762",
+  "runtime_seconds": 61.49476194381714,
+  "gpu": null,
+  "temperatures": {
+    "acpitz": [
+      {
+        "label": "",
+        "current": 78.0,
+        "high": null,
+        "critical": null
+      }
+    ],
+    "nvme": [
+      {
+        "label": "Composite",
+        "current": 33.85,
+        "high": 86.85,
+        "critical": 89.85
+      },
+      {
+        "label": "Sensor 1",
+        "current": 34.85,
+        "high": 65261.85,
+        "critical": 65261.85
+      }
+    ],
+    "k10temp": [
+      {
+        "label": "Tctl",
+        "current": 80.625,
+        "high": null,
+        "critical": null
+      }
+    ],
+    "amdgpu": [
+      {
+        "label": "edge",
+        "current": 54.0,
+        "high": null,
+        "critical": null
+      }
+    ]
+  },
+  "output_dir_sizes": {
+    "total": 9558667,
+    "totalh": "9.6 MB",
+    "files": 9
+  }
+}

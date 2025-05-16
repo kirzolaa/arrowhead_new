@@ -1,0 +1,4 @@
+# Triple points on orthogonal circle
+Point 1: [ 0.05  -0.025 -0.025]
+Point 2: [-0.025  0.05  -0.025]
+Point 3: [-0.025 -0.025  0.05 ]
