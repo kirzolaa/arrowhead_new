@@ -307,6 +307,7 @@ def plot_potentials(triple_points, d_value, aVx, aVa, x_shift, c_const, omega, o
     - d_value: The d value to use
     - aVx, aVa, x_shift, c_const, omega: Hamiltonian parameters
     - output_dir: Directory to save the plots
+    - point_type: Type of points ('original' or 'nested')
     """
     # Create a subdirectory for potential plots
     potentials_dir = os.path.join(output_dir, 'potential_plots')
@@ -367,6 +368,43 @@ def plot_potentials(triple_points, d_value, aVx, aVa, x_shift, c_const, omega, o
         plt.savefig(os.path.join(type_dir, f'Va_minus_Vx_R0_{i+1}.png'), dpi=150)
         plt.close()
         
+        # For nested points, add a zoomed-in version to better see the crossing
+        if point_type == 'nested':
+            # Create zoomed-in figure for Va-Vx
+            fig, ax = plt.subplots(figsize=(12, 8))
+            
+            # Find where Va-Vx is close to zero for all components
+            diff_values = Va_values - Vx_values
+            abs_diff = np.abs(diff_values)
+            min_indices = []
+            
+            # Find the minimum difference points for each component
+            for j in range(diff_values.shape[1]):
+                min_idx = np.argmin(abs_diff[:, j])
+                min_indices.append(min_idx)
+            
+            # Get the average index to center the zoom
+            center_idx = int(np.mean(min_indices))
+            window = 10  # Points on either side to show
+            start_idx = max(0, center_idx - window)
+            end_idx = min(len(theta_range), center_idx + window)
+            
+            # Plot the zoomed-in region for each component
+            for j in range(Va_values.shape[1]):
+                ax.plot(theta_range[start_idx:end_idx]/np.pi, 
+                       diff_values[start_idx:end_idx, j], 
+                       linewidth=2, label=f'Va[{j+1}] - Vx[{j+1}]')
+            
+            ax.axhline(y=0, color='r', linestyle='--', label='Zero')
+            ax.set_title(f'ZOOMED: Va-Vx vs Theta for R0={R0}, d={d_value:.10f}')
+            ax.set_xlabel('Theta (θ/π)')
+            ax.set_ylabel('Va-Vx Value')
+            ax.grid(True)
+            ax.legend()
+            plt.tight_layout()
+            plt.savefig(os.path.join(type_dir, f'Va_minus_Vx_ZOOM_R0_{i+1}.png'), dpi=150)
+            plt.close()
+        
         # Create figure for Vx-Va
         plt.figure(figsize=(12, 8))
         
@@ -382,6 +420,43 @@ def plot_potentials(triple_points, d_value, aVx, aVa, x_shift, c_const, omega, o
         plt.tight_layout()
         plt.savefig(os.path.join(type_dir, f'Vx_minus_Va_R0_{i+1}.png'), dpi=150)
         plt.close()
+        
+        # For nested points, add a zoomed-in version to better see the crossing
+        if point_type == 'nested':
+            # Create zoomed-in figure for Vx-Va
+            fig, ax = plt.subplots(figsize=(12, 8))
+            
+            # Find where Vx-Va is close to zero for all components
+            diff_values = Vx_values - Va_values
+            abs_diff = np.abs(diff_values)
+            min_indices = []
+            
+            # Find the minimum difference points for each component
+            for j in range(diff_values.shape[1]):
+                min_idx = np.argmin(abs_diff[:, j])
+                min_indices.append(min_idx)
+            
+            # Get the average index to center the zoom
+            center_idx = int(np.mean(min_indices))
+            window = 10  # Points on either side to show
+            start_idx = max(0, center_idx - window)
+            end_idx = min(len(theta_range), center_idx + window)
+            
+            # Plot the zoomed-in region for each component
+            for j in range(Vx_values.shape[1]):
+                ax.plot(theta_range[start_idx:end_idx]/np.pi, 
+                       diff_values[start_idx:end_idx, j], 
+                       linewidth=2, label=f'Vx[{j+1}] - Va[{j+1}]')
+            
+            ax.axhline(y=0, color='r', linestyle='--', label='Zero')
+            ax.set_title(f'ZOOMED: Vx-Va vs Theta for R0={R0}, d={d_value:.10f}')
+            ax.set_xlabel('Theta (θ/π)')
+            ax.set_ylabel('Vx-Va Value')
+            ax.grid(True)
+            ax.legend()
+            plt.tight_layout()
+            plt.savefig(os.path.join(type_dir, f'Vx_minus_Va_ZOOM_R0_{i+1}.png'), dpi=150)
+            plt.close()
         
         # Create a combined figure showing all potentials
         plt.figure(figsize=(15, 10))
@@ -593,6 +668,142 @@ def plot_ci_points_detailed(triple_points, all_points, all_ci_points, output_dir
     plt.close()
 
 
+def generate_detailed_report(points, d_value, aVx, aVa, x_shift, c_const, omega, output_dir, point_type):
+    """
+    Generate a detailed report with high numerical precision for Va-Vx values at each point.
+    
+    Parameters:
+    - points: List of points to analyze
+    - d_value: The d value to use
+    - aVx, aVa, x_shift, c_const, omega: Hamiltonian parameters
+    - output_dir: Directory to save the report
+    - point_type: Type of points ('original' or 'nested')
+    """
+    # Create a subdirectory for reports
+    reports_dir = os.path.join(output_dir, 'detailed_reports')
+    os.makedirs(reports_dir, exist_ok=True)
+    
+    # Create a report file for this point type
+    report_file = os.path.join(reports_dir, f'{point_type}_points_detailed_report.txt')
+    
+    with open(report_file, 'w') as f:
+        f.write(f"Detailed Report for {point_type.capitalize()} Points\n")
+        f.write("="*50 + "\n\n")
+        f.write(f"Global Parameters:\n")
+        f.write(f"  d_value = {d_value:.16f}\n")
+        f.write(f"  aVx = {aVx}\n")
+        f.write(f"  aVa = {aVa}\n")
+        f.write(f"  x_shift = {x_shift}\n")
+        f.write(f"  c_const = {c_const}\n")
+        f.write(f"  omega = {omega}\n\n")
+        
+        # Create theta range with high precision
+        theta_range = np.linspace(0, 2*np.pi, 1000)  # Higher resolution for precision
+        
+        for i, R0 in enumerate(points):
+            f.write(f"Point {i+1}: R0 = {R0}\n")
+            f.write("-"*50 + "\n")
+            
+            # Calculate potentials with high precision
+            Va_values = np.zeros((len(theta_range), 3))
+            Vx_values = np.zeros((len(theta_range), 3))
+            
+            # Find the minimum difference between Va and Vx for each component
+            min_diff_values = [float('inf'), float('inf'), float('inf')]
+            min_diff_thetas = [0, 0, 0]
+            min_diff_Va = [0, 0, 0]
+            min_diff_Vx = [0, 0, 0]
+            
+            for j, theta in enumerate(theta_range):
+                # Calculate R(theta)
+                R_theta = np.array([
+                    R0[0] + d_value * np.cos(theta),
+                    R0[1] + d_value * np.sin(theta),
+                    R0[2]
+                ])
+                
+                # Calculate Va and Vx for each component
+                for k in range(3):
+                    # Va calculation
+                    Va_values[j, k] = aVa * (R_theta[k] ** 2)
+                    
+                    # Vx calculation
+                    if k == 0:
+                        Vx_values[j, k] = aVx * ((R_theta[1] - x_shift) ** 2 + R_theta[2] ** 2) + c_const
+                    elif k == 1:
+                        Vx_values[j, k] = aVx * ((R_theta[0] - x_shift) ** 2 + R_theta[2] ** 2) + c_const
+                    else:  # k == 2
+                        Vx_values[j, k] = aVx * ((R_theta[0] - x_shift) ** 2 + R_theta[1] ** 2) + c_const
+                    
+                    # Check if this is the minimum difference
+                    diff = abs(Va_values[j, k] - Vx_values[j, k])
+                    if diff < min_diff_values[k]:
+                        min_diff_values[k] = diff
+                        min_diff_thetas[k] = theta
+                        min_diff_Va[k] = Va_values[j, k]
+                        min_diff_Vx[k] = Vx_values[j, k]
+            
+            # Write the minimum differences to the report
+            f.write("Minimum Va-Vx differences for each component:\n")
+            for k in range(3):
+                f.write(f"  Component {k+1}:\n")
+                f.write(f"    Theta = {min_diff_thetas[k]:.16f} rad = {min_diff_thetas[k]/np.pi:.16f}π\n")
+                f.write(f"    Va = {min_diff_Va[k]:.16f}\n")
+                f.write(f"    Vx = {min_diff_Vx[k]:.16f}\n")
+                f.write(f"    |Va-Vx| = {min_diff_values[k]:.16f}\n")
+                f.write(f"    Va-Vx = {min_diff_Va[k]-min_diff_Vx[k]:.16f}\n\n")
+            
+            # Find where all three components have minimum differences within a small range
+            # This indicates a potential CI point
+            theta_diffs = [abs(min_diff_thetas[0] - min_diff_thetas[1]),
+                          abs(min_diff_thetas[1] - min_diff_thetas[2]),
+                          abs(min_diff_thetas[0] - min_diff_thetas[2])]
+            
+            max_theta_diff = max(theta_diffs)
+            f.write(f"Maximum theta difference between components: {max_theta_diff:.16f} rad = {max_theta_diff/np.pi:.16f}π\n")
+            
+            if max_theta_diff < 0.01:  # If all thetas are close
+                f.write("POTENTIAL CI POINT DETECTED: All components have minimum Va-Vx at similar theta values\n")
+                
+                # Calculate the average theta and the potentials at that point
+                avg_theta = sum(min_diff_thetas) / 3
+                f.write(f"Average theta for CI point: {avg_theta:.16f} rad = {avg_theta/np.pi:.16f}π\n")
+                
+                # Calculate R(avg_theta)
+                R_ci = np.array([
+                    R0[0] + d_value * np.cos(avg_theta),
+                    R0[1] + d_value * np.sin(avg_theta),
+                    R0[2]
+                ])
+                f.write(f"CI point coordinates: {R_ci}\n")
+                
+                # Calculate potentials at the CI point
+                Va_ci = np.zeros(3)
+                Vx_ci = np.zeros(3)
+                for k in range(3):
+                    # Va calculation
+                    Va_ci[k] = aVa * (R_ci[k] ** 2)
+                    
+                    # Vx calculation
+                    if k == 0:
+                        Vx_ci[k] = aVx * ((R_ci[1] - x_shift) ** 2 + R_ci[2] ** 2) + c_const
+                    elif k == 1:
+                        Vx_ci[k] = aVx * ((R_ci[0] - x_shift) ** 2 + R_ci[2] ** 2) + c_const
+                    else:  # k == 2
+                        Vx_ci[k] = aVx * ((R_ci[0] - x_shift) ** 2 + R_ci[1] ** 2) + c_const
+                
+                f.write("Potentials at CI point:\n")
+                for k in range(3):
+                    f.write(f"  Component {k+1}:\n")
+                    f.write(f"    Va = {Va_ci[k]:.16f}\n")
+                    f.write(f"    Vx = {Vx_ci[k]:.16f}\n")
+                    f.write(f"    Va-Vx = {Va_ci[k]-Vx_ci[k]:.16f}\n")
+            
+            f.write("\n" + "="*50 + "\n\n")
+    
+    print(f"Detailed report for {point_type} points saved to: {report_file}")
+
+
 def generate_nested_triple_points(triple_points, small_radius=0.01):
     """
     Generate additional triple points around each of the original triple points.
@@ -734,16 +945,16 @@ if __name__ == '__main__':
     nested_ci_points = []
     for i, nested_point in enumerate(all_points[3:]):
         print(f"\nAnalyzing nested point {i+1}: {nested_point}")
-        # Use a narrower range for nested points to speed up the search
-        nested_d_start = d_value - 1e-7
-        nested_d_end = d_value + 1e-7
-        nested_d_step = 1e-7
+        # Use a higher precision search for nested points
+        nested_d_start = d_value - 5e-7  # Slightly wider range
+        nested_d_end = d_value + 5e-7
+        nested_d_step = 1e-9  # Much finer step size (100x more precise)
         
-        # Find CI points around this nested point
+        # Find CI points around this nested point with higher precision
         points = find_va_vx_intersection(
             nested_d_start, nested_d_end, nested_d_step,
             aVx=1.0, aVa=5.0, x_shift=0.1, c_const=0.1, omega=1.0,
-            R_0=nested_point, epsilon=1e-10
+            R_0=nested_point, epsilon=1e-12  # Higher precision tolerance
         )
         
         # Add to the list of all CI points
@@ -774,6 +985,15 @@ if __name__ == '__main__':
     nested_points = all_points[len(triple_points):]
     plot_potentials(nested_points, d_value, aVx=1.0, aVa=5.0, x_shift=0.1, c_const=0.1, omega=1.0, 
                    output_dir=output_dir, point_type='nested')
+    
+    # Generate detailed reports with high numerical precision
+    print("\nGenerating detailed report for original triple points...")
+    generate_detailed_report(triple_points, d_value, aVx=1.0, aVa=5.0, x_shift=0.1, c_const=0.1, omega=1.0,
+                           output_dir=output_dir, point_type='original')
+    
+    print("\nGenerating detailed report for nested triple points...")
+    generate_detailed_report(nested_points, d_value, aVx=1.0, aVa=5.0, x_shift=0.1, c_const=0.1, omega=1.0,
+                           output_dir=output_dir, point_type='nested')
     
     # Create a summary file explaining the plot organization
     with open(os.path.join(output_dir, 'potential_plots', 'README.txt'), 'w') as f:
