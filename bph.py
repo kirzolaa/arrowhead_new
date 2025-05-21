@@ -680,7 +680,10 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), f'{og}_berry_phase_AROUND_d_{d:.8f}')
+    if og:
+        output_dir = os.path.join(os.path.dirname(__file__), f'og_berry_phase_AROUND_d_{d:.8f}')
+    else:
+        output_dir = os.path.join(os.path.dirname(__file__), f'not_og_berry_phase_AROUND_d_{d:.8f}')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
