@@ -302,7 +302,7 @@ class Eigenvectors:
         plt.savefig(f'{self.output_dir}/eigenvector_components_for_eigvec_2x2.png')
         plt.close()
         
-def compute_berry_phase_og(eigvectors_all, theta_vals):
+def compute_berry_phase_og(eigvectors_all, theta_vals, continuity_check=False, OUT_DIR=None):
     """
     Note: the first and the last tau, gamma matrices are seemingly wrong!
     
@@ -320,6 +320,20 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
     
     tau = np.zeros((M, M, N), dtype=np.float64)
     gamma = np.zeros((M, M, N), dtype=np.float64)
+
+    # Create arrays to track the magnitude of tau and gamma for diagnostics
+    tau_imag_magnitudes = np.zeros((M, M, N))
+    tau_real_magnitudes = np.zeros((M, M, N))
+    gamma_increments = np.zeros((M, M, N))
+
+    # Optional: normalize eigenvectors for safety
+    eigvectors_all = eigvectors_all / np.linalg.norm(eigvectors_all, axis=1, keepdims=True)
+
+    # Track the largest tau values and their locations
+    largest_tau_imag = 0
+    largest_tau_imag_loc = (0, 0, 0)
+    largest_gamma_increment = 0
+    largest_gamma_increment_loc = (0, 0, 0)
 
     for n in range(M):
         for m in range(M):
@@ -362,29 +376,69 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
                 # τ = ⟨ψ_i | ∇_theta | ψ_{i-1}⟩  (Corrected index for tau)
                 tau_val = np.vdot(psi_curr, grad_psi)
                 tau[n, m, i] = tau_val
-                # · d_theta to integrate. 
-                if i == 0:
-                   gamma[n, m, i] = 0.0
-                else:
-                    delta_theta_integrate = theta_vals[i] - theta_vals[i-1]
-                    # Add the area of the segment from theta_vals[i-1] to theta_vals[i]
-                    # Option 1: Using tau at the end of the interval (simplest Riemann sum)
-                    gamma[n, m, i] = gamma[n, m, i-1] + tau[n, m, i] * delta_theta_integrate
 
-                    # Option 2: Using trapezoidal rule (generally more accurate)
-                    #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
-                    #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
+                
+                # Store magnitudes for diagnostics
+                if i < N:
+                    tau_imag_magnitudes[n, m, i] = np.abs(np.imag(tau_val))
+                    tau_real_magnitudes[n, m, i] = np.abs(np.real(tau_val))
+                    
+                    # Track largest values
+                    if np.abs(np.imag(tau_val)) > largest_tau_imag:
+                        largest_tau_imag = np.abs(np.imag(tau_val))
+                        largest_tau_imag_loc = (n, m, i)
+
+                # Accumulate γ (imaginary part of τ)
+                if i > 0:
+                    # Use trapezoidal rule for more accurate integration
+                    gamma_increment = 0.5 * np.real(tau_val + tau[n, m, i - 1]) * delta_theta_for_grad
+                    gamma[n, m, i] = gamma[n, m, i - 1] + gamma_increment
+                    
+                    # Store increment for diagnostics
+                    if i < N:
+                        gamma_increments[n, m, i-1] = gamma_increment
+                        
+                        # Track largest increment
+                        if np.abs(gamma_increment) > largest_gamma_increment:
+                            largest_gamma_increment = np.abs(gamma_increment)
+                            largest_gamma_increment_loc = (n, m, i-1)
+
+    
+
+    # Print diagnostic information about large tau and gamma values
+    print(f"\nDiagnostic Information:")
+    print(f"Largest imaginary tau value: {largest_tau_imag:.6f} at (n={largest_tau_imag_loc[0]+1}, m={largest_tau_imag_loc[1]+1}, theta_idx={largest_tau_imag_loc[2]})")
+    print(f"Largest gamma increment: {largest_gamma_increment:.6f} at (n={largest_gamma_increment_loc[0]+1}, m={largest_gamma_increment_loc[1]+1}, theta_idx={largest_gamma_increment_loc[2]})")
+    
+    # Find the matrix elements with the largest contribution to the trace
+    tau_imag_sum = np.sum(np.abs(tau), axis=2)
+    gamma_final_abs = np.abs(gamma[:,:,-1])
+    
+    # Get the indices of the top 5 contributors
+    tau_flat_indices = np.argsort(tau_imag_sum.flatten())[-5:]
+    gamma_flat_indices = np.argsort(gamma_final_abs.flatten())[-5:]
+    
+    print("\nTop 5 contributors to tau (imaginary part sum):")
+    for idx in tau_flat_indices[::-1]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        print(f"  Tau[{n+1},{m+1}]: Sum of abs(imag) = {tau_imag_sum[n,m]:.6f}, Final value = {np.imag(tau[n,m,-1]):.6f}")
+    
+    print("\nTop 5 contributors to gamma (final values):")
+    for idx in gamma_flat_indices[::-1]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        print(f"  Gamma[{n+1},{m+1}]: Final value = {gamma[n,m,-1]:.6f}")
+    
     # Create diagnostic plots directory
-    diag_dir = os.path.join('berry_phase_corrected_script', 'diagnostics')
+    diag_dir = os.path.join(OUT_DIR, 'diagnostics')
     os.makedirs(diag_dir, exist_ok=True)
     
     # Plot the evolution of the largest contributors
     plt.figure(figsize=(12, 8))
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
-        plt.plot(theta_vals[1:], gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
+        plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
     plt.title('Evolution of Largest Gamma Contributors')
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Gamma Value')
     plt.grid(True)
     plt.legend()
@@ -396,9 +450,9 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
     plt.figure(figsize=(12, 8))
     for idx in tau_flat_indices[-3:]:
         n, m = np.unravel_index(idx, tau_imag_sum.shape)
-        plt.plot(theta_vals[1:], np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
+        plt.plot(theta_vals[1:]/np.pi, np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
     plt.title('Evolution of Largest Tau Imaginary Parts')
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Imaginary Part of Tau')
     plt.grid(True)
     plt.legend()
@@ -412,9 +466,9 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
         # Calculate increments
         increments = np.diff(gamma[n,m,1:])
-        plt.plot(theta_vals[1:-1], increments, label=f'Gamma[{n+1},{m+1}] increments')
+        plt.plot(theta_vals[1:-1]/np.pi, increments, label=f'Gamma[{n+1},{m+1}] increments')
     plt.title('Gamma Increments for Largest Contributors')
-    plt.xlabel('Theta (θ)')
+    plt.xlabel('Theta (θ/π)')
     plt.ylabel('Increment Value')
     plt.grid(True)
     plt.legend()
@@ -424,20 +478,142 @@ def compute_berry_phase_og(eigvectors_all, theta_vals):
     
     # Plot a heatmap of the final gamma matrix
     plt.figure(figsize=(10, 8))
-    im = plt.imshow(gamma[:,:,-1], cmap='viridis')
+    im = plt.imshow(gamma[:,:,-1], cmap='coolwarm')
     plt.colorbar(im, label='Gamma Value')
     plt.title('Final Gamma Matrix Heatmap')
     plt.xlabel('m')
     plt.ylabel('n')
+    # DISPLAY THE INDEXES ON THE PLOT
+    plt.xticks(range(M), range(1, M+1))
+    plt.yticks(range(M), range(1, M+1))
     # Add text annotations
     for i in range(M):
         for j in range(M):
-            text = plt.text(j, i, f'{gamma[i,j,-1]:.1f}',
+            text = plt.text(j, i, f'{gamma[i,j,-1]:.3f}',
                           ha="center", va="center", color="w" if abs(gamma[i,j,-1]) > 1000 else "k")
     plt.tight_layout()
     plt.savefig(f'{diag_dir}/gamma_final_heatmap.png')
     plt.close()
     
+    final_plotz_from_bph_func_folder = os.path.join(OUT_DIR, 'final_plots_from_bph_func')
+    os.makedirs(final_plotz_from_bph_func_folder, exist_ok=True)
+    # /np.pi and plot these diagnostics plots
+    # Plot the evolution of the largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
+    plt.title('Evolution of Largest Gamma Contributors')
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Gamma Value')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/largest_gamma_evolution.png')
+    plt.close()
+    
+    # Plot the evolution of tau imaginary part for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in tau_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        plt.plot(theta_vals[1:]/np.pi, np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
+    plt.title('Evolution of Largest Tau Imaginary Parts')
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Imaginary Part of Tau')
+    plt.grid(True)
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/largest_tau_imag_evolution.png')
+    plt.close()
+    
+    # Plot the gamma increments for largest contributors
+    plt.figure(figsize=(12, 8))
+    for idx in gamma_flat_indices[-3:]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        # Calculate increments
+        increments = np.diff(gamma[n,m,1:])
+        plt.plot(theta_vals[1:-1]/np.pi, increments, label=f'Gamma[{n+1},{m+1}] increments')
+    plt.title('Gamma Increments for Largest Contributors')
+    plt.xlabel('Theta (θ/π)')
+    plt.ylabel('Increment Value')
+    plt.grid(True)
+    plt.legend(fontsize=10,loc='upper center', bbox_to_anchor=(0.5, -0.1))
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/gamma_increments.png')
+    plt.close()
+    
+    # Plot a heatmap of the final gamma matrix
+    plt.figure(figsize=(12, 10))
+    
+    # Convert gamma values to multiples of pi
+    gamma_pi = gamma[:,:,-1]/np.pi
+    im = plt.imshow(gamma_pi, cmap='coolwarm')
+    
+    # Create colorbar with π units
+    cbar = plt.colorbar(im, label='Gamma Value (×π)')
+    cbar.set_ticks([-2, -1, -0.5, 0, 0.5, 1, 2])  # Common fractions of pi
+    cbar.set_ticklabels(['-2π', '-π', '-π/2', '0', 'π/2', 'π', '2π'])
+    
+    plt.title('Final Gamma Matrix Heatmap')
+    plt.xlabel('m')
+    plt.ylabel('n')
+    # DISPLAY THE INDEXES ON THE PLOT
+    plt.xticks(range(M), range(1, M+1))
+    plt.yticks(range(M), range(1, M+1))
+    
+    # Function to format values as fractions of pi
+    def format_pi(val):
+        if val == 0:
+            return '0'
+        
+        # Common fractions
+        fractions = {
+            1.0: 'π',
+            -1.0: '-π',
+            0.5: 'π/2',
+            -0.5: '-π/2',
+            0.333: 'π/3',
+            -0.333: '-π/3',
+            0.666: '2π/3',
+            -0.666: '-2π/3',
+            0.25: 'π/4',
+            -0.25: '-π/4',
+            0.75: '3π/4',
+            -0.75: '-3π/4',
+            2.0: '2π',
+            -2.0: '-2π'
+        }
+        
+        # Check for common fractions first
+        for frac, label in fractions.items():
+            if abs(val - frac) < 0.001:  # Allow for small floating point errors
+                return label.format(val) + 'π'
+        
+        # For other values, show as decimal * π
+        return f'{val:.3f}'
+    
+    # Add text annotations with formatted values
+    for i in range(M):
+        for j in range(M):
+            val = gamma_pi[i,j]
+            text_label = format_pi(val)
+            text = plt.text(j, i, text_label,
+                          ha="center", va="center", 
+                          color="w" if abs(val) > 0.5 else "k",
+                          fontsize=10)
+    
+    plt.tight_layout()
+    plt.savefig(f'{final_plotz_from_bph_func_folder}/gamma_final_heatmap.png', dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    if continuity_check:
+        print("\nEigenvector continuity (should be ~1):")
+        for i in range(1, N_orig):
+            for n in range(M):
+                overlap = np.abs(np.vdot(eigvectors_all[i - 1, :, n], eigvectors_all[i, :, n]))
+                if overlap < 0.99:
+                    print(f"Theta index {i}, state {n+1}: overlap = {overlap:.6f}")
+
     return tau, gamma
 
 def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir):
@@ -486,8 +662,8 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     N_orig, M, _ = eigvectors_all.shape
     output_dir = OUT_DIR
     # Extend θ and eigvecs for periodic boundary
-    eigvectors_all = eigvectors_all.copy() # np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
-    theta_vals = theta_vals.copy() #np.append(theta_vals, theta_vals[0] + 2 * np.pi)
+    #eigvectors_all = eigvectors_all.copy() # np.concatenate([eigvectors_all, eigvectors_all[:1]], axis=0)
+    #theta_vals = theta_vals.copy() #np.append(theta_vals, theta_vals[0] + 2 * np.pi)
     N = N_orig # + 1
     delta_theta = theta_vals[1] - theta_vals[0]
 
@@ -500,7 +676,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     gamma_increments = np.zeros((M, M, N_orig))
 
     # Optional: normalize eigenvectors for safety
-    eigvectors_all = eigvectors_all / np.linalg.norm(eigvectors_all, axis=1, keepdims=True)
+    #eigvectors_all = eigvectors_all / np.linalg.norm(eigvectors_all, axis=1, keepdims=True)
 
     # Track the largest tau values and their locations
     largest_tau_imag = 0
@@ -528,6 +704,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                 psi_prev = eigvectors_all[im1, :, n] # (THETA, COMPONENT, STATE)
                 psi_next = eigvectors_all[ip1, :, n]
                 delta_theta_for_grad = theta_vals[2] - theta_vals[0]
+
                 if ip1 - im1 != 2:
                     if np.vdot(psi_prev, psi_next).real < 0:
                         print("Negative overlap between previous and next eigenvector at theta index", im1, "and", ip1)
@@ -535,16 +712,17 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                             psi_prev = -1 * copy.deepcopy(psi_prev)
                         else:
                             psi_next = -1 * copy.deepcopy(psi_next)
+
                 psi_curr = eigvectors_all[i, :, m]
 
-                grad_psi = (psi_next - psi_prev) / delta_theta
+                grad_psi = (psi_next - psi_prev) / delta_theta_for_grad
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
                 
                 # Zero out diagonal elements of tau
                 # This is a common practice in Berry phase calculations
                 #if n == m:
                 #    tau_val = 0.0 AI MADE THIS CHANGE
-                
+                """
                 # Check for unusually large imaginary values at the end of the loop
                 # This prevents the sudden jump in gamma at 2π
                 if i == N-1 and np.abs(np.imag(tau_val)) > 10.0:
@@ -553,11 +731,11 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                         prev_tau = tau[n, m, i-1]
                         tau_val = prev_tau
                         print(f"Limiting large tau value at (n={n+1}, m={m+1}, theta_idx={i})")
-                
+                """
                 tau[n, m, i] = tau_val
                 
                 # Store magnitudes for diagnostics
-                if i < N_orig:
+                if i < N:
                     tau_imag_magnitudes[n, m, i] = np.abs(np.imag(tau_val))
                     tau_real_magnitudes[n, m, i] = np.abs(np.real(tau_val))
                     
@@ -567,13 +745,17 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                         largest_tau_imag_loc = (n, m, i)
 
                 # Accumulate γ (imaginary part of τ)
-                if i > 0:
+                if i >= 0:
+                    # USE riemann sum
+                    #gamma_increment = np.imag(tau[n, m, i]) * delta_theta
+                    #gamma[n, m, i] = gamma[n, m, i-1] + gamma_increment
+                    
                     # Use trapezoidal rule for more accurate integration
-                    gamma_increment = 0.5 * np.imag(tau_val + tau[n, m, i - 1]) * delta_theta
+                    gamma_increment = 0.5 * (np.imag(tau_val) + np.imag(tau[n, m, i - 1])) * delta_theta_for_grad
                     gamma[n, m, i] = gamma[n, m, i - 1] + gamma_increment
                     
                     # Store increment for diagnostics
-                    if i < N_orig:
+                    if i < N:
                         gamma_increments[n, m, i-1] = gamma_increment
                         
                         # Track largest increment
@@ -1260,15 +1442,15 @@ if __name__ == '__main__':
     def dataset(val):
         if val == 1:
             return {
-                'd': 0.06123724356957945,
+                'd': 0.07,#0.06123724356957945,
                 'aVx': 1.0,
-                'aVa': 5.0,
+                'aVa': 3.0,
                 'c_const': 0.1,
                 'x_shift': 0.1,
                 'theta_min': 0,
                 'theta_max': 2 * np.pi,
                 'omega': 0.1,
-                'num_points': 50000,
+                'num_points': 5000,
                 'R_0': (0, 0, 0)
             }
     
@@ -1283,7 +1465,7 @@ if __name__ == '__main__':
                 'theta_min': 0,
                 'theta_max': 2 * np.pi,
                 'omega': 0.1,
-                'num_points': 50000,
+                'num_points': 5000,
                 'R_0': (0, 0, 0)
             }    
     
