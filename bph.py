@@ -494,9 +494,6 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     largest_gamma_increment_loc = (0, 0, 0)
 
     for i in range(N):
-        i_prev = (i - 1)
-        i_next = (i + 1) % N
-
         for n in range(M):
             for m in range(M):
 
@@ -524,20 +521,6 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
 
                 grad_psi = (psi_next - psi_prev) / delta_theta
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
-                
-                # Zero out diagonal elements of tau
-                # This is a common practice in Berry phase calculations
-                #if n == m:
-                #    tau_val = 0.0 AI MADE THIS CHANGE
-                
-                # Check for unusually large imaginary values at the end of the loop
-                # This prevents the sudden jump in gamma at 2π
-                if i == N-1 and np.abs(np.imag(tau_val)) > 10.0:
-                    # Use the average of previous values instead
-                    if i > 0:
-                        prev_tau = tau[n, m, i-1]
-                        tau_val = prev_tau
-                        print(f"Limiting large tau value at (n={n+1}, m={m+1}, theta_idx={i})")
                 
                 tau[n, m, i] = tau_val
                 
@@ -601,7 +584,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     plt.figure(figsize=(12, 8))
     for idx in gamma_flat_indices[-3:]:
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
-        plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:], label=f'Gamma[{n+1},{m+1}]')
+        plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:]/np.pi, label=f'Gamma[{n+1},{m+1}]')
     plt.title('Evolution of Largest Gamma Contributors')
     plt.xlabel('θ/π')
     plt.ylabel('Gamma Value')
@@ -631,7 +614,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
         n, m = np.unravel_index(idx, gamma_final_abs.shape)
         # Calculate increments
         increments = np.diff(gamma[n,m,1:])
-        plt.plot(theta_vals[1:-1]/np.pi, increments, label=f'Gamma[{n+1},{m+1}] increments')
+        plt.plot(theta_vals[1:-1]/np.pi, increments/np.pi, label=f'Gamma[{n+1},{m+1}] increments')
     plt.title('Gamma Increments for Largest Contributors')
     plt.xlabel('θ/π')
     plt.ylabel('Increment Value')
@@ -643,7 +626,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     
     # Plot a heatmap of the final gamma matrix
     plt.figure(figsize=(10, 8))
-    im = plt.imshow(gamma[:,:,-1], cmap='viridis')
+    im = plt.imshow(gamma[:,:,-1]/np.pi, cmap='viridis')
     plt.colorbar(im, label='Gamma Value')
     plt.title('Final Gamma Matrix Heatmap')
     plt.xlabel('m')
@@ -651,7 +634,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
     # Add text annotations
     for i in range(M):
         for j in range(M):
-            text = plt.text(j, i, f'{gamma[i,j,-1]:.1f}',
+            text = plt.text(j, i, f'{gamma[i,j,-1]/np.pi:.1f}',
                           ha="center", va="center", color="w" if abs(gamma[i,j,-1]) > 1000 else "k")
     plt.tight_layout()
     plt.savefig(f'{diag_dir}/gamma_final_heatmap.png')
@@ -722,7 +705,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
             for j in range(gamma.shape[1]):
-                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]}\n")
+                f.write(f"Gamma[{i+1},{j+1}]: {gamma[i,j,-1]/np.pi}\n")
                 f.write(f"Tau[{i+1},{j+1}]: {np.imag(tau[i,j,-1])}\n")
             f.write("\n")
         f.write("===========================================\n")

@@ -3,34 +3,34 @@
   "python_version": "3.10.12",
   "memory": {
     "total": 67172204544,
-    "available": 59148410880,
-    "percent": 11.9,
-    "used": 7115796480,
-    "free": 49706598400
+    "available": 60251594752,
+    "percent": 10.3,
+    "used": 6048096256,
+    "free": 49975799808
   },
   "cpu": {
     "count": 24,
-    "percent": 1.8,
+    "percent": 0.2,
     "freq": {
-      "current": 2312.611166666667,
+      "current": 1561.060833333333,
       "min": 800.0,
       "max": 4833.333333333333
     },
     "load_avg": [
-      0.80859375,
-      0.65087890625,
-      0.60009765625
+      0.7353515625,
+      0.2099609375,
+      0.08935546875
     ]
   },
-  "Runned at": "2025-05-21 18:41:43",
-  "runtime": "0:00:31.664021",
-  "runtime_seconds": 31.664021015167236,
+  "Runned at": "2025-05-21 19:29:47",
+  "runtime": "0:00:31.246660",
+  "runtime_seconds": 31.246659755706787,
   "gpu": [
     {
       "name": "NVIDIA GeForce RTX 3060 Ti",
       "vram_total": 8589934592,
-      "vram_used": 807403520,
-      "vram_free": 7517241344,
+      "vram_used": 808452096,
+      "vram_free": 7516192768,
       "temperature": 35.0
     }
   ],
@@ -52,13 +52,13 @@
       },
       {
         "label": "Composite",
-        "current": 33.85,
+        "current": 32.85,
         "high": 81.85,
         "critical": 84.85
       },
       {
         "label": "Sensor 1",
-        "current": 33.85,
+        "current": 32.85,
         "high": 65261.85,
         "critical": 65261.85
       },
@@ -114,7 +114,7 @@
     "iwlwifi_1": [
       {
         "label": "",
-        "current": 36.0,
+        "current": 27.0,
         "high": null,
         "critical": null
       }
@@ -122,25 +122,25 @@
     "coretemp": [
       {
         "label": "Package id 0",
-        "current": 35.0,
+        "current": 37.0,
         "high": 80.0,
         "critical": 100.0
       },
       {
         "label": "Core 8",
-        "current": 29.0,
+        "current": 30.0,
         "high": 80.0,
         "critical": 100.0
       },
       {
         "label": "Core 12",
-        "current": 31.0,
+        "current": 29.0,
         "high": 80.0,
         "critical": 100.0
       },
       {
         "label": "Core 16",
-        "current": 30.0,
+        "current": 31.0,
         "high": 80.0,
         "critical": 100.0
       },
@@ -158,7 +158,7 @@
       },
       {
         "label": "Core 24",
-        "current": 29.0,
+        "current": 28.0,
         "high": 80.0,
         "critical": 100.0
       },
@@ -170,25 +170,25 @@
       },
       {
         "label": "Core 32",
-        "current": 33.0,
+        "current": 32.0,
         "high": 80.0,
         "critical": 100.0
       },
       {
         "label": "Core 33",
-        "current": 33.0,
+        "current": 32.0,
         "high": 80.0,
         "critical": 100.0
       },
       {
         "label": "Core 34",
-        "current": 33.0,
+        "current": 32.0,
         "high": 80.0,
         "critical": 100.0
       },
       {
         "label": "Core 35",
-        "current": 33.0,
+        "current": 32.0,
         "high": 80.0,
         "critical": 100.0
       },
@@ -225,7 +225,7 @@
     ]
   },
   "output_dir_sizes": {
-    "total": 9558566,
+    "total": 9558574,
     "totalh": "9.6 MB",
     "files": 8
   }
