@@ -519,7 +519,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                             psi_next = -1 * copy.deepcopy(psi_next)
                 psi_curr = eigvectors_all[i, :, m]
 
-                grad_psi = (psi_next - psi_prev) / delta_theta
+                grad_psi = (psi_next - psi_prev) / delta_theta_for_grad
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
                 
                 tau[n, m, i] = tau_val
@@ -537,7 +537,8 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                 # Accumulate γ (imaginary part of τ)
                 if i > 0:
                     # Use trapezoidal rule for more accurate integration
-                    gamma_increment = 0.5 * np.imag(tau_val + tau[n, m, i - 1]) * delta_theta
+                    delta_theta_for_integration = theta_vals[i] - theta_vals[i-1]
+                    gamma_increment = np.imag(tau_val + tau[n, m, i - 1]) * delta_theta_for_integration # delta_theta is 
                     gamma[n, m, i] = gamma[n, m, i - 1] + gamma_increment
                     
                     # Store increment for diagnostics
@@ -1123,8 +1124,8 @@ if __name__ == '__main__':
                 'aVa': 5.0,
                 'c_const': 0.1,
                 'x_shift': 0.1,
-                'theta_min': 0,
-                'theta_max': 2 * np.pi,
+                'theta_min': 0.0,
+                'theta_max': 2.0 * np.pi,
                 'omega': 0.1,
                 'num_points': 50000,
                 'R_0': (0, 0, 0)
@@ -1138,8 +1139,8 @@ if __name__ == '__main__':
                 'aVa': 3.0,
                 'c_const': 0.01,
                 'x_shift': 0.01,
-                'theta_min': 0,
-                'theta_max': 2 * np.pi,
+                'theta_min': 0.0,
+                'theta_max': 2.0 * np.pi,
                 'omega': 0.1,
                 'num_points': 50000,
                 'R_0': (0, 0, 0)
