@@ -729,10 +729,93 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     return tau, gamma, eigvecs, theta_vals
 
-if __name__ == '__main__':
-    dataset = 2
+def dataset(val):
+    """Return parameters for different datasets"""
+    params = {}
+    
+    if val == 1:
+        # Original dataset
+        params['aVx'] = 1.0
+        params['aVa'] = 1.3
+        params['c_const'] = 0.01
+        params['x_shift'] = 0.1
+        params['theta_min'] = 0
+        params['theta_max'] = 2 * np.pi
+        params['omega'] = 0.1
+        params['num_points'] = 5001
+        params['d'] = 0.001
+        params['R_0'] = (0.433, 0.433, 0.433)  # Default R_0 at r0
+        
+    elif val == 2:
+        # Dataset with R_0 at r0
+        params['aVx'] = 1.0
+        params['aVa'] = 1.3
+        params['c_const'] = 0.01
+        params['x_shift'] = 0.1
+        params['theta_min'] = 0
+        params['theta_max'] = 2 * np.pi
+        params['omega'] = 0.1
+        params['num_points'] = 5001
+        params['d'] = 0.001
+        
+        # Calculate r0, r1, r2
+        x_prime = (params['aVa']/params['aVx']) / (params['aVa']/params['aVx']-1) * params['x_shift']
+        r0 = x_prime
+        x = 0  # Since r0 = x_prime, x = 2*(x_prime-r0) = 0
+        
+        # For dataset 2, use R_0 = (r0, r0, r0)
+        params['R_0'] = (r0, r0, r0)
+        
+    elif val == 3:
+        # Dataset with R_0 at r1
+        params['aVx'] = 1.0
+        params['aVa'] = 1.3
+        params['c_const'] = 0.01
+        params['x_shift'] = 0.1
+        params['theta_min'] = 0
+        params['theta_max'] = 2 * np.pi
+        params['omega'] = 0.1
+        params['num_points'] = 5001
+        params['d'] = 0.001
+        
+        # Calculate r0, r1, r2
+        x_prime = (params['aVa']/params['aVx']) / (params['aVa']/params['aVx']-1) * params['x_shift']
+        r0 = x_prime
+        
+        # Using the formula derived in the notes: r1 = 3*r0 - 2*x_prime
+        r1 = 3*r0 - 2*x_prime
+        
+        # For dataset 3, use R_0 = (r1, r1, r1)
+        params['R_0'] = (r1, r1, r1)
+        
+    elif val == 4:
+        # Dataset with R_0 at r2
+        params['aVx'] = 1.0
+        params['aVa'] = 1.3
+        params['c_const'] = 0.01
+        params['x_shift'] = 0.1
+        params['theta_min'] = 0
+        params['theta_max'] = 2 * np.pi
+        params['omega'] = 0.1
+        params['num_points'] = 5001
+        params['d'] = 0.001
+        
+        # Calculate r0, r1, r2
+        x_prime = (params['aVa']/params['aVx']) / (params['aVa']/params['aVx']-1) * params['x_shift']
+        r0 = x_prime
+        
+        # Using the formula derived in the notes: r2 = 4*x_prime - 3*r0
+        r2 = 4*x_prime - 3*r0
+        
+        # For dataset 4, use R_0 = (r2, r2, r2)
+        params['R_0'] = (r2, r2, r2)
+    
+    return params
 
-    if dataset == 1:
+if __name__ == '__main__':
+    dataset_num = 4
+
+    if dataset_num == 1:
         d = 0.001 #radius of the circle
         aVx = 1.0
         aVa = 1.3
@@ -744,28 +827,79 @@ if __name__ == '__main__':
         num_points = 50001
         R_0 = (0, 0, 0)
     
-    elif dataset == 2:
-        #let a be an aVx and an aVa parameter
-        aVx = 1.0
-        aVa = 1.3
-        c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
-        x_shift = 0.1  # Shift in x direction
-        theta_min = 0
-        theta_max = 2 * np.pi
-        omega = 0.1
-        num_points = 5001
+    elif dataset_num == 2:
+        # Use dataset function to get parameters
+        params = dataset(dataset_num)
+        aVx = params['aVx']
+        aVa = params['aVa']
+        c_const = params['c_const']
+        x_shift = params['x_shift']
+        theta_min = params['theta_min']
+        theta_max = params['theta_max']
+        omega = params['omega']
+        num_points = params['num_points']
+        d = params['d']
+        R_0 = params['R_0']
+        
+        # Calculate r0, r1, r2 for informational purposes
         x_prime = (aVa/aVx) / (aVa/aVx-1) * x_shift
-        r0 = x_prime * 1
-        x = (2 * (x_prime - r0)) * 1
-        d = 0.001 # 1e-10 # 0.06123724356957945 ...  0.06123724356957950
-        n_CI = 0
-        if n_CI<3:
-            R_0 = [r0+x+x if i == n_CI else r0-x for i in range(3)]
-        else:
-            R_0 = (r0, r0, r0)
-        print("R_0:",R_0, "\tr0:", r0, "\tsum(R_0)/3:", sum(R_0)/3)
+        r0 = x_prime
+        r1 = 3*r0 - 2*x_prime
+        r2 = 4*x_prime - 3*r0
+        
+        print(f"Dataset {dataset_num}: R_0 at r0")
+        print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
+        print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
 
+    elif dataset_num == 3:
+        # Use dataset function to get parameters
+        params = dataset(dataset_num)
+        aVx = params['aVx']
+        aVa = params['aVa']
+        c_const = params['c_const']
+        x_shift = params['x_shift']
+        theta_min = params['theta_min']
+        theta_max = params['theta_max']
+        omega = params['omega']
+        num_points = params['num_points']
+        d = params['d']
+        R_0 = params['R_0']
+        
+        # Calculate r0, r1, r2 for informational purposes
+        x_prime = (aVa/aVx) / (aVa/aVx-1) * x_shift
+        r0 = x_prime
+        r1 = 3*r0 - 2*x_prime
+        r2 = 4*x_prime - 3*r0
+        
+        print(f"Dataset {dataset_num}: R_0 at r1")
+        print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
+        print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
     
+    elif dataset_num == 4:
+        # Use dataset function to get parameters
+        params = dataset(dataset_num)
+        aVx = params['aVx']
+        aVa = params['aVa']
+        c_const = params['c_const']
+        x_shift = params['x_shift']
+        theta_min = params['theta_min']
+        theta_max = params['theta_max']
+        omega = params['omega']
+        num_points = params['num_points']
+        d = params['d']
+        R_0 = params['R_0']
+        
+        # Calculate r0, r1, r2 for informational purposes
+        x_prime = (aVa/aVx) / (aVa/aVx-1) * x_shift
+        r0 = x_prime
+        r1 = 3*r0 - 2*x_prime
+        r2 = 4*x_prime - 3*r0
+        
+        print(f"Dataset {dataset_num}: R_0 at r2")
+        print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
+        print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
+    
+    # Run the main function with the selected dataset parameters
     main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0)
 
 
