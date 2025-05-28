@@ -1,0 +1,159 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{physics}
+\usepackage{tikz}
+
+\title{Notes on Conical Intersection Points}
+\author{Arrowhead Project}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This document provides a comprehensive explanation of our findings regarding Conical Intersection (CI) points in the Arrowhead model. We focus on understanding the geometric properties of these points and their relationship to the parameters of our model potentials.
+
+\section{Model Potentials}
+
+Our system is described by two potential energy surfaces:
+\begin{align}
+V_x(x) &= a_{V_x} \cdot x^2 \\
+V_a(x) &= a_{V_a} \cdot (x - x_{\text{shift}})^2 + c_0
+\end{align}
+
+Where:
+\begin{itemize}
+    \item $a_{V_x}$ and $a_{V_a}$ are scaling parameters
+    \item $x_{\text{shift}}$ is a shift parameter for the second potential
+    \item $c_0$ is a constant energy offset
+\end{itemize}
+
+\section{Finding Conical Intersection Points}
+
+A conical intersection occurs when the two potential energy surfaces meet at a point. For our model, this happens when:
+\begin{equation}
+V_a(x) - V_x(x) = 0
+\end{equation}
+
+\subsection{Mathematical Derivation}
+
+Starting with the difference between the potentials:
+\begin{align}
+V_a(x) - V_x(x) &= a_{V_a} \cdot (x - x_{\text{shift}})^2 + c_0 - a_{V_x} \cdot x^2 \\
+&= a_{V_a} \cdot x^2 - 2 \cdot a_{V_a} \cdot x_{\text{shift}} \cdot x + a_{V_a} \cdot x_{\text{shift}}^2 + c_0 - a_{V_x} \cdot x^2 \\
+&= (a_{V_a} - a_{V_x}) \cdot x^2 - 2 \cdot a_{V_a} \cdot x_{\text{shift}} \cdot x + c_1
+\end{align}
+
+Where $c_1 = a_{V_a} \cdot x_{\text{shift}}^2 + c_0$.
+
+We can rewrite this in the form of a perfect square plus a constant:
+\begin{equation}
+V_a(x) - V_x(x) = (a_{V_a} - a_{V_x}) \cdot (x - x_{\text{prime}})^2 + c_1'
+\end{equation}
+
+Where $x_{\text{prime}}$ is the point where the quadratic term has its minimum:
+\begin{equation}
+x_{\text{prime}} = \frac{a_{V_a}}{a_{V_a} - a_{V_x}} \cdot x_{\text{shift}}
+\end{equation}
+
+\section{Geometric Configuration of CI Points}
+
+For a 3D system with coordinates $(r_0, r_1, r_2)$, we need to find points where the potentials are equal. This leads to a specific geometric arrangement.
+
+\subsection{Key Insight}
+
+If we have a point $R_0 = (r_0, r_1, r_2)$ where two of the coordinates give equal potential differences, then we can find a CI point. Specifically, if:
+\begin{equation}
+(V_a - V_x)(r_1) = (V_a - V_x)(r_2)
+\end{equation}
+
+Then we can express this in terms of distances from $x_{\text{prime}}$:
+\begin{align}
+r_1 &= x_{\text{prime}} - \delta \\
+r_2 &= x_{\text{prime}} + \delta
+\end{align}
+
+Where $\delta$ is some displacement.
+
+\subsection{Relationship Between Coordinates}
+
+Given that only two coordinates can be equal at the same time to create a CI point, we can derive the following relationships:
+
+If we set $r_0 = x_{\text{prime}} - \alpha$ for some value $\alpha$, then:
+\begin{equation}
+r_2 - r_0 = -2 \cdot (r_1 - r_0)
+\end{equation}
+
+This leads to:
+\begin{align}
+2(r_0 - r_1) &= r_2 - r_0 \\
+2r_0 - 2x_{\text{prime}} + 2\delta &= x_{\text{prime}} + \delta - r_0 \\
+3r_0 &= 3x_{\text{prime}} - 3\delta \\
+\delta &= 3(x_{\text{prime}} - r_0)
+\end{align}
+
+\subsection{Expressions for $r_1$ and $r_2$}
+
+Using the value of $\delta$, we can express $r_1$ and $r_2$ in terms of $r_0$ and $x_{\text{prime}}$:
+\begin{align}
+r_1 &= x_{\text{prime}} - \delta \\
+&= x_{\text{prime}} - 3(x_{\text{prime}} - r_0) \\
+&= 3r_0 - 2x_{\text{prime}} \\
+&= r_0 - 2(x_{\text{prime}} - r_0)
+\end{align}
+
+Similarly:
+\begin{align}
+r_2 &= x_{\text{prime}} + \delta \\
+&= x_{\text{prime}} + 3(x_{\text{prime}} - r_0) \\
+&= 4x_{\text{prime}} - 3r_0 \\
+&= r_0 + 4(x_{\text{prime}} - r_0)
+\end{align}
+
+\section{Distance to CI Points}
+
+The distance from $R_0$ to the CI point can be calculated as:
+\begin{align}
+d_{\text{CI}} &= (r_2 - r_0) \cdot \frac{\sqrt{6}}{2} \\
+&= 4(x_{\text{prime}} - r_0) \cdot \frac{\sqrt{6}}{2} \\
+&= 2\sqrt{6} \cdot (x_{\text{prime}} - r_0)
+\end{align}
+
+\section{Implementation in Our Code}
+
+In our code, we implement this by setting:
+\begin{align}
+r_0 &= x_{\text{prime}} \\
+x &= 2(x_{\text{prime}} - r_0) = 0
+\end{align}
+
+For the CI point at index $n_{\text{CI}}$, we set:
+\begin{equation}
+R_0[i] = 
+\begin{cases}
+r_0 + x + x & \text{if } i = n_{\text{CI}} \\
+r_0 - x & \text{otherwise}
+\end{cases}
+\end{equation}
+
+With our parameter values, this gives $R_0 = [0.433, 0.433, 0.433]$ when $n_{\text{CI}} = 3$ (i.e., no specific CI point selected).
+
+\section{Visualization}
+
+We visualize these CI points by creating a circle of radius $d = 0.001$ around the point $R_0$. This small radius allows us to observe the behavior of the system near the CI point without being affected by other features of the potential energy landscape.
+
+The circle is constructed to be orthogonal to the line $x = y = z$, which corresponds to the direction where all three coordinates are equal. This ensures that we're properly sampling the neighborhood around the CI point.
+
+\section{Conclusion}
+
+Our analysis reveals that the CI points in our system have a specific geometric structure related to the parameters of our model potentials. By understanding this structure, we can precisely locate and visualize these points, which is crucial for studying the quantum dynamics of the system.
+
+The key parameter $x_{\text{prime}} = \frac{a_{V_a}}{a_{V_a} - a_{V_x}} \cdot x_{\text{shift}}$ determines the location of the CI points, and the distance between $r_0$ and $x_{\text{prime}}$ determines the radius of the circle containing the CI points.
+
+\end{document}
