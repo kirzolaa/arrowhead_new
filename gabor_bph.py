@@ -7,6 +7,7 @@ from scipy.integrate import odeint
 from os.path import join
 from generalized.vector_utils import multiprocessing_create_perfect_orthogonal_circle
 from perfect_orthogonal_circle import verify_circle_properties, visualize_perfect_orthogonal_circle
+from scaled_circle_visualizer import create_and_visualize_scaled_circle
 from scipy.constants import hbar
 import copy
     
@@ -17,8 +18,14 @@ def visualize_vectorz(R_0, d, num_points, theta_min, theta_max, save_dir):
     points = multiprocessing_create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max) #we already have a method for this
     #points = create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max)
     print(points.shape)
-    visualize_perfect_orthogonal_circle(points, save_dir)
-    verify_circle_properties(d, num_points, points, save_dir)
+    
+    # Pass R_0 to both functions so they know where the center is
+    visualize_perfect_orthogonal_circle(points, save_dir, R_0=R_0)
+    verify_circle_properties(d, num_points, points, save_dir, R_0=R_0)
+    
+    # Also create a scaled visualization for better visibility
+    # Use a scale factor of 60 to make the small circle (d=0.001) visible
+    create_and_visualize_scaled_circle(R_0, d, num_points, theta_min, theta_max, save_dir, scale_factor=60)
 
 def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
     """

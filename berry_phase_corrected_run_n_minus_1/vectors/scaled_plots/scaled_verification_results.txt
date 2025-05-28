@@ -1,0 +1,14 @@
+Verification Results for Scaled Circle (scale_factor=60):
+R_0: [0.43333333 0.43333333 0.43333333]
+Actual d: 0.001
+Scaled d: 0.06
+
+Expected radius: 0.06
+Actual radius: 0.06
+Radius error: 0.000000%
+
+Mean distance to x=y=z line: 0.06
+Standard deviation of distance: 1.7228264818484748e-17
+
+Mean angle with x=y=z line: 90.0 degrees
+Standard deviation of angle: 1.850502594400236e-14 degrees

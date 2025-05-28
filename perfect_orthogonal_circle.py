@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import os
 
-def generate_perfect_orthogonal_circle(d=1.0, num_points=73):
+def generate_perfect_orthogonal_circle(d=1.0, num_points=73, R_0=(0,0,0)):
     """
     Generate a perfect circle in the plane orthogonal to the x=y=z line.
     
@@ -20,9 +20,8 @@ def generate_perfect_orthogonal_circle(d=1.0, num_points=73):
     Returns:
     numpy.ndarray: Array of points forming the circle
     """
-    # Set R_0 to (0,0,0)
-    R_0 = np.array([0, 0, 0])
-    
+    #convert R_0 to numpy array
+    R_0 = np.array(R_0)
     # Define the basis vectors orthogonal to the (1,1,1) direction
     basis1 = np.array([1, -1/2, -1/2])
     basis2 = np.array([0, -1/2, 1/2])
@@ -43,7 +42,7 @@ def generate_perfect_orthogonal_circle(d=1.0, num_points=73):
     
     return np.array(points)
 
-def visualize_perfect_orthogonal_circle(points, save_dir):
+def visualize_perfect_orthogonal_circle(points, save_dir, R_0=None):
     """
     Visualize the perfect circle in the plane orthogonal to the x=y=z line.
     
@@ -59,8 +58,22 @@ def visualize_perfect_orthogonal_circle(points, save_dir):
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
-    # Plot the origin
-    ax.scatter([0], [0], [0], color='black', s=100, label='Origin (R_0)')
+    # Determine R_0 from the points if not provided
+    if R_0 is None:
+        # Try to estimate R_0 from the points
+        # For a circle orthogonal to x=y=z, the center should be the mean of the points
+        # projected onto the x=y=z line
+        basis = np.array([1, 1, 1]) / np.sqrt(3)  # Normalized x=y=z direction
+        projections = np.array([np.dot(p, basis) for p in points])
+        mean_proj = np.mean(projections)
+        R_0 = mean_proj * basis
+    else:
+        R_0 = np.array(R_0)
+    
+    # Plot both the origin and R_0 if they're different
+    ax.scatter([0], [0], [0], color='gray', s=50, label='Origin (0,0,0)')
+    R_0_rounded = tuple(round(float(val), 3) for val in R_0)
+    ax.scatter([R_0[0]], [R_0[1]], [R_0[2]], color='black', s=100, label=f'R_0 {R_0_rounded}')
     
     # Plot the circle points
     ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='red', s=20, alpha=0.7, label='Circle Points')
@@ -113,7 +126,13 @@ def visualize_perfect_orthogonal_circle(points, save_dir):
     ax.set_xlabel('X')
     ax.set_ylabel('Y')
     ax.set_zlabel('Z')
-    ax.set_title('Perfect Circle Orthogonal to x=y=z line (R_0 = (0,0,0), d=1)')
+    # Use the actual R_0 value in the title
+    R_0_rounded = tuple(round(float(val), 3) for val in R_0)
+    # Estimate d from the points
+    center_to_points = np.linalg.norm(points - R_0, axis=1)
+    d_estimated = np.mean(center_to_points)
+    d_rounded = round(float(d_estimated), 3)
+    ax.set_title(f'Perfect Circle Orthogonal to x=y=z line (R_0 = {R_0_rounded}, d={d_rounded})')
     
     # Set equal aspect ratio and adjust limits for better viewing
     buffer = max_val * 0.2  # Add a small buffer for better visibility
@@ -219,7 +238,7 @@ def visualize_perfect_orthogonal_circle(points, save_dir):
     
     print(f"Visualizations saved to {save_dir} directory.")
 
-def verify_circle_properties(d, num_points, points, save_dir):
+def verify_circle_properties(d, num_points, points, save_dir, R_0=None):
     """
     Verify that the generated points form a perfect circle.
     
@@ -229,8 +248,20 @@ def verify_circle_properties(d, num_points, points, save_dir):
     Returns:
     dict: Dictionary containing verification results
     """
-    # Calculate distances from origin
-    distances = np.linalg.norm(points, axis=1)
+    # Determine R_0 from the points if not provided
+    if R_0 is None:
+        # Try to estimate R_0 from the points
+        # For a circle orthogonal to x=y=z, the center should be the mean of the points
+        # projected onto the x=y=z line
+        basis = np.array([1, 1, 1]) / np.sqrt(3)  # Normalized x=y=z direction
+        projections = np.array([np.dot(p, basis) for p in points])
+        mean_proj = np.mean(projections)
+        R_0 = mean_proj * basis
+    else:
+        R_0 = np.array(R_0)
+    
+    # Calculate distances from R_0 (not origin)
+    distances = np.linalg.norm(points - R_0, axis=1)
     
     # Calculate statistics
     mean_distance = np.mean(distances)
@@ -241,10 +272,13 @@ def verify_circle_properties(d, num_points, points, save_dir):
     # Verify orthogonality to (1,1,1) direction
     unit_111 = np.array([1, 1, 1]) / np.sqrt(3)  # Normalized (1,1,1) vector
     
-    # Calculate dot products for each point
+    # Calculate dot products for each point relative to R_0
     dot_products = []
     for p in points:
-        dot_product = np.abs(np.dot(p, unit_111))
+        # Calculate vector from R_0 to point
+        vec = p - R_0
+        # Calculate dot product with normalized (1,1,1) vector
+        dot_product = np.abs(np.dot(vec, unit_111))
         dot_products.append(dot_product)
     
     max_dot_product = max(dot_products)

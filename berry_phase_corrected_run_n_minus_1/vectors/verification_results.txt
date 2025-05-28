@@ -1,17 +1,23 @@
-Verification Results for Perfect Circle (R_0 = (np.float64(0.43333333333333335), np.float64(0.43333333333333335), np.float64(0.43333333333333335)), d = 0.001):
-Number of points: 36
+Perfect Circle Properties Verification
+======================================
 
-Distance from R_0 to points:
-  Expected: 0.001
-  Mean: 0.001000000000000009
-  Std Dev: 2.1152225883106936e-17
+Parameters: R_0=(0,0,0), d=0.001, num_points=5001
 
-Dot product with basis1 (should be 0 for orthogonality):
-  Expected: 0
-  Mean: 3.568032175536823e-18
-  Std Dev: 1.0072945073710136e-17
+3D Circle Properties:
+  Mean Distance from Origin: 0.0009999999999999996
+  Standard Deviation of Distances: 1.6041615030913847e-17
+  Minimum Distance: 0.000999999999999962
+  Maximum Distance: 0.001000000000000036
+  Max/Min Ratio: 1.000000000000074
 
-Distance in basis2-basis3 plane (should be equal to d):
-  Expected: 0.001
-  Mean: 0.0010000000000000091
-  Std Dev: 2.1170032647573776e-17
+Orthogonality Verification:
+  Maximum Dot Product with (1,1,1): 3.209238430557093e-17
+  Average Dot Product with (1,1,1): 7.857708902596735e-18
+
+2D Projection Properties:
+  Mean Distance from Origin: 0.0009999999999999996
+  Standard Deviation of Distances: 2.646894235811838e-17
+  Minimum Distance: 0.0009999999999999191
+  Maximum Distance: 0.0010000000000000859
+  Max/Min Ratio: 1.0000000000001668
+
