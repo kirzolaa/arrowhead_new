@@ -1,0 +1,23 @@
+Perfect Circle Properties Verification
+======================================
+
+Parameters: R_0=(0,0,0), d=0.001, num_points=5001
+
+3D Circle Properties:
+  Mean Distance from Origin: 0.7505560161196055
+  Standard Deviation of Distances: 1.1631304299207011e-16
+  Minimum Distance: 0.7505560161196053
+  Maximum Distance: 0.7505560161196055
+  Max/Min Ratio: 1.0000000000000002
+
+Orthogonality Verification:
+  Maximum Dot Product with (1,1,1): 0.7505553499465137
+  Average Dot Product with (1,1,1): 0.7505553499464535
+
+2D Projection Properties:
+  Mean Distance from Origin: 0.0009999999999999996
+  Standard Deviation of Distances: 2.646894235811838e-17
+  Minimum Distance: 0.0009999999999999191
+  Maximum Distance: 0.0010000000000000859
+  Max/Min Ratio: 1.0000000000001668
+

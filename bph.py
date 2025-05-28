@@ -518,7 +518,10 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                         else:
                             psi_next = -1 * copy.deepcopy(psi_next)
                 psi_curr = eigvectors_all[i, :, m]
-
+                # Normalize for safety (elvileg 1-gyel osztunk itt, mivel a vektorok eigh-val számolva)
+                psi_prev = psi_prev / np.linalg.norm(psi_prev)
+                psi_next = psi_next / np.linalg.norm(psi_next)
+                psi_curr = psi_curr / np.linalg.norm(psi_curr)
                 grad_psi = (psi_next - psi_prev) / delta_theta_for_grad
                 tau_val = 1j * np.vdot(psi_curr, grad_psi)
                 
