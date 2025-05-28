@@ -278,15 +278,17 @@ class Eigenvectors:
         plt.savefig(f'{self.output_dir}/eigenvector_components_for_eigvec_2x2.png')
         plt.close()
         
-def compute_berry_phase(eigvectors_all, theta_vals):
+def compute_berry_phase(eigvectors_all, theta_vals, output_dir=None):
     """
     Note: the first and the last tau, gamma matrices are seemingly wrong!
     
     Compute Berry phases γ_n for each eigenstate n along a closed path in R-space.
+    Enhanced with additional diagnostics and visualizations.
 
     Parameters:
     - eigvectors_all: ndarray of shape (N, M, M), eigenvectors for each R(θ)
     - theta_vals: ndarray of shape (N,), parameter values along the path
+    - output_dir: Directory to save diagnostic plots and data (optional)
 
     Returns:
     - tau: ndarray of shape (M, M, N), Berry connection for each eigenstate in radians
@@ -294,8 +296,19 @@ def compute_berry_phase(eigvectors_all, theta_vals):
     """
     N, M, _ = eigvectors_all.shape
     
-    tau = np.zeros((M, M, N), dtype=np.float64)
+    tau = np.zeros((M, M, N), dtype=np.complex128)  # Changed to complex to store both real and imaginary parts
     gamma = np.zeros((M, M, N), dtype=np.float64)
+    
+    # Arrays for diagnostics
+    tau_imag_magnitudes = np.zeros((M, M, N), dtype=np.float64)
+    tau_real_magnitudes = np.zeros((M, M, N), dtype=np.float64)
+    gamma_increments = np.zeros((M, M, N-1), dtype=np.float64)
+    
+    # Tracking largest values for diagnostics
+    largest_tau_imag = 0.0
+    largest_tau_imag_loc = (0, 0, 0)
+    largest_gamma_increment = 0.0
+    largest_gamma_increment_loc = (0, 0, 0)
 
     for n in range(M):
         for m in range(M):
@@ -344,20 +357,194 @@ def compute_berry_phase(eigvectors_all, theta_vals):
                 grad_psi = delta_psi / (delta_theta_for_grad) # Corrected delta_theta
 
                 # τ = ⟨ψ_i | ∇_theta | ψ_{i-1}⟩  (Corrected index for tau)
-                tau_val = np.vdot(psi_curr, grad_psi)
-                tau[n, m, i] = tau_val.real
+                tau_val = 1j * np.vdot(psi_curr, grad_psi)
+                tau[n, m, i] = tau_val
+                
+                # Store magnitudes for diagnostics
+                tau_imag_magnitudes[n, m, i] = np.abs(np.imag(tau_val))
+                tau_real_magnitudes[n, m, i] = np.abs(np.real(tau_val))
+                
+                # Track largest values
+                if np.abs(np.imag(tau_val)) > largest_tau_imag:
+                    largest_tau_imag = np.abs(np.imag(tau_val))
+                    largest_tau_imag_loc = (n, m, i)
+                
                 # · d_theta to integrate. 
                 if i == 0:
                    gamma[n, m, i] = 0.0
                 else:
                     delta_theta_integrate = theta_vals[i] - theta_vals[i-1]
-                    # Add the area of the segment from theta_vals[i-1] to theta_vals[i]
-                    # Option 1: Using tau at the end of the interval (simplest Riemann sum)
-                    gamma[n, m, i] = gamma[n, m, i-1] + tau[n, m, i] * delta_theta_integrate
-
-                    # Option 2: Using trapezoidal rule (generally more accurate)
-                    #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
-                    #gamma[n, m, i] = gamma[n, m, i-1] + (tau[n, m, i] + tau[n, m, i-1]) / 2.0 * delta_theta_integrate
+                    
+                    # Use trapezoidal rule for more accurate integration
+                    gamma_increment = np.imag(tau_val + tau[n, m, i - 1]) * delta_theta_integrate / 2.0
+                    gamma[n, m, i] = gamma[n, m, i - 1] + gamma_increment
+                    
+                    # Store increment for diagnostics
+                    gamma_increments[n, m, i-1] = gamma_increment
+                    
+                    # Track largest increment
+                    if np.abs(gamma_increment) > largest_gamma_increment:
+                        largest_gamma_increment = np.abs(gamma_increment)
+                        largest_gamma_increment_loc = (n, m, i-1)
+    
+    # Print diagnostic information about large tau and gamma values
+    print(f"\nDiagnostic Information:")
+    print(f"Largest imaginary tau value: {largest_tau_imag:.8f} at (n={largest_tau_imag_loc[0]+1}, m={largest_tau_imag_loc[1]+1}, theta_idx={largest_tau_imag_loc[2]})")
+    print(f"Largest imaginary tau value / π: {largest_tau_imag/np.pi:.8f}π at (n={largest_tau_imag_loc[0]+1}, m={largest_tau_imag_loc[1]+1}, theta_idx={largest_tau_imag_loc[2]})")
+    print(f"Largest gamma increment: {largest_gamma_increment:.8f} at (n={largest_gamma_increment_loc[0]+1}, m={largest_gamma_increment_loc[1]+1}, theta_idx={largest_gamma_increment_loc[2]})")
+    print(f"Largest gamma increment / π: {largest_gamma_increment/np.pi:.8f}π at (n={largest_gamma_increment_loc[0]+1}, m={largest_gamma_increment_loc[1]+1}, theta_idx={largest_gamma_increment_loc[2]})")
+    
+    # Find the matrix elements with the largest contribution to the trace
+    tau_imag_sum = np.sum(tau_imag_magnitudes, axis=2)
+    gamma_final_abs = np.abs(gamma[:,:,-1])
+    
+    # Get the indices of the top 5 contributors
+    tau_flat_indices = np.argsort(tau_imag_sum.flatten())[-5:]
+    gamma_flat_indices = np.argsort(gamma_final_abs.flatten())[-5:]
+    
+    print("\nTop 5 contributors to tau (imaginary part sum):")
+    for idx in tau_flat_indices[::-1]:
+        n, m = np.unravel_index(idx, tau_imag_sum.shape)
+        print(f"  Tau[{n+1},{m+1}]: Sum of abs(imag) = {tau_imag_sum[n,m]:.8f}, Final value = {np.imag(tau[n,m,-1]):.8f}")
+        print(f"                   Sum of abs(imag) / π = {tau_imag_sum[n,m]/np.pi:.8f}π, Final value / π = {np.imag(tau[n,m,-1])/np.pi:.8f}π")
+    
+    print("\nTop 5 contributors to gamma (final values):")
+    for idx in gamma_flat_indices[::-1]:
+        n, m = np.unravel_index(idx, gamma_final_abs.shape)
+        print(f"  Gamma[{n+1},{m+1}]: Final value = {gamma[n,m,-1]:.8f}, Final value / π = {gamma[n,m,-1]/np.pi:.8f}π")
+    
+    # If output directory is provided, create diagnostic plots
+    if output_dir is not None:
+        # Create diagnostic plots directory
+        diag_dir = os.path.join(output_dir, 'diagnostics')
+        os.makedirs(diag_dir, exist_ok=True)
+        
+        # Plot the evolution of the largest contributors
+        plt.figure(figsize=(12, 8))
+        for idx in gamma_flat_indices[-3:]:
+            n, m = np.unravel_index(idx, gamma_final_abs.shape)
+            plt.plot(theta_vals[1:]/np.pi, gamma[n,m,1:]/np.pi, label=f'Gamma[{n+1},{m+1}]/π')
+        plt.title('Evolution of Largest Gamma Contributors (in units of π)')
+        plt.xlabel('θ/π')
+        plt.ylabel('Gamma Value/π')
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'{diag_dir}/largest_gamma_evolution.png', dpi=300)
+        plt.close()
+        
+        # Plot the evolution of tau imaginary part for largest contributors
+        plt.figure(figsize=(12, 8))
+        for idx in tau_flat_indices[-3:]:
+            n, m = np.unravel_index(idx, tau_imag_sum.shape)
+            plt.plot(theta_vals[1:]/np.pi, np.imag(tau[n,m,1:]), label=f'Imag(Tau[{n+1},{m+1}])')
+        plt.title('Evolution of Largest Tau Imaginary Parts')
+        plt.xlabel('θ/π')
+        plt.ylabel('Imaginary Part of Tau')
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'{diag_dir}/largest_tau_imag_evolution.png')
+        plt.close()
+        
+        # Plot the gamma increments for largest contributors
+        plt.figure(figsize=(12, 8))
+        for idx in gamma_flat_indices[-3:]:
+            n, m = np.unravel_index(idx, gamma_final_abs.shape)
+            # Calculate increments
+            increments = np.diff(gamma[n,m,1:])
+            plt.plot(theta_vals[1:-1]/np.pi, increments/np.pi, label=f'Gamma[{n+1},{m+1}] increments/π')
+        plt.title('Gamma Increments for Largest Contributors (in units of π)')
+        plt.xlabel('θ/π')
+        plt.ylabel('Increment Value/π')
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'{diag_dir}/gamma_increments.png', dpi=300)
+        plt.close()
+        
+        # Plot a heatmap of the final gamma matrix
+        plt.figure(figsize=(10, 8))
+        # Use RdBu_r colormap (red-white-blue reversed) for better visualization
+        # Normalize the colormap to make zero values white and set symmetric limits
+        gamma_max = np.max(np.abs(gamma[:,:,-1]))
+        im = plt.imshow(gamma[:,:,-1]/np.pi, cmap='RdBu_r', vmin=-gamma_max/np.pi, vmax=gamma_max/np.pi)
+        plt.colorbar(im, label='Gamma Value / π')
+        plt.title('Final Gamma Matrix Heatmap (in units of π)')
+        plt.xlabel('m')
+        plt.ylabel('n')
+        # Ensure that the x and y labels are integers
+        plt.xticks(np.arange(0, M, 1))
+        plt.yticks(np.arange(0, M, 1))
+        # Add text annotations with more digits
+        for i in range(M):
+            for j in range(M):
+                # Format as π units with more precision
+                value_text = f'{gamma[i,j,-1]/np.pi:.4f}π'
+                # Choose text color based on background intensity
+                text_color = 'w' if abs(gamma[i,j,-1]/np.pi) > 1.5 else 'k'
+                text = plt.text(j, i, value_text,
+                              ha="center", va="center", color=text_color, fontsize=9)
+        plt.tight_layout()
+        plt.savefig(f'{diag_dir}/gamma_final_heatmap.png', dpi=300)
+        plt.close()
+        
+        # Also create a heatmap of the tau imaginary part
+        plt.figure(figsize=(10, 8))
+        tau_imag_final = np.imag(tau[:,:,-1])
+        tau_max = np.max(np.abs(tau_imag_final))
+        im = plt.imshow(tau_imag_final, cmap='RdBu_r', vmin=-tau_max, vmax=tau_max)
+        plt.colorbar(im, label='Imag(Tau)')
+        plt.title('Final Tau Imaginary Part Heatmap')
+        plt.xlabel('m')
+        plt.ylabel('n')
+        #ensure that the x and y labels are even numbers
+        plt.xticks(np.arange(0, M, 1))
+        plt.yticks(np.arange(0, M, 1))
+        # Add text annotations
+        for i in range(M):
+            for j in range(M):
+                value_text = f'{tau_imag_final[i,j]:.4f}'
+                text_color = 'w' if abs(tau_imag_final[i,j]) > 0.3 else 'k'
+                text = plt.text(j, i, value_text,
+                              ha="center", va="center", color=text_color, fontsize=9)
+        plt.tight_layout()
+        plt.savefig(f'{diag_dir}/tau_imag_final_heatmap.png', dpi=300)
+        plt.close()
+        
+        # Check eigenvector continuity
+        continuity_data = []
+        print("\nEigenvector continuity (should be ~1):")
+        for i in range(1, N):
+            for n in range(M):
+                overlap = np.abs(np.vdot(eigvectors_all[i - 1, :, n], eigvectors_all[i, :, n]))
+                continuity_data.append((i, n, overlap))
+                if overlap < 0.9:  # Only print problematic overlaps
+                    print(f"  Overlap between θ_{i-1} and θ_{i} for state {n+1}: {overlap:.6f}")
+        
+        # Plot continuity data
+        plt.figure(figsize=(12, 6))
+        for n in range(M):
+            overlaps = [data[2] for data in continuity_data if data[1] == n]
+            theta_indices = [data[0] for data in continuity_data if data[1] == n]
+            plt.plot(theta_vals[theta_indices], overlaps, label=f'State {n+1}')
+        plt.title('Eigenvector Continuity Between Adjacent Points')
+        plt.xlabel('θ')
+        plt.ylabel('Overlap Magnitude')
+        plt.ylim(0, 1.05)
+        plt.grid(True)
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(f'{diag_dir}/eigenvector_continuity.png')
+        plt.close()
+        
+        # Save the gamma matrix to a text file
+        with open(f'{diag_dir}/gamma_matrix.txt', 'w') as f:
+            f.write("Final Gamma Matrix:\n")
+            for i in range(M):
+                for j in range(M):
+                    f.write(f"Gamma[{i+1},{j+1}] = {gamma[i,j,-1]}\n")
+    
     return tau, gamma
 
 def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, theta_vals, plot_dir):
@@ -429,10 +616,13 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     eigenvalues = Eigenvalues(H_thetas, plot_dir, theta_vals)
     eigenvalues.plot()
     
-    tau, gamma = compute_berry_phase(eigvecs, theta_vals)
-    #print("Tau:", tau)
-    print("Gamma[:,:,-1]:\n", gamma[:,:,-1]) #print the last gamma matrix
-    #create a report on the gamma matrix
+    # Pass the output directory to compute_berry_phase for enhanced diagnostics
+    tau, gamma = compute_berry_phase(eigvecs, theta_vals, output_dir)
+    
+    # Print the last gamma matrix
+    print("Gamma[:,:,-1]:\n", gamma[:,:,-1])
+    
+    # Create a report on the gamma matrix
     with open(f'{output_dir}/gamma_report.txt', "w") as f:
         f.write("Gamma matrix report:\n===========================================\n")
         for i in range(gamma.shape[0]):
@@ -448,6 +638,33 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
         f.write("\n")
         f.write(format_matrix(tau[:,:,-2], "Tau Matrix", output_dir))
         f.write("\n\n")
+        
+        # Add additional diagnostic information to the report
+        f.write("===========================================\n")
+        f.write("Additional Diagnostics:\n")
+        f.write("===========================================\n")
+        
+        # Add information about the largest contributors to gamma
+        gamma_final_abs = np.abs(gamma[:,:,-1])
+        gamma_flat_indices = np.argsort(gamma_final_abs.flatten())[-5:]
+        
+        f.write("\nTop 5 contributors to gamma (final values):\n")
+        for idx in gamma_flat_indices[::-1]:
+            n, m = np.unravel_index(idx, gamma_final_abs.shape)
+            f.write(f"  Gamma[{n+1},{m+1}]: Final value = {gamma[n,m,-1]:.6f}\n")
+        
+        # Add information about the eigenvector continuity
+        f.write("\nEigenvector continuity summary:\n")
+        continuity_issues = 0
+        for i in range(1, len(theta_vals)):
+            for n in range(gamma.shape[0]):
+                overlap = np.abs(np.vdot(eigvecs[i-1,:,n], eigvecs[i,:,n]))
+                if overlap < 0.9:
+                    f.write(f"  Low overlap between θ_{i-1} and θ_{i} for state {n+1}: {overlap:.6f}\n")
+                    continuity_issues += 1
+        
+        if continuity_issues == 0:
+            f.write("  No significant continuity issues detected.\n")
         f.write("===========================================\n")
         f.write("===========================================\n")
         f.write("\n")
