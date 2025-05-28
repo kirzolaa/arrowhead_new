@@ -110,35 +110,30 @@ def improved_visualize_perfect_orthogonal_circle(points, R_0, d, save_dir, title
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
-    # Plot the origin (0,0,0)
-    ax.scatter([0], [0], [0], color='black', s=50, label='Origin (0,0,0)')
-    
     # Plot the R_0 point - truncate coordinates to 3 decimal places
     R_0_truncated = tuple(round(val, 3) for val in R_0)
-    ax.scatter([R_0[0]], [R_0[1]], [R_0[2]], color='blue', s=100, label=f'R_0 {R_0_truncated}')
+    ax.scatter([R_0[0]], [R_0[1]], [R_0[2]], color='black', s=100, label=f'Origin (R_0)')
     
-    # Plot the circle points
-    ax.scatter(points[:, 0], points[:, 1], points[:, 2], color='red', s=20, alpha=0.7, label='Circle Points')
-    
-    # Connect the points to show the circle
-    ax.plot(points[:, 0], points[:, 1], points[:, 2], 'r-', alpha=0.5)
+    # Connect the points to show the circle with a thicker, more visible red line
+    ax.plot(points[:, 0], points[:, 1], points[:, 2], 'r-', linewidth=4, alpha=0.9, label='Circle Points')
     
     # Plot the x=y=z line
     max_val = max(np.max(np.abs(points)), np.max(np.abs(R_0))) * 1.5
     line_points = np.array([-max_val, max_val])
-    ax.plot(line_points, line_points, line_points, 'k--', label='x=y=z line', alpha=0.5)
+    ax.plot(line_points, line_points, line_points, 'k-', label='x=y=z line', alpha=0.8)
     
-    # Plot the basis vectors from R_0
-    scale_factor = d * 0.5  # Scale factor for better visualization
-    ax.quiver(R_0[0], R_0[1], R_0[2], 
-             scale_factor*basis1[0], scale_factor*basis1[1], scale_factor*basis1[2], 
-             color='purple', linewidth=2, label='Basis1 (x=y=z)')
-    ax.quiver(R_0[0], R_0[1], R_0[2], 
-             scale_factor*basis2[0], scale_factor*basis2[1], scale_factor*basis2[2], 
-             color='orange', linewidth=2, label='Basis2')
-    ax.quiver(R_0[0], R_0[1], R_0[2], 
-             scale_factor*basis3[0], scale_factor*basis3[1], scale_factor*basis3[2], 
-             color='cyan', linewidth=2, label='Basis3')
+    # Plot the coordinate axes with colored lines
+    # X-axis - red
+    ax.plot([-max_val, max_val], [0, 0], [0, 0], 'r-', linewidth=2, alpha=0.8)
+    # Y-axis - green
+    ax.plot([0, 0], [-max_val, max_val], [0, 0], 'g-', linewidth=2, alpha=0.8)
+    # Z-axis - blue
+    ax.plot([0, 0], [0, 0], [-max_val, max_val], 'b-', linewidth=2, alpha=0.8)
+    
+    # Add axis labels at the ends
+    ax.text(max_val, 0, 0, 'X', color='red', fontsize=12)
+    ax.text(0, max_val, 0, 'Y', color='green', fontsize=12)
+    ax.text(0, 0, max_val, 'Z', color='blue', fontsize=12)
     
     # Set labels and title
     ax.set_xlabel('X')
@@ -177,10 +172,8 @@ def improved_visualize_perfect_orthogonal_circle(points, R_0, d, save_dir, title
     
     # XY projection
     ax_xy = fig.add_subplot(gs[0, 0])
-    ax_xy.scatter(points[:, 0], points[:, 1], color='red', s=20, alpha=0.7, label='Circle Points')
-    ax_xy.plot(points[:, 0], points[:, 1], 'r-', alpha=0.5)
-    ax_xy.scatter(R_0[0], R_0[1], color='blue', s=100, label=f'R_0 {R_0_truncated}')
-    ax_xy.scatter(0, 0, color='black', s=50, label='Origin (0,0,0)')
+    ax_xy.plot(points[:, 0], points[:, 1], 'r-', linewidth=4, alpha=0.9, label='Circle Points')
+    ax_xy.scatter(R_0[0], R_0[1], color='black', s=100, label='Origin (R_0)')
     ax_xy.set_xlabel('X')
     ax_xy.set_ylabel('Y')
     ax_xy.set_title('XY Projection')
@@ -189,10 +182,8 @@ def improved_visualize_perfect_orthogonal_circle(points, R_0, d, save_dir, title
     
     # XZ projection
     ax_xz = fig.add_subplot(gs[0, 1])
-    ax_xz.scatter(points[:, 0], points[:, 2], color='red', s=20, alpha=0.7, label='Circle Points')
-    ax_xz.plot(points[:, 0], points[:, 2], 'r-', alpha=0.5)
-    ax_xz.scatter(R_0[0], R_0[2], color='blue', s=100, label=f'R_0 {R_0_truncated}')
-    ax_xz.scatter(0, 0, color='black', s=50, label='Origin (0,0,0)')
+    ax_xz.plot(points[:, 0], points[:, 2], 'r-', linewidth=4, alpha=0.9, label='Circle Points')
+    ax_xz.scatter(R_0[0], R_0[2], color='black', s=100, label='Origin (R_0)')
     ax_xz.set_xlabel('X')
     ax_xz.set_ylabel('Z')
     ax_xz.set_title('XZ Projection')
@@ -201,10 +192,8 @@ def improved_visualize_perfect_orthogonal_circle(points, R_0, d, save_dir, title
     
     # YZ projection
     ax_yz = fig.add_subplot(gs[1, 0])
-    ax_yz.scatter(points[:, 1], points[:, 2], color='red', s=20, alpha=0.7, label='Circle Points')
-    ax_yz.plot(points[:, 1], points[:, 2], 'r-', alpha=0.5)
-    ax_yz.scatter(R_0[1], R_0[2], color='blue', s=100, label=f'R_0 {R_0_truncated}')
-    ax_yz.scatter(0, 0, color='black', s=50, label='Origin (0,0,0)')
+    ax_yz.plot(points[:, 1], points[:, 2], 'r-', linewidth=4, alpha=0.9, label='Circle Points')
+    ax_yz.scatter(R_0[1], R_0[2], color='black', s=100, label='Origin (R_0)')
     ax_yz.set_xlabel('Y')
     ax_yz.set_ylabel('Z')
     ax_yz.set_title('YZ Projection')
@@ -227,14 +216,14 @@ def improved_visualize_perfect_orthogonal_circle(points, R_0, d, save_dir, title
     ax_basis.scatter(points_basis[:, 0], points_basis[:, 1], color='red', s=20, alpha=0.7, label='Circle Points')
     ax_basis.plot(points_basis[:, 0], points_basis[:, 1], 'r-', alpha=0.5)
     
-    # Plot the origin (which is R_0 in this projection)
-    ax_basis.scatter(0, 0, color='blue', s=100, label=f'R_0 {tuple(R_0)}')
-    
-    # Plot the circle
+    # Plot the circle in the orthogonal plane
     theta = np.linspace(0, 2*np.pi, 100)
     circle_x = d * np.cos(theta)
     circle_y = d * np.sin(theta)
-    ax_basis.plot(circle_x, circle_y, 'r--', alpha=0.5, label='Perfect Circle')
+    ax_basis.plot(circle_x, circle_y, 'r-', linewidth=4, alpha=0.9, label='Circle Points')
+    
+    # Plot the origin (which is R_0 in this projection)
+    ax_basis.scatter(0, 0, color='black', s=100, label='Origin (R_0)')
     
     ax_basis.set_xlabel('Basis Vector 1 Direction')
     ax_basis.set_ylabel('Basis Vector 2 Direction')
@@ -270,7 +259,7 @@ def improved_visualize_perfect_orthogonal_circle(points, R_0, d, save_dir, title
     ax.scatter(0, 0, color='blue', s=100, label=f'Origin (R_0 {R_0_truncated})')
     
     # Plot the circle
-    ax.plot(circle_x, circle_y, 'r-', linewidth=2, alpha=0.8, label='Perfect Circle')
+    ax.plot(circle_x, circle_y, 'r-', linewidth=4, alpha=0.9, label='Circle Points')
     
     ax.set_xlabel('Basis Vector 1 Direction')
     ax.set_ylabel('Basis Vector 2 Direction')

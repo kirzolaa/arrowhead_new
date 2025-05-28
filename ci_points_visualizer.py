@@ -40,7 +40,14 @@ def calculate_ci_points(aVa=1.3, aVx=1.0, x_shift=0.1, d=0.001):
     
     return R_0, np.array(CI_points)
 
-def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"):
+def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors", d_scale=1.0):
+    """
+    Visualize the CI points around R0=(0.433, 0.433, 0.433).
+    
+    Parameters:
+    output_dir (str): Directory to save the visualizations
+    d_scale (float): Scale factor for the circle radius to make it more visible
+    """
     """
     Visualize the CI points around R0=(0.433, 0.433, 0.433).
     
@@ -58,10 +65,12 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
     
     R_0, CI_points = calculate_ci_points(aVa, aVx, x_shift, d)
     
-    # Print the values for verification
-    print(f"R_0: {R_0}    r0: {R_0[0]}  sum(R_0)/3: {sum(R_0)/3}")
+    # Print the values for verification with truncated coordinates
+    R_0_truncated = tuple(round(float(val), 3) for val in R_0)
+    print(f"R_0: {R_0_truncated}    r0: {round(float(R_0[0]), 3)}  sum(R_0)/3: {round(float(sum(R_0)/3), 3)}")
     for i, point in enumerate(CI_points):
-        print(f"CI Point {i+1}: {point}")
+        point_truncated = tuple(round(float(val), 3) for val in point)
+        print(f"CI Point {i+1}: {point_truncated}")
     
     # Calculate distances between points
     distances_from_R0 = np.linalg.norm(CI_points - R_0, axis=1)
@@ -76,11 +85,13 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
             dist = np.linalg.norm(CI_points[i] - CI_points[j])
             print(f"CI Point {i+1} to CI Point {j+1}: {dist}")
     
-    # Create a perfect circle for reference
+    # Create a perfect circle for reference with scaled radius for better visibility
     num_points = 36
     theta_min = 0
     theta_max = 2 * np.pi
-    circle_points = create_perfect_orthogonal_circle(R_0, d, num_points, theta_min, theta_max)
+    # Scale the radius to make the circle more visible
+    circle_d = d * d_scale
+    circle_points = create_perfect_orthogonal_circle(R_0, circle_d, num_points, theta_min, theta_max)
     
     # Visualize the points using our improved visualization
     visualize_vectorz(R_0, d, num_points, theta_min, theta_max, output_dir)
@@ -89,25 +100,36 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
     fig = plt.figure(figsize=(10, 8))
     ax = fig.add_subplot(111, projection='3d')
     
-    # Plot the origin (0,0,0)
-    ax.scatter([0], [0], [0], color='black', s=50, label='Origin (0,0,0)')
+    # Plot the R_0 point with truncated coordinates
+    R_0_truncated = tuple(round(float(val), 3) for val in R_0)
+    ax.scatter([R_0[0]], [R_0[1]], [R_0[2]], color='black', s=100, label=f'Origin (R_0)')
     
-    # Plot the R_0 point
-    ax.scatter([R_0[0]], [R_0[1]], [R_0[2]], color='blue', s=100, label=f'R_0 {tuple(R_0)}')
+    # Plot the circle with a thicker, more visible red line
+    ax.plot(circle_points[:, 0], circle_points[:, 1], circle_points[:, 2], 'r-', linewidth=4, alpha=0.9, label='Circle Points')
     
-    # Plot the circle points
-    ax.scatter(circle_points[:, 0], circle_points[:, 1], circle_points[:, 2], color='red', s=5, alpha=0.3, label='Circle Points')
-    ax.plot(circle_points[:, 0], circle_points[:, 1], circle_points[:, 2], 'r-', alpha=0.3)
-    
-    # Plot the CI points with larger markers
+    # Plot the CI points with larger markers and truncated coordinates
     colors = ['green', 'purple', 'orange']
     for i, point in enumerate(CI_points):
+        point_truncated = tuple(round(float(val), 3) for val in point)
         ax.scatter([point[0]], [point[1]], [point[2]], color=colors[i], s=150, label=f'CI Point {i+1}')
     
     # Plot the x=y=z line
     max_val = max(np.max(np.abs(circle_points)), np.max(np.abs(R_0))) * 1.5
     line_points = np.array([-max_val, max_val])
-    ax.plot(line_points, line_points, line_points, 'k--', label='x=y=z line', alpha=0.5)
+    ax.plot(line_points, line_points, line_points, 'k-', label='x=y=z line', alpha=0.8)
+    
+    # Plot the coordinate axes with colored lines
+    # X-axis - red
+    ax.plot([-max_val, max_val], [0, 0], [0, 0], 'r-', linewidth=2, alpha=0.8)
+    # Y-axis - green
+    ax.plot([0, 0], [-max_val, max_val], [0, 0], 'g-', linewidth=2, alpha=0.8)
+    # Z-axis - blue
+    ax.plot([0, 0], [0, 0], [-max_val, max_val], 'b-', linewidth=2, alpha=0.8)
+    
+    # Add axis labels at the ends
+    ax.text(max_val, 0, 0, 'X', color='red', fontsize=12)
+    ax.text(0, max_val, 0, 'Y', color='green', fontsize=12)
+    ax.text(0, 0, max_val, 'Z', color='blue', fontsize=12)
     
     # Set labels and title
     ax.set_xlabel('X')
@@ -130,14 +152,15 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
     ax.set_ylim(mid_y - max_range, mid_y + max_range)
     ax.set_zlim(mid_z - max_range, mid_z + max_range)
     
-    # Add legend with better positioning
-    ax.legend(loc='upper left', bbox_to_anchor=(1.05, 1))
+    # Add legend with better positioning in a single row
+    ax.legend(loc='upper center', bbox_to_anchor=(0.5, -0.15), ncol=3, fontsize=9)
     
     # Add grid
     ax.grid(True)
     
     # Save the figure
     plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)
     plt.savefig(f'{output_dir}/ci_points_visualization.png', dpi=300, bbox_inches='tight')
     plt.close()
     
@@ -151,6 +174,9 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
     basis1 = basis1_raw / np.linalg.norm(basis1_raw)
     basis2 = basis2_raw / np.linalg.norm(basis2_raw)
     basis3 = basis3_raw / np.linalg.norm(basis3_raw)
+    
+    # Create a figure with 2x2 subplots for the projections
+    fig, axs = plt.subplots(2, 2, figsize=(12, 10))
     
     # Project the CI points onto the basis2-basis3 plane
     ci_points_basis = np.zeros((len(CI_points), 2))
@@ -173,9 +199,10 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
     # Plot the origin (which is R_0 in this projection)
     ax.scatter(0, 0, color='blue', s=100, label=f'Origin (R_0)')
     
-    # Plot the CI points
+    # Plot the CI points with truncated coordinates
     for i, point in enumerate(ci_points_basis):
-        ax.scatter(point[0], point[1], color=colors[i], s=150, label=f'CI Point {i+1}')
+        point_truncated = (round(float(point[0]), 3), round(float(point[1]), 3))
+        ax.scatter(point[0], point[1], color=colors[i], s=150, label=f'CI Point {i+1}: {point_truncated}')
     
     # Connect the CI points to form a triangle
     ci_points_basis_closed = np.vstack([ci_points_basis, ci_points_basis[0]])
@@ -207,8 +234,11 @@ def visualize_ci_points(output_dir="berry_phase_corrected_run_n_minus_1/vectors"
     ax.set_aspect('equal')
     
     plt.tight_layout()
+    plt.subplots_adjust(bottom=0.15)
     plt.savefig(f'{output_dir}/ci_points_orthogonal_plane.png', dpi=300, bbox_inches='tight')
     plt.close()
 
 if __name__ == "__main__":
-    visualize_ci_points()
+    # Use a scale factor to make the circle more visible in the visualization
+    # The actual d value is 0.001, but we scale it for better visualization
+    visualize_ci_points(d_scale=60.0)
