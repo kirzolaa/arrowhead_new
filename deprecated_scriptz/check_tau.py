@@ -29,9 +29,9 @@ def compute_berry_phase_overlap(eigvectors_all):
             phase_diff = np.angle(overlap)
             phase_diff = np.unwrap(np.array([phase_diff]))  # Ensure phase is continuous
 
-            # Correct for sign flips if necessary
-            if np.vdot(psi_i, psi_next) < 0:
-                phase_diff += np.pi
+            # Correct for sign flips if necessary, update: this ids implemented implicitly
+            #if np.vdot(psi_i, psi_next) < 0:
+            #    phase_diff += np.pi
 
             phase_sum += phase_diff[0]
 

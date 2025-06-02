@@ -55,7 +55,7 @@ The repository contains several scripts for different analyses:
 
 1. For the main Berry phase calculation using the tau matrix method:
 ```bash
-python -m better_or_not_better_bph.py
+python -m bph.py or python -m gabor_bph.py
 ```
 
 2. For the Hamiltonian implementation and basic analysis:
