@@ -350,7 +350,7 @@ def compute_berry_phase_og(eigvectors_all, theta_vals, output_dir):
                 if i == 0:
                    gamma[n, m, i] = 0.0
                 else:
-                    delta_theta_integrate = delta_theta_for_grad # twice as in the riemann sum
+                    delta_theta_integrate = delta_theta_for_grad/2.0 # not twice as in the riemann sum
                     # Add the area of the segment from theta_vals[i-1] to theta_vals[i]
                     # Option 1: Using tau at the end of the interval (simplest Riemann sum)
                     #gamma[n, m, i] = gamma[n, m, i-1] + tau[n, m, i] * delta_theta_integrate
@@ -541,7 +541,7 @@ def compute_berry_phase(eigvectors_all, theta_vals, continuity_check=False, OUT_
                 if i > 0:
                     # Use trapezoidal rule for more accurate integration
                     delta_theta_for_integration = theta_vals[i] - theta_vals[i-1]
-                    gamma_increment = np.imag(tau_val + tau[n, m, i - 1]) * delta_theta_for_integration # delta_theta is 
+                    gamma_increment = np.imag(tau_val + tau[n, m, i - 1]) * delta_theta_for_integration/2.0 # delta_theta is 
                     gamma[n, m, i] = gamma[n, m, i - 1] + gamma_increment
                     
                     # Store increment for diagnostics
