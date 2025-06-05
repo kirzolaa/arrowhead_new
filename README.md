@@ -68,6 +68,8 @@ python -m new_bph.py
 python -m deprecated_scriptz/check_tau.py
 ```
 
+Note: The original Berry phase calculator is deprecated and is not recommended for use. It is only provided for reference. Use Gábor's repaired function since it seems to be working as intented. My function gives a smaller difference from pi than Gábor's function.
+
 ## Parameters
 
 The scripts use the following physical parameters:

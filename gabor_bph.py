@@ -594,7 +594,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), OUT_DIR, 'berry_phase_corrected_run_n_minus_1')
+    output_dir = os.path.join(os.path.dirname(__file__), OUT_DIR, f'd_{d}')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -699,6 +699,8 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
 
     #save the eigvecs
     np.save(os.path.join(npy_dir, 'eigvecs.npy'), eigvecs)
+    #save the eigvals, but calculate them as well
+    np.save(os.path.join(npy_dir, 'eigvals.npy'), eigenvalues)
 
     #save the theta_vals
     np.save(os.path.join(npy_dir, 'theta_vals.npy'), theta_vals)
@@ -902,7 +904,7 @@ if __name__ == '__main__':
 
     LEFU_DIR = os.path.join(os.path.dirname(__file__), 'lefutasok')
     # Run the main function with the selected dataset parameters
-    for d1 in np.linspace(d, 0.01, 100, endpoint=True):
+    for d1 in np.linspace(d, 0.01, 20, endpoint=True):
         main(d1, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, LEFU_DIR)
 
 

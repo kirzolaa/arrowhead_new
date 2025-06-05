@@ -1,74 +1,76 @@
 {
-  "platform": "Linux-6.11.0-25-generic-x86_64-with-glibc2.39",
+  "platform": "Linux-6.11.0-26-generic-x86_64-with-glibc2.39",
   "python_version": "3.12.3",
   "memory": {
-    "total": 16051986432,
-    "available": 10285506560,
-    "percent": 35.9,
-    "used": 5272903680,
-    "free": 886067200
+    "total": 16533262336,
+    "available": 7255404544,
+    "percent": 56.1,
+    "used": 7644078080,
+    "free": 758386688
   },
   "cpu": {
-    "count": 12,
-    "percent": 4.6,
+    "count": 4,
+    "percent": 17.4,
     "freq": {
-      "current": 649.3448333333334,
-      "min": 400.0,
-      "max": 4056.0
+      "current": 2978.27475,
+      "min": 800.0,
+      "max": 3400.0
     },
     "load_avg": [
-      1.54248046875,
-      1.69384765625,
-      0.9775390625
+      1.0107421875,
+      1.4765625,
+      1.685546875
     ]
   },
-  "Runned at": "2025-05-28 13:53:56",
-  "runtime": "0:01:09.698609",
-  "runtime_seconds": 69.69860887527466,
+  "Runned at": "2025-06-05 12:44:05",
+  "runtime": "0:00:21.935664",
+  "runtime_seconds": 21.935664176940918,
   "gpu": null,
   "temperatures": {
     "acpitz": [
       {
         "label": "",
-        "current": 74.0,
+        "current": 27.8,
         "high": null,
         "critical": null
       }
     ],
-    "nvme": [
+    "coretemp": [
       {
-        "label": "Composite",
-        "current": 36.85,
-        "high": 86.85,
-        "critical": 89.85
+        "label": "Package id 0",
+        "current": 72.0,
+        "high": 105.0,
+        "critical": 105.0
       },
       {
-        "label": "Sensor 1",
-        "current": 36.85,
-        "high": 65261.85,
-        "critical": 65261.85
-      }
-    ],
-    "k10temp": [
+        "label": "Core 0",
+        "current": 70.0,
+        "high": 105.0,
+        "critical": 105.0
+      },
       {
-        "label": "Tctl",
-        "current": 78.75,
-        "high": null,
-        "critical": null
-      }
-    ],
-    "amdgpu": [
+        "label": "Core 1",
+        "current": 70.0,
+        "high": 105.0,
+        "critical": 105.0
+      },
       {
-        "label": "edge",
-        "current": 51.0,
-        "high": null,
-        "critical": null
+        "label": "Core 2",
+        "current": 70.0,
+        "high": 105.0,
+        "critical": 105.0
+      },
+      {
+        "label": "Core 3",
+        "current": 70.0,
+        "high": 105.0,
+        "critical": 105.0
       }
     ]
   },
   "output_dir_sizes": {
-    "total": 9558573,
-    "totalh": "9.6 MB",
+    "total": 938768,
+    "totalh": "938.8 kB",
     "files": 8
   }
 }

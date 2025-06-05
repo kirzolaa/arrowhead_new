@@ -6,5 +6,5 @@ x_shift = 0.1
 theta_min = 0.0
 theta_max = 6.283185307179586
 omega = 0.1
-num_points = 50000
+num_points = 5001
 R_0 = (0, 0, 0)
