@@ -584,7 +584,7 @@ def save_and__visalize_va_and_vx(npy_dir, Hamiltonians, Va_values, Vx_values, th
     print("Vx plots saved to figures directory.")
     plt.close()
 
-def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0):
+def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, OUT_DIR):
     
     theta_vals = theta_range = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
@@ -594,7 +594,7 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), 'berry_phase_corrected_run_n_minus_1')
+    output_dir = os.path.join(os.path.dirname(__file__), OUT_DIR, 'berry_phase_corrected_run_n_minus_1')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -898,9 +898,12 @@ if __name__ == '__main__':
         print(f"Dataset {dataset_num}: R_0 at r2")
         print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
         print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
-    
+
+
+    LEFU_DIR = os.path.join(os.path.dirname(__file__), 'lefutasok')
     # Run the main function with the selected dataset parameters
-    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0)
+    for d1 in np.linspace(d, 0.01, 100, endpoint=True):
+        main(d1, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, LEFU_DIR)
 
 
 # 01: Vx = x**2
