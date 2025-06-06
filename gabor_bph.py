@@ -594,7 +594,10 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     
     #create a directory for the output
-    output_dir = os.path.join(os.path.dirname(__file__), OUT_DIR, f'd_{d}')
+    if OUT_DIR is None:
+        output_dir = os.path.join(os.path.dirname(__file__), f'd_{d}')
+    else:
+        output_dir = os.path.join(os.path.dirname(__file__), OUT_DIR, f'd_{d}')
     os.makedirs(output_dir, exist_ok=True)
     
     #create a directory for the plots
@@ -904,8 +907,8 @@ if __name__ == '__main__':
 
     LEFU_DIR = os.path.join(os.path.dirname(__file__), 'lefutasok')
     # Run the main function with the selected dataset parameters
-    for d1 in np.linspace(d, 0.01, 20, endpoint=True):
-        main(d1, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, LEFU_DIR)
+    #for d1 in np.linspace(d, 0.01, 20, endpoint=True):
+    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, None)
 
 
 # 01: Vx = x**2
