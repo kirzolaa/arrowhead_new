@@ -15,13 +15,11 @@ def fix_sign(eigvecs, printout, output_dir='eigenvals_vs_basis1_basis2_for_d'):
                 s = 0.0
                 for k in range(eigvecs.shape[1]): #for every component
                     s += sign * np.real(eigvecs[i, k, j]) * np.real(eigvecs[i-1, k, j]) #dot product of current and previous eigvec
-                    if s * sign < 0 and printout == 1:
-                        log_file.write(f"Flipping sign of state {j} at theta {i} (s={s}, sign={sign})\n")
-                        log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, :]}\n")
-                        log_file.write(f"Current eigvec:  {eigvecs[i, :, :]}\n")
-                        sign = -sign
-                    if sign == -1:
-                        eigvecs[i, :, j] *= -1
+                if s * sign < 0 and printout == 1:
+                    log_file.write(f"Flipping sign of state {j} at theta {i} (s={s}, sign={sign})\n")
+                    log_file.write(f"Pervious eigvec: {eigvecs[i-1, :, :]}\n")
+                    log_file.write(f"Current eigvec:  {eigvecs[i, :, :]}\n")
+                    sign = -sign
     return eigvecs
 
 def main_plotting(d):
