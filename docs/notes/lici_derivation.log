@@ -1,9 +1,9 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.10.2)  7 JUL 2026 20:33
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (MiKTeX 24.1) (preloaded format=pdflatex 2025.10.2)  19 JUL 2026 21:45
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**./ci_notes.tex
-(ci_notes.tex
+**./lici_derivation.tex
+(lici_derivation.tex
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
 (C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/base\article.cls
@@ -679,69 +679,45 @@ Package: array 2023/10/16 v2.5g Tabular extension package (FMi)
 \extratabsurround=\skip54
 \backup@length=\skip55
 \ar@cellbox=\box74
-)) (C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
-\lst@mode=\count325
-\lst@gtempboxa=\box75
-\lst@token=\toks36
-\lst@length=\count326
-\lst@currlwidth=\dimen282
-\lst@column=\count327
-\lst@pos=\count328
-\lst@lostspace=\dimen283
-\lst@width=\dimen284
-\lst@newlines=\count329
-\lst@lineno=\count330
-\lst@maxwidth=\dimen285
-
-(C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty
-File: lstmisc.sty 2023/02/27 1.9 (Carsten Heinz)
-\c@lstnumber=\count331
-\lst@skipnumbers=\count332
-\lst@framebox=\box76
-)
-(C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg
-File: listings.cfg 2023/02/27 1.9 listings configuration
 ))
-Package: listings 2023/02/27 1.9 (Carsten Heinz)
 Package translations Info: No language package found. I am going to use `englis
-h' as default language. on input line 51.
+h' as default language. on input line 15.
+(lici_derivation.aux)
+\openout1 = `lici_derivation.aux'.
 
-(ci_notes.aux)
-\openout1 = `ci_notes.aux'.
-
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 51.
-LaTeX Font Info:    ... okay on input line 51.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 15.
+LaTeX Font Info:    ... okay on input line 15.
 
 (C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/context/base/mkii\supp-pdf.mki
 i
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count333
-\scratchdimen=\dimen286
-\scratchbox=\box77
-\nofMPsegments=\count334
-\nofMParguments=\count335
-\everyMPshowfont=\toks37
-\MPscratchCnt=\count336
-\MPscratchDim=\dimen287
-\MPnumerator=\count337
-\makeMPintoPDFobject=\count338
-\everyMPtoPDFconversion=\toks38
+\scratchcounter=\count325
+\scratchdimen=\dimen282
+\scratchbox=\box75
+\nofMPsegments=\count326
+\nofMParguments=\count327
+\everyMPshowfont=\toks36
+\MPscratchCnt=\count328
+\MPscratchDim=\dimen283
+\MPnumerator=\count329
+\makeMPintoPDFobject=\count330
+\everyMPtoPDFconversion=\toks37
 )
 (C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/epstopdf-pkg\epstopdf-ba
 se.sty
@@ -753,10 +729,10 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 g
 File: epstopdf-sys.cfg 2021/03/18 v2.0 Configuration of epstopdf for MiKTeX
 ))
-Package hyperref Info: Link coloring OFF on input line 51.
- (ci_notes.out) (ci_notes.out)
+Package hyperref Info: Link coloring OFF on input line 15.
+ (lici_derivation.out) (lici_derivation.out)
 \@outlinefile=\write4
-\openout4 = `ci_notes.out'.
+\openout4 = `lici_derivation.out'.
 
 
 
@@ -777,15 +753,14 @@ File: translations-basic-dictionary-english.trsl (english translation file `tra
 nslations-basic-dictionary')
 )
 Package translations Info: loading dictionary `translations-basic-dictionary' f
-or `english'. on input line 51.
-\c@lstlisting=\count339
-LaTeX Font Info:    Trying to load font information for U+msa on input line 54.
+or `english'. on input line 15.
+LaTeX Font Info:    Trying to load font information for U+msa on input line 18.
 
 
 (C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsa.fd
 File: umsa.fd 2013/01/14 v3.01 AMS symbols A
 )
-LaTeX Font Info:    Trying to load font information for U+msb on input line 54.
+LaTeX Font Info:    Trying to load font information for U+msb on input line 18.
 
 
 (C:\Users\Zoli\AppData\Local\Programs\MiKTeX\tex/latex/amsfonts\umsb.fd
@@ -795,21 +770,9 @@ File: umsb.fd 2013/01/14 v3.01 AMS symbols B
 LaTeX Warning: No \author given.
 
 
-Overfull \hbox (2.05621pt too wide) in paragraph at lines 57--58
-\OT1/cmr/m/n/10 Ez a doku-men-tum azt hi-va-tott ^^?osszegezni, amit a kollekt^
-^S^^Pv k^^Sonikus keresztez}od^^Sesi
- []
-
-
-Overfull \hbox (13.27843pt too wide) in paragraph at lines 59--60
-[]\OT1/cmr/m/n/10 Az alapel-ren-dez^^Sese a rend-szer^^?unknek, hogy cavity-ben
-, h^^Sarom azonos k^^Setatomos
- []
-
-
-Overfull \hbox (0.44516pt too wide) in paragraph at lines 59--60
-\OT1/cmr/m/n/10 molekul^^Sat helyez^^?unk el egy der^^Seksz^^?og}u ko-ordin^^Sa
-ta rend-szer-ben, ahol a molekul^^Sak
+Overfull \hbox (0.41736pt too wide) in paragraph at lines 21--22
+\OT1/cmr/m/n/10 This doc-u-ment presents the math-e-mat-i-cal deriva-tion for f
+ind-ing non-triv-ial Light-
  []
 
 [1
@@ -817,66 +780,107 @@ ta rend-szer-ben, ahol a molekul^^Sak
 {C:/Users/Zoli/AppData/Local/MiKTeX/fonts/map/pdftex/pdftex.map}]
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 140.
+(hyperref)                removing `math shift' on input line 96.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 140.
+(hyperref)                removing `subscript' on input line 96.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 140.
+(hyperref)                removing `math shift' on input line 96.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 140.
+(hyperref)                removing `math shift' on input line 96.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `subscript' on input line 140.
+(hyperref)                removing `subscript' on input line 96.
 
 
 Package hyperref Warning: Token not allowed in a PDF string (Unicode):
-(hyperref)                removing `math shift' on input line 140.
+(hyperref)                removing `math shift' on input line 96.
 
-[2] [3] [4] [5] (ci_notes.aux)
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 96.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 96.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 96.
+
+[2]
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `subscript' on input line 132.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 132.
+
+[3] [4] (lici_derivation.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-01-04>
  ***********
-Package rerunfilecheck Info: File `ci_notes.out' has not changed.
-(rerunfilecheck)             Checksum: F347F248B64B0CA980FB0BA063B06537;3254.
+Package rerunfilecheck Info: File `lici_derivation.out' has not changed.
+(rerunfilecheck)             Checksum: 47563AA82015FFEE8F5594BCB425D23E;1743.
  ) 
 Here is how much of TeX's memory you used:
- 26214 strings out of 474486
- 527170 string characters out of 5744227
+ 24833 strings out of 474486
+ 507281 string characters out of 5744227
  1941542 words of memory out of 5000000
- 48066 multiletter control sequences out of 15000+600000
- 571178 words of font info for 84 fonts, out of 8000000 for 9000
+ 46704 multiletter control sequences out of 15000+600000
+ 573038 words of font info for 91 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,11n,93p,391b,1039s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,11n,93p,413b,1043s stack positions out of 10000i,1000n,20000p,200000b,200000s
  <C:\Users\Zoli\AppData\Local\MiKTeX\fonts/pk/ljfour/jknappen/ec/dpi600\tcrm1
 000.pk><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts
 /cm/cmbx12.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1/public/
-amsfonts/cm/cmex10.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/amsfonts/cm/cmmi10.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fon
-ts/type1/public/amsfonts/cm/cmmi12.pfb><C:/Users/Zoli/AppData/Local/Programs/Mi
-KTeX/fonts/type1/public/amsfonts/cm/cmmi5.pfb><C:/Users/Zoli/AppData/Local/Prog
-rams/MiKTeX/fonts/type1/public/amsfonts/cm/cmmi7.pfb><C:/Users/Zoli/AppData/Loc
-al/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmmib10.pfb><C:/Users/Zoli/Ap
-pData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cmextra/cmmib7.pfb><C:/
-Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr10.p
-fb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/
-cmr12.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfo
-nts/cm/cmr17.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1/publi
-c/amsfonts/cm/cmr7.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1
-/public/amsfonts/cm/cmr8.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts
-/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKT
-eX/fonts/type1/public/amsfonts/cm/cmsy7.pfb><C:/Users/Zoli/AppData/Local/Progra
-ms/MiKTeX/fonts/type1/public/amsfonts/symbols/msbm10.pfb>
-Output written on ci_notes.pdf (5 pages, 204425 bytes).
+amsfonts/cm/cmmi10.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/fonts/type1
+/public/amsfonts/cm/cmmi7.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKTeX/font
+s/type1/public/amsfonts/cm/cmr10.pfb><C:/Users/Zoli/AppData/Local/Programs/MiKT
+eX/fonts/type1/public/amsfonts/cm/cmr12.pfb><C:/Users/Zoli/AppData/Local/Progra
+ms/MiKTeX/fonts/type1/public/amsfonts/cm/cmr17.pfb><C:/Users/Zoli/AppData/Local
+/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmr7.pfb><C:/Users/Zoli/AppData
+/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Users/Zoli
+/AppData/Local/Programs/MiKTeX/fonts/type1/public/amsfonts/cm/cmsy7.pfb>
+Output written on lici_derivation.pdf (4 pages, 128997 bytes).
 PDF statistics:
- 235 PDF objects out of 1000 (max. 8388607)
- 58 named destinations out of 1000 (max. 500000)
- 157 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 163 PDF objects out of 1000 (max. 8388607)
+ 48 named destinations out of 1000 (max. 500000)
+ 101 words of extra memory for PDF output out of 10000 (max. 10000000)
 

@@ -3,12 +3,49 @@
 \usepackage{amssymb}
 \usepackage{graphicx}
 \usepackage{hyperref}
-\usepackage{xcolor}
 \usepackage{physics}
 \usepackage{tikz}
 
-\title{Notes on Conical Intersection Points}
-\author{Arrowhead Project}
+
+
+
+\usepackage{physics}
+
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{siunitx}
+
+\usepackage{listings}
+\usepackage{xcolor}
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codegray}{rgb}{0.5,0.5,0.5}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backcolour}{rgb}{0.95,0.95,0.92}
+
+\lstdefinestyle{mystyle}{
+    backgroundcolor=\color{backcolour},   
+    commentstyle=\color{codegreen},
+    keywordstyle=\color{codepurple},
+    numberstyle=\tiny\color{codegray},
+    stringstyle=\color{codegreen},
+    basicstyle=\ttfamily\footnotesize,
+    breakatwhitespace=false,         
+    breaklines=true,                 
+    captionpos=b,                    
+    keepspaces=true,                 
+    numbers=left,                    
+    numbersep=5pt,                  
+    showspaces=false,                
+    showstringspaces=false,
+    showtabs=false,                  
+    tabsize=2
+}
+
+\lstset{style=mystyle}
+
+
+\title{Notes -- WIP}
 \date{\today}
 
 \begin{document}
@@ -17,7 +54,9 @@
 
 \section{Introduction}
 
-This document provides a comprehensive explanation of our findings regarding Conical Intersection (CI) points in the Arrowhead model. We focus on understanding the geometric properties of these points and their relationship to the parameters of our model potentials.
+Ez a dokumentum azt hivatott összegezni, amit a kollektív kónikus kereszteződési pontokkal kapcsolatos topologikus modellünkkel eddig elértünk.
+
+Az alapelrendezése a rendszerünknek, hogy cavity-ben, három azonos kétatomos molekulát helyezünk el egy derékszögű koordináta rendszerben, ahol a molekulák tengelyei párhuzamosak az $x$, $y$ és $z$ tengelyekkel. Ez az elrendezés alapvetően megteremtheti a CI-k kialakulását a rendszerben.
 
 \section{Model Potentials}
 
@@ -142,18 +181,93 @@ r_0 - x & \text{otherwise}
 \end{cases}
 \end{equation}
 
-With our parameter values, this gives $R_0 = [0.433, 0.433, 0.433]$ when $n_{\text{CI}} = 3$ (i.e., no specific CI point selected).
+With our parameter values, this gives $R_0 = [0.433, 0.433, 0.433]$ when $n_{\text{CI}} = 3$ (i.e., no specific CI point selected). We should run both a $\theta^*$- and a $d^*$-scan on this specific point.
 
-\section{Visualization}
+\subsection{Arrowhead Hamiltonian}
 
-We visualize these CI points by creating a circle of radius $d = 0.001$ around the point $R_0$. This small radius allows us to observe the behavior of the system near the CI point without being affected by other features of the potential energy landscape.
+Since the cavity excites collectively, the system is described by a 4×4 arrowhead Hamiltonian matrix with the following structure:
 
-The circle is constructed to be orthogonal to the line $x = y = z$, which corresponds to the direction where all three coordinates are equal. This ensures that we're properly sampling the neighborhood around the CI point.
+\begin{equation}
+H(\bm{R}_{\theta}) = 
+\begin{pmatrix}
+\hbar\omega + \sum_i V_x(\bm{R}_i) & t_{01} & t_{02} & t_{03} \\
+t_{01} & V_e(\bm{R}_0) & 0 & 0 \\
+t_{02} & 0 & V_e(\bm{R}_1) & 0 \\
+t_{03} & 0 & 0 & V_e(\bm{R}_2)
+\end{pmatrix}
+\end{equation}
 
-\section{Conclusion}
+where:
+\begin{itemize}
+    \item $\hbar\omega$ is the energy quantum of the system
+    \item $V_x(\bm{R}_i) = a_{Vx} |\bm{R}_i|^2$ is the potential energy function
+    \item $V_e(\bm{R}_i) = \sum_j V_x(\bm{R}_j) + V_a(\bm{R}_i) - V_x(\bm{R}_i)$ is the effective potential
+    \item $V_a(\bm{R}_i) = a_{Va} (|\bm{R}_i - x_{\text{shift}}|^2 + c)$ is the additional potential
+    \item $t_{0i}$ are the transition dipole moments between states
+\end{itemize}
 
-Our analysis reveals that the CI points in our system have a specific geometric structure related to the parameters of our model potentials. By understanding this structure, we can precisely locate and visualize these points, which is crucial for studying the quantum dynamics of the system.
+The parameter vector $\bm{R}_\theta$ traces a perfect circle orthogonal to the $x=y=z$ line in 3D space, parameterized by angle $\theta$.
 
-The key parameter $x_{\text{prime}} = \frac{a_{V_a}}{a_{V_a} - a_{V_x}} \cdot x_{\text{shift}}$ determines the location of the CI points, and the distance between $r_0$ and $x_{\text{prime}}$ determines the radius of the circle containing the CI points.
+\subsection{Berry Connection and Berry Phase}
+
+The Berry connection $\bm{A}_n(\bm{R})$ for the $n$-th eigenstate is defined as:
+
+\begin{equation}
+\bm{A}_n(\bm{R}) = i\langle n(\bm{R})|\nabla_{\bm{R}}|n(\bm{R})\rangle
+\end{equation}
+
+The Berry phase $\gamma_n$ is the integral of the Berry connection around a closed loop $C$ in parameter space:
+
+\begin{equation}
+\gamma_n = \oint_C \bm{A}_n(\bm{R}) \cdot d\bm{R}
+\end{equation}
+
+\subsection{Off-Diagonal Elements}
+
+The off-diagonal elements $\tau_{nm}(\theta)$ for $n \neq m$ provide information about the coupling between different eigenstates. These elements can be used to analyze transitions between states and to identify regions in parameter space where eigenstates are strongly coupled.
+
+
+\section{The Tau Matrix Method}
+
+We call this the "tau matrix method" because the key matrix is the tau matrix in the codebase. However, this matrix is actually the matrix of the Non-adiabatic coupling terms.
+
+In this method, we first compute $\tau$ matrix, then use it to compute the Berry phase.
+
+\subsection{Definition of the Tau Matrix}
+
+This method is a numerical approach for computing the Berry phase. The key element is the tau matrix, whose elements are defined as:
+
+\begin{equation}
+\tau_{nm}(\theta) = \langle \psi_m(\theta) | \frac{\partial}{\partial\theta} | \psi_n(\theta) \rangle
+\end{equation}
+
+where $|\psi_n(\theta)\rangle$ is the $n$-th eigenstate of the Hamiltonian $H(\bm{R}_\theta)$.
+
+\section{Numerical Results and Analysis}
+
+\subsection{Berry Phase Matrix Structure}
+
+The numerical results show that the Berry phase matrix $\gamma_{nm}$ has a specific structure with the following features:
+
+\begin{itemize}
+    \item The diagonal elements $\gamma_{nn}$ are typically small (order $10^{-3}$ to $10^{-4}$), indicating minimal geometric phase accumulation for individual states.
+    
+    \item Large off-diagonal elements (order $10^0$) appear in specific positions, particularly between states 1-2, 2-1, 1-3, and 3-1.
+    
+    \item The values close to $\pm 2\pi$ in the [1,2] and [2,1] positions indicate complete phase winding, which is a signature of non-trivial topology.
+\end{itemize}
+
+\subsection{Physical Interpretation}
+
+The observed Berry phase structure has important physical implications:
+
+\begin{itemize}
+    \item The system exhibits non-trivial geometric phase accumulation primarily in the subspace spanned by states 1 and 2.
+    
+    \item The antisymmetric nature of the off-diagonal elements ($\gamma_{12} \approx -\gamma_{21}$) is consistent with the expected behavior of a quantum system with time-reversal symmetry.
+    
+    \item The $2\pi$ phase difference indicates that the system's parameter space trajectory encloses a topological singularity.
+\end{itemize}
+
 
 \end{document}

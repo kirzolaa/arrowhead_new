@@ -87,7 +87,7 @@ def plot_matrix_elements(tau, gamma, theta_vals, output_dir):
         plt.close()
 
 def format_matrix(matrix, title=None, output_dir=None):
-    """Format a matrix with box drawing characters"""
+    """Format a matrix with ASCII characters"""
     n, m = matrix.shape
     max_len = max(len(f"{x:.4f}") for row in matrix for x in row)
     
@@ -99,7 +99,7 @@ def format_matrix(matrix, title=None, output_dir=None):
         lines.append(f"    |{title:^{width-2}}|")
     
     # Top border
-    lines.append("    |‾" + "‾" * (width-2) + "‾|")
+    lines.append("    |" + "-" * (width-2) + "|")
     
     # Matrix rows
     for i in range(n):
@@ -118,7 +118,7 @@ def format_matrix(matrix, title=None, output_dir=None):
         lines.append(row)
     
     # Bottom border
-    lines.append("    |_" + "_" * (width-2) + "_|")
+    lines.append("    |" + "-" * (width-2) + "|")
     
     return "\n".join(lines)
 
@@ -734,6 +734,177 @@ def main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points,
     
     return tau, gamma, eigvecs, theta_vals
 
+def find_nontrivial_licis(aVx, aVa, x_shift, r0=None):
+    """
+    Find the three non-trivial LICI points around a trivial LICI.
+    
+    Parameters:
+    - aVx: Parameter for Vx potential
+    - aVa: Parameter for Va potential  
+    - x_shift: Shift parameter for Va potential
+    - r0: Optional, the trivial LICI position. If None, calculated as x_prime
+    
+    Returns:
+    - Dictionary containing:
+        * 'trivial_lci': (r0, r0, r0) - the trivial LICI
+        * 'nontrivial_licis': List of three non-trivial LICI points
+        * 'r0', 'r1', 'r2': The calculated bond distances
+        * 'x_prime': The position of the potential minimum
+        * 'd_CI': Distance from trivial to non-trivial LICI
+    """
+    # Calculate x_prime from the potential parameters
+    x_prime = (aVa / aVx) / ((aVa / aVx) - 1) * x_shift
+    
+    # If r0 is not provided, use x_prime (trivial LICI at potential minimum)
+    if r0 is None:
+        r0 = x_prime
+    
+    # Calculate r1 and r2 using the derived formulas
+    r1 = 3 * r0 - 2 * x_prime  # = r0 - 2*(x_prime - r0)
+    r2 = 4 * x_prime - 3 * r0  # = r0 + 4*(x_prime - r0)
+    
+    # The three non-trivial LICI configurations
+    nontrivial_licis = [
+        (r1, r1, r2),  # LICI_1: molecules 1&2 equal, molecule 3 different
+        (r1, r2, r1),  # LICI_2: molecules 1&3 equal, molecule 2 different
+        (r2, r1, r1)   # LICI_3: molecules 2&3 equal, molecule 1 different
+    ]
+    
+    # Calculate distance from trivial to non-trivial LICI
+    d_CI = 2 * np.sqrt(6) * abs(x_prime - r0)
+    
+    return {
+        'trivial_lci': (x_prime, x_prime, x_prime),
+        'nontrivial_licis': nontrivial_licis,
+        'r0': r0,
+        'r1': r1,
+        'r2': r2,
+        'x_prime': x_prime,
+        'd_CI': d_CI
+    }
+
+def print_lici_info(lici_data):
+    """Print formatted information about the LICI points."""
+    print("\n" + "="*60)
+    print("LICI Point Information")
+    print("="*60)
+    print(f"x_prime: {lici_data['x_prime']:.6f}")
+    print(f"r0 (trivial LICI): {lici_data['r0']:.6f}")
+    print(f"r1: {lici_data['r1']:.6f}")
+    print(f"r2: {lici_data['r2']:.6f}")
+    print(f"Distance d_CI: {lici_data['d_CI']:.6f}")
+    print("\nTrivial LICI:")
+    print(f"  (r0, r0, r0) = {lici_data['trivial_lci']}")
+    print("\nNon-trivial LICIs:")
+    for i, lici in enumerate(lici_data['nontrivial_licis'], 1):
+        print(f"  LICI_{i}: {lici}")
+    print("="*60 + "\n")
+
+def verify_lici_properties(lici_data, aVx, aVa, x_shift, c_const):
+    """
+    Verify that the found LICI points satisfy the CI condition.
+    
+    Parameters:
+    - lici_data: Dictionary from find_nontrivial_licis
+    - aVx, aVa, x_shift, c_const: Potential parameters
+    """
+    def Vx(x):
+        return aVx * x**2
+    
+    def Va(x):
+        return aVa * (x - x_shift)**2 + c_const
+    
+    print("\nVerifying CI condition (Va - Vx ≈ 0 for all coordinates):")
+    print("-" * 60)
+    
+    # Check trivial LICI
+    trivial = lici_data['trivial_lci']
+    diff_trivial = [Va(r) - Vx(r) for r in trivial]
+    print(f"Trivial LICI {trivial}:")
+    print(f"  Va-Vx values: {[f'{d:.6f}' for d in diff_trivial]}")
+    print(f"  Max difference: {max(abs(d) for d in diff_trivial):.8f}")
+    
+    # Check non-trivial LICIs
+    for i, lici in enumerate(lici_data['nontrivial_licis'], 1):
+        diff = [Va(r) - Vx(r) for r in lici]
+        print(f"\nLICI_{i} {lici}:")
+        print(f"  Va-Vx values: {[f'{d:.6f}' for d in diff]}")
+        print(f"  Max difference: {max(abs(d) for d in diff):.8f}")
+        print(f"  All equal? {all(abs(d - diff[0]) < 1e-10 for d in diff)}")
+    
+    print("-" * 60 + "\n")
+
+def plot_ci_points_on_orthogonal_plane(ci_points, R_0, R_thetas, save_dir):
+    """
+    Plot CI points on the orthogonal plane using basis1 and basis2 as axes.
+    Basis vectors are constructed dynamically (like the 'r0' branch in
+    plot_vectors_2d_projection) as two orthogonal vectors spanning the plane
+    perpendicular to the (1,1,1) direction.
+    
+    Parameters:
+    - ci_points: Dictionary with 'trivial_ci' and 'nontrivial_licis' keys
+    - R_0: Center point of the circle
+    - R_thetas: Array of 3D points (shape (N, 3)) from hamiltonian.R_thetas(),
+                tracing the actual circle orthogonal to (1,1,1)
+    - save_dir: Directory to save the plot
+    """
+    
+    # Normal to the plane: the (1,1,1) direction
+    normal = np.array([1, 1, 1])
+    normal = normal / np.linalg.norm(normal)
+    
+    # Build two orthogonal in-plane basis vectors via cross products,
+    # same approach as the 'r0' branch above
+    if not np.allclose(normal, np.array([1, 0, 0])):
+        basis1 = np.cross(normal, np.array([1, 0, 0]))
+    else:
+        basis1 = np.cross(normal, np.array([0, 1, 0]))
+    basis1 = basis1 / np.linalg.norm(basis1)
+    
+    basis2 = np.cross(normal, basis1)
+    basis2 = basis2 / np.linalg.norm(basis2)
+    
+    def project_to_plane(point):
+        rel_point = np.array(point) - np.array(R_0)
+        x_coord = np.dot(rel_point, basis1)
+        y_coord = np.dot(rel_point, basis2)
+        return x_coord, y_coord
+    
+    fig, ax = plt.subplots(figsize=(10, 8))
+    
+    # Plot all CI points
+    all_ci_points = [
+        ('Origin', (0, 0, 0)),
+        ('CI_0', (0.433, 0.433, 0.433)),
+    ] + [(f'CI_{i+1}', ci) for i, ci in enumerate(ci_points['nontrivial_licis'])]
+    for label, ci in all_ci_points:
+        ci_x, ci_y = project_to_plane(ci)
+        color = 'blue' if label == 'Origin' else 'red'
+        ax.scatter(ci_x, ci_y, c=color, s=200, label=label,
+                   marker='o' if label == 'Origin' else 's', zorder=5)
+    
+    # Plot center point R_0
+    r0_x, r0_y = project_to_plane(R_0)
+    ax.scatter(r0_x, r0_y, c='black', s=100, label='R_0 (center)', marker='*', zorder=6)
+    
+    # Plot the ACTUAL circle from R_thetas, projected onto the same plane
+    R_thetas = np.asarray(R_thetas)  # expected shape (N, 3)
+    circle_x, circle_y = zip(*[project_to_plane(pt) for pt in R_thetas])
+    ax.plot(circle_x, circle_y, 'k--', alpha=0.5, label='Circle (R_thetas)', linewidth=2)
+    
+    ax.set_xlabel('Basis1 direction (orthogonal to (1,1,1))')
+    ax.set_ylabel('Basis2 direction (orthogonal to (1,1,1))')
+    ax.set_title('CI Points on Orthogonal Plane (centered at R_0)')
+    ax.legend(loc='best')
+    ax.grid(True, alpha=0.3)
+    ax.axhline(y=0, color='k', linestyle='-', alpha=0.3)
+    ax.axvline(x=0, color='k', linestyle='-', alpha=0.3)
+    ax.set_aspect('equal', adjustable='box')
+    
+    os.makedirs(save_dir, exist_ok=True)
+    plt.savefig(f'{save_dir}/ci_points_orthogonal_plane.png', dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"CI points visualization saved to {save_dir}/ci_points_orthogonal_plane.png")
 def dataset(val):
     """Return parameters for different datasets"""
     params = {}
@@ -817,98 +988,159 @@ def dataset(val):
     
     return params
 
+from mpl_toolkits.mplot3d import Axes3D  # noqa: F401, registers 3d projection
+
+def plot_ci_seam_3d(x_prime, r0_range=(-3.0, 3.0), r0_marker=0.0, save_dir=None):
+    """
+    Plot the trivial CI seam and the three nontrivial-CI branch lines in
+    full 3D (r1, r2, r3) space, showing all three branches converge on
+    the trivial CI.
+    """
+
+    plt.close('all')
+
+    r0_vals = np.linspace(r0_range[0], r0_range[1], 200)
+    r1_vals = 3*r0_vals - 2*x_prime
+    r2_vals = 4*x_prime - 3*r0_vals
+
+    branch1 = np.stack([r1_vals, r1_vals, r2_vals], axis=1)
+    branch2 = np.stack([r1_vals, r2_vals, r1_vals], axis=1)
+    branch3 = np.stack([r2_vals, r1_vals, r1_vals], axis=1)
+
+    CI_0 = np.array([x_prime, x_prime, x_prime])
+    seam_t = np.linspace(r0_range[0], r0_range[1], 50)
+    seam = np.stack([seam_t, seam_t, seam_t], axis=1)
+
+    fig = plt.figure(figsize=(9, 8))
+    ax = fig.add_subplot(111, projection='3d')
+
+    ax.plot(*seam.T, 'k--', alpha=0.4, label='Trivial CI seam (1,1,1)')
+    for branch, color, name in [(branch1, 'tab:red', 'CI_1 branch'),
+                                  (branch2, 'tab:blue', 'CI_2 branch'),
+                                  (branch3, 'tab:green', 'CI_3 branch')]:
+        ax.plot(*branch.T, color=color, linewidth=2, label=name)
+
+    ax.scatter(*CI_0, c='black', s=50, marker='x', zorder=5, label='CI_T')
+    
+    r1_m, r2_m = 3*r0_marker - 2*x_prime, 4*x_prime - 3*r0_marker
+    for pt in [(r1_m, r1_m, r2_m), (r1_m, r2_m, r1_m), (r2_m, r1_m, r1_m)]:
+        ax.scatter(*pt, c='orange', s=75, marker='o', zorder=5)
+    
+    ax.set_xlabel('r1'); ax.set_ylabel('r2'); ax.set_zlabel('r3')
+    ax.set_title('Nontrivial CI branches converging on the trivial CI')
+    ax.legend(loc='best')
+    ax.set_xlim(-2.0, 2.0)
+    ax.set_ylim(-2.0, 2.0)
+    ax.set_zlim(-2.0, 2.0)
+
+    if save_dir:
+        os.makedirs(save_dir, exist_ok=True)
+        plt.savefig(f'{save_dir}/ci_seam_3d.png', dpi=300, bbox_inches='tight')
+    
+    plt.show()
+
 if __name__ == '__main__':
-    dataset_num = 4
-
-    if dataset_num == 1:
-        d = 0.001 #radius of the circle
-        aVx = 1.0
-        aVa = 1.3
-        c_const = 0.01  # Potential constant, shifts the 2d parabola on the y axis
-        x_shift = 0.1  # Shift in x direction
-        theta_min = 0
-        theta_max = 2 * np.pi
-        omega = 0.1
-        num_points = 50001
-        R_0 = (0, 0, 0)
+    # Common parameters
+    d = 0.001  # radius of the circle
+    aVx = 1.0
+    aVa = 1.3
+    c_const = 0.01
+    x_shift = 0.1
+    theta_min = 0
+    theta_max = 2 * np.pi
+    omega = 0.1
+    num_points = 5001
     
-    elif dataset_num == 2:
-        # Use dataset function to get parameters
-        params = dataset(dataset_num)
-        aVx = params['aVx']
-        aVa = params['aVa']
-        c_const = params['c_const']
-        x_shift = params['x_shift']
-        theta_min = params['theta_min']
-        theta_max = params['theta_max']
-        omega = params['omega']
-        num_points = params['num_points']
-        d = params['d']
-        R_0 = params['R_0']
-        
-        # Calculate r0, r1, r2 for informational purposes
-        x_prime = (aVa/aVx) / (aVa/aVx-1) * x_shift
-        r0 = x_prime
-        r1 = 3*r0 - 2*x_prime
-        r2 = 4*x_prime - 3*r0
-        
-        print(f"Dataset {dataset_num}: R_0 at r0")
-        print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
-        print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
-
-    elif dataset_num == 3:
-        # Use dataset function to get parameters
-        params = dataset(dataset_num)
-        aVx = params['aVx']
-        aVa = params['aVa']
-        c_const = params['c_const']
-        x_shift = params['x_shift']
-        theta_min = params['theta_min']
-        theta_max = params['theta_max']
-        omega = params['omega']
-        num_points = params['num_points']
-        d = params['d']
-        R_0 = params['R_0']
-        
-        # Calculate r0, r1, r2 for informational purposes
-        x_prime = (aVa/aVx) / (aVa/aVx-1) * x_shift
-        r0 = x_prime
-        r1 = 3*r0 - 2*x_prime
-        r2 = 4*x_prime - 3*r0
-        
-        print(f"Dataset {dataset_num}: R_0 at r1")
-        print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
-        print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
+    # Find the actual trivial CI (at x_prime)
+    tci_data = find_nontrivial_licis(aVx, aVa, x_shift, r0=None)
     
-    elif dataset_num == 4:
-        # Use dataset function to get parameters
-        params = dataset(dataset_num)
-        aVx = params['aVx']
-        aVa = params['aVa']
-        c_const = params['c_const']
-        x_shift = params['x_shift']
-        theta_min = params['theta_min']
-        theta_max = params['theta_max']
-        omega = params['omega']
-        num_points = params['num_points']
-        d = params['d']
-        R_0 = params['R_0']
-        
-        # Calculate r0, r1, r2 for informational purposes
-        x_prime = (aVa/aVx) / (aVa/aVx-1) * x_shift
-        r0 = x_prime
-        r1 = 3*r0 - 2*x_prime
-        r2 = 4*x_prime - 3*r0
-        
-        print(f"Dataset {dataset_num}: R_0 at r2")
-        print(f"R_0: {R_0}, r0: {r0:.6f}, r1: {r1:.6f}, r2: {r2:.6f}")
-        print(f"sum(R_0)/3: {sum(R_0)/3:.6f}")
+    # Find non-trivial CIs with R_0 = (0, 0, 0) as center
+    R_0_center = (0, 0, 0)
+    ci_data = find_nontrivial_licis(aVx, aVa, x_shift, r0=0)
+    
+    print("\n" + "="*60)
+    print("ACTUAL TRIVIAL CI (at x_prime):")
+    print("="*60)
+    print(f"Trivial CI: {tci_data['trivial_lci']}")
+    print("="*60 + "\n")
+    
+    print_lici_info(ci_data)
+    verify_lici_properties(ci_data, aVx, aVa, x_shift, c_const)
+    
+    # Collect all CI points to analyze
+    # Include both the actual trivial CI at x_prime and the non-trivial CIs
+    all_ci_points = [
+        ('Origin', (0, 0, 0)),  # Origin point for comparison
+        ('CI_0', (0.433, 0.433, 0.433)),  # Trivial CI at r0
+        ('CI_1', ci_data['nontrivial_licis'][0]),
+        ('CI_2', ci_data['nontrivial_licis'][1]),
+        ('CI_3', ci_data['nontrivial_licis'][2])
+    ]
 
+    all_ci_points_no_origin = [
+        ('CI_0', (0.433, 0.433, 0.433)),  # Trivial CI at r0
+        ('CI_1', ci_data['nontrivial_licis'][0]),
+        ('CI_2', ci_data['nontrivial_licis'][1]),
+        ('CI_3', ci_data['nontrivial_licis'][2])
+    ]
+    
+    #calculate R_thetas using the Hamiltonian for R_0 = (0, 0, 0)
+    theta_vals = theta_range = np.linspace(theta_min, theta_max, num_points, endpoint=True)
 
+    hamiltonian = Hamiltonian(omega, aVx, aVa, x_shift, c_const, R_0_center, d, theta_range)
+    R_thetas = hamiltonian.R_thetas()
+
+    # Create visualization of all CI points on orthogonal plane
+    viz_dir = os.path.join(os.path.dirname(__file__), 'ci_analysis')
+    plot_ci_points_on_orthogonal_plane(ci_data, R_0_center, R_thetas, viz_dir)
+    
+    # Run calculations for each CI point with d=0.001
     LEFU_DIR = os.path.join(os.path.dirname(__file__), 'lefutasok')
-    # Run the main function with the selected dataset parameters
-    #for d1 in np.linspace(d, 0.01, 20, endpoint=True):
-    main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, R_0, None)
+    
+    for ci_name, ci_point in all_ci_points_no_origin:
+        # Create folder name: d_0.001_point1_point2_point3
+        point_str = f"{ci_point[0]:.3f}_{ci_point[1]:.3f}_{ci_point[2]:.3f}"
+        folder_name = f"d_{d}_{point_str}"
+        
+        print(f"\n{'='*60}")
+        print(f"Running calculation for {ci_name}: {ci_point}")
+        print(f"Folder: {folder_name}")
+        print(f"{'='*60}\n")
+        
+        # Run main calculation with this CI point as R_0
+        main(d, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, ci_point, folder_name)
+
+    """
+    not needed, origin is not a ci but on a ci seam ???
+    # Run additional calculation for Origin with d=0.433 to enclose CIs
+    d_large = 0.433
+    origin_point = (0, 0, 0)
+    point_str = f"{origin_point[0]:.3f}_{origin_point[1]:.3f}_{origin_point[2]:.3f}"
+    folder_name_large = f"d_{d_large}_{point_str}"
+    
+
+    print(f"\n{'='*60}")
+    print(f"Running calculation for Origin with large d={d_large}: {origin_point}")
+    print(f"Folder: {folder_name_large}")
+    print(f"{'='*60}\n")
+    
+    main(d_large, aVx, aVa, c_const, x_shift, theta_min, theta_max, omega, num_points, origin_point, folder_name_large)
+    """
+
+    x_prime = (aVa / aVx) / ((aVa / aVx) - 1) * x_shift
+
+    plot_ci_seam_3d(x_prime, r0_range=(-3.0, 3.0), r0_marker=0.0, save_dir='ci_analysis')
+
+
+    for i, ci in enumerate(ci_data['nontrivial_licis'], start=1):
+        ci = np.array(ci)
+        dist = np.linalg.norm(ci - np.array([0, 0, 0]))
+        print(f"\n\nCI_{i}: {ci}, distance from R_0: {dist:.6f}")
+    
+    for i, ci in enumerate(ci_data['nontrivial_licis'], start=1):
+        ci = np.array(ci)
+        dist = np.linalg.norm(ci - np.array([0.433, 0.433, 0.433]))
+        print(f"\n\njust for curiosity\n\nCI_{i}: {ci}, distance from TCI: {dist:.6f}")
 
 
 # 01: Vx = x**2

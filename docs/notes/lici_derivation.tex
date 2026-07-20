@@ -1,0 +1,161 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{physics}
+\usepackage{tikz}
+\usepackage{bm}
+\usepackage{booktabs}
+\usepackage{siunitx}
+
+\title{Derivation of Nontrivial LICI Geometries}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Introduction}
+
+This document presents the mathematical derivation for finding nontrivial Light-Induced Conical Intersection (LICI) geometries in a three-molecule system. The system consists of three identical diatomic molecules placed in a cavity with their axes parallel to the $x$, $y$, and $z$ axes of a Cartesian coordinate system.
+
+\section{Model Potentials}
+
+The system is described by two potential energy surfaces:
+\begin{align}
+V_x(x) &= x^2 \\
+V_a(x) &= a \cdot (x - x_{\text{shift}})^2 + c_0
+\end{align}
+
+Where:
+\begin{itemize}
+    \item $a$ is a scaling parameter
+    \item $x_{\text{shift}}$ is a shift parameter for the second potential
+    \item $c_0$ is a constant energy offset
+\end{itemize}
+
+\section{Potential Difference Analysis}
+
+The difference between the two potentials is:
+\begin{align}
+V_a(x) - V_x(x) &= a \cdot (x - x_{\text{shift}})^2 + c_0 - x^2 \\
+&= (a - 1) \cdot x^2 - 2 \cdot a \cdot x_{\text{shift}} \cdot x + c_1
+\end{align}
+
+Where $c_1 = a \cdot x_{\text{shift}}^2 + c_0$.
+
+This can be rewritten in the form of a perfect square plus a constant:
+\begin{equation}
+V_a(x) - V_x(x) = (a - 1) \cdot (x - x_{\text{prime}})^2 + c_1'
+\end{equation}
+
+Where $x_{\text{prime}}$ is the point where the quadratic term has its minimum:
+\begin{equation}
+x_{\text{prime}} = \frac{a}{a - 1} \cdot x_{\text{shift}}
+\end{equation}
+
+\section{Trivial and Nontrivial LICIs}
+
+\subsection{Trivial LICIs}
+
+Trivial LICIs occur when all three bond distances are equal:
+\begin{equation}
+(r_1, r_2, r_3) \text{ with } r_1 = r_2 = r_3 (= r_0)
+\end{equation}
+
+These form a seam with the property $r_1 = r_2 = r_3$.
+
+\subsection{Nontrivial LICIs}
+
+To find nontrivial LICIs, we search for points where two different bond distances $r_1 \neq r_2$ give equal potential differences:
+\begin{equation}
+(V_a - V_x)(r_1) = (V_a - V_x)(r_2)
+\end{equation}
+
+If such $r_1 \neq r_2$ exist, the following configurations provide nontrivial LICIs:
+\begin{align}
+\text{LICI}_1 &: (r_1, r_2, r_3) = (r_1, r_1, r_2) \\
+\text{LICI}_2 &: (r_1, r_2, r_3) = (r_1, r_2, r_1) \\
+\text{LICI}_3 &: (r_1, r_2, r_3) = (r_2, r_1, r_1) \\
+\text{LICI}_4 &: (r_1, r_2, r_3) = (r_2, r_2, r_1) \\
+\text{LICI}_5 &: (r_1, r_2, r_3) = (r_2, r_1, r_2) \\
+\text{LICI}_6 &: (r_1, r_2, r_3) = (r_1, r_2, r_2)
+\end{align}
+
+\section{Geometric Constraints}
+
+Since the trivial LICIs form a seam, we set up our closed paths in the plane perpendicular to this "trivial" seam. All points in this plane have the property:
+\begin{equation}
+r_1 + r_2 + r_3 = 3 \cdot r_0
+\end{equation}
+where $(r_0, r_0, r_0)$ is the trivial LICI in the plane.
+
+It is easy to see that $\text{LICI}_1$, $\text{LICI}_2$, and $\text{LICI}_3$ lie in the same plane, and similarly, $\text{LICI}_4$, $\text{LICI}_5$, and $\text{LICI}_6$ also lie in the same plane.
+
+\section{Derivation for LICI$_1$, LICI$_2$, LICI$_3$}
+
+We now search for nontrivial LICIs of type $\text{LICI}_1$, $\text{LICI}_2$, $\text{LICI}_3$ with the additional requirement:
+\begin{equation}
+r_1 + r_1 + r_2 = 3 \cdot r_0
+\end{equation}
+for a predefined $r_0$.
+
+From the equality condition $(V_a - V_x)(r_1) = (V_a - V_x)(r_2)$ with $r_1 \neq r_2$, we obtain:
+\begin{equation}
+r_1 = x_{\text{prime}} - \delta, \quad r_2 = x_{\text{prime}} + \delta
+\end{equation}
+where $\delta$ is an arbitrary parameter.
+
+Applying the geometric constraint:
+\begin{align}
+r_1 + r_1 + r_2 &= 3 \cdot r_0 \\
+3 \cdot x_{\text{prime}} - \delta &= 3 \cdot r_0 \\
+\delta &= 3 \cdot (x_{\text{prime}} - r_0)
+\end{align}
+
+Substituting back to find $r_1$ and $r_2$:
+\begin{align}
+r_1 &= x_{\text{prime}} - \delta = 3 \cdot r_0 - 2 \cdot x_{\text{prime}} = r_0 - 2 \cdot (x_{\text{prime}} - r_0) \\
+r_2 &= x_{\text{prime}} + \delta = 4 \cdot x_{\text{prime}} - 3 \cdot r_0 = r_0 + 4 \cdot (x_{\text{prime}} - r_0)
+\end{align}
+
+\section{Distance from Trivial LICI}
+
+To determine how many LICIs are enclosed by a given circle, we need to know the distance between the nontrivial and trivial LICIs. The distance in the 3D coordinate space is:
+\begin{align}
+d_{\text{CI}} &= |r_2 - r_0| \cdot \frac{\sqrt{6}}{2} \\
+&= 4 \cdot |x_{\text{prime}} - r_0| \cdot \frac{\sqrt{6}}{2} \\
+&= 2 \cdot \sqrt{6} \cdot |x_{\text{prime}} - r_0|
+\end{align}
+
+\section{Analysis of LICI$_4$, LICI$_5$, LICI$_6$}
+
+Similar expressions could be derived for $\text{LICI}_4$, $\text{LICI}_5$, and $\text{LICI}_6$. In this case, we would obtain:
+\begin{equation}
+\delta' = -3 \cdot (x_{\text{prime}} - r_0) = -\delta
+\end{equation}
+
+Taking this value and substituting into the expressions for $r_1$ and $r_2$:
+\begin{align}
+r_1' &= x_{\text{prime}} - \delta' = x_{\text{prime}} + \delta = r_2 \\
+r_2' &= x_{\text{prime}} + \delta' = x_{\text{prime}} - \delta = r_1
+\end{align}
+
+Combining this with the definitions of the nontrivial $\text{LICI}_i$ configurations, we realize that these LICIs are actually the same as $\text{LICI}_1$, $\text{LICI}_2$, and $\text{LICI}_3$. More specifically:
+\begin{align}
+\text{LICI}_4 &= \text{LICI}_1 \\
+\text{LICI}_5 &= \text{LICI}_2 \\
+\text{LICI}_6 &= \text{LICI}_3
+\end{align}
+
+\section{Conclusion}
+
+The derivation shows that for a given plane defined by $r_1 + r_2 + r_3 = 3 \cdot r_0$, there are exactly three distinct nontrivial LICI configurations. These are symmetrically arranged around the trivial LICI at $(r_0, r_0, r_0)$, with the distance from the trivial LICI given by:
+\begin{equation}
+d_{\text{CI}} = 2 \cdot \sqrt{6} \cdot |x_{\text{prime}} - r_0|
+\end{equation}
+
+This geometric understanding is crucial for determining the topological properties of the system and for setting up appropriate closed paths for geometric phase calculations.
+
+\end{document}

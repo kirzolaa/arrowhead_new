@@ -86,3 +86,5 @@ output/run_20250521_152434
 output/run_20250521_152559
 ci_notes.txt
 .venv/
+
+*.npy
