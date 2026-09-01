@@ -477,11 +477,11 @@ def generate_eigenvalue_plot(data, output_dir):
     for i in range(M):
         plotter.plot(theta_vals/np.pi, eigvals[:, i],
                     color=colors[i % len(colors)],
-                    linewidth=2, label=f'Eigenvalue {i+1}')
+                    linewidth=2, label=f'State {i+1}')
     
     plotter.set_labels(r'$\theta/\pi$', 'Energy (eV)', use_latex=False)
     plotter.add_legend(loc='upper center')
-    plotter.set_tick_locator(axis='both', multiple=0.5)
+    #plotter.set_tick_locator(axis='both', multiple=0.5)
     
     os.makedirs(output_dir, exist_ok=True)
     plotter.save('eigenvalues_improved.png', save_dir=output_dir)
@@ -525,30 +525,43 @@ def generate_potential_components_plot(data, output_dir):
         
         for i in range(num_components):
             plotter.plot(theta_vals/np.pi, Va_values[:, i],
-                        color=colors[i], linewidth=2, label=rf'$V_a[{i+1}]$')
+                        color=colors[i], linewidth=4, label=rf'$V_a[{i+1}]$')
         
         plotter.set_labels(r'$\theta/\pi$', r'$V_a Components (eV)$', use_latex=False)
         plotter.add_legend(loc='upper center')
-        plotter.set_tick_locator(axis='both', multiple=0.5)
         
         os.makedirs(output_dir, exist_ok=True)
         plotter.save('Va_components_improved.png', save_dir=output_dir)
         
         # Plot Vx components
-        plotter = Plot2D(figsize=(12, 7), dpi=300)
+        plotter = Plot2D(figsize=(15, 8), dpi=300)
         fig, ax = plotter.create_figure()
         
         num_components = min(3, Vx_values.shape[1])
         
         for i in range(num_components):
             plotter.plot(theta_vals/np.pi, Vx_values[:, i],
-                        color=colors[i], linewidth=2, label=rf'$V_x[{i+1}]$')
+                        color=colors[i], linewidth=4, label=rf'$V_x[{i+1}]$')
         
         plotter.set_labels(r'$\theta/\pi$', r'$V_x Components (eV)$', use_latex=False)
         plotter.add_legend(loc='upper center')
-        plotter.set_tick_locator(axis='both', multiple=0.5)
         
         plotter.save('Vx_components_improved.png', save_dir=output_dir)
+
+        #plot Vx-Va
+        plotter = Plot2D(figsize=(12, 7), dpi=300)
+        fig, ax = plotter.create_figure()
+        
+        for i in range(num_components):
+            plotter.plot(theta_vals/np.pi, 100 *(Va_values[:, i] - Vx_values[:, i]),
+                        color=colors[i], linewidth=4, label=rf'$V_a[{i+1}] - V_x[{i+1}]$')
+        
+        plotter.set_labels(r'$\theta/\pi$', r'$V_a - V_x$ (eV)', use_latex=False)
+        plotter.add_legend(loc='upper center')
+        plotter.set_tick_formatter(axis='y', format_str='%.5f')
+        
+        plotter.save('Vx_Va_comparison.png', save_dir=output_dir)
+        
         print(f"Saved potential components plots to {output_dir}")
     except Exception as e:
         print(f"Error generating potential components plot: {e}")
@@ -1274,8 +1287,8 @@ def process_ci_folder(base_dir, folder_name):
     generate_potential_components_plot(data, output_dir)
     generate_eigenvector_components_plot(data, output_dir)
     generate_eigenvalue_plot(data, output_dir)
-    generate_gamma_3d_plot(data, output_dir)
-    generate_tau_3d_plot(data, output_dir)
+    #generate_gamma_3d_plot(data, output_dir) # deprecated
+    #generate_tau_3d_plot(data, output_dir) # deprecated
     generate_tau_abs_23_plot(data, output_dir)
     generate_tau_abs_32_plot(data, output_dir)
 

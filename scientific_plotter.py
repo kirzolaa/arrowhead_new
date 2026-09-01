@@ -12,7 +12,7 @@ Classes:
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from matplotlib.ticker import MultipleLocator
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import os
 
 
@@ -22,9 +22,9 @@ class PlotStyle:
     
     # Font sizes (globally defined, not in functions)
     AXIS_TITLE_SIZE = 48
-    AXIS_AXISTITLE_SIZE_XYZ = int(0.9 * AXIS_TITLE_SIZE)
-    AXIS_LABELSIZE = int(0.8 * AXIS_AXISTITLE_SIZE_XYZ)
-    TICKLABELSIZE = int(0.7 * AXIS_LABELSIZE)
+    AXIS_AXISTITLE_SIZE_XYZ = int(0.6 * AXIS_TITLE_SIZE)
+    AXIS_LABELSIZE = int(0.9 * AXIS_AXISTITLE_SIZE_XYZ)
+    TICKLABELSIZE = int(0.9 * AXIS_LABELSIZE)
     LEGEND_FONT_SIZE = TICKLABELSIZE
     
     # Line and grid settings
@@ -247,6 +247,19 @@ class Plot2D:
             self.ax.xaxis.set_major_locator(MultipleLocator(multiple))
         if axis in ['y', 'both']:
             self.ax.yaxis.set_major_locator(MultipleLocator(multiple))
+    
+    def set_tick_formatter(self, axis='both', format_str='%.1f'):
+        """
+        Set tick formatter to control decimal places.
+        
+        Parameters:
+        - axis: Which axis to set ('x', 'y', or 'both')
+        - format_str: Format string for tick labels (e.g., '%.1f' for 1 decimal)
+        """
+        if axis in ['x', 'both']:
+            self.ax.xaxis.set_major_formatter(FormatStrFormatter(format_str))
+        if axis in ['y', 'both']:
+            self.ax.yaxis.set_major_formatter(FormatStrFormatter(format_str))
         
     def set_aspect(self, aspect='equal'):
         """
