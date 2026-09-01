@@ -20,7 +20,15 @@
 
 This document summarizes what we have achieved so far with our topological model for collective conical intersection points.
 
+
 The basic arrangement of our system is that three identical diatomic molecules are placed in a cavity in a Cartesian coordinate system, where the axes of the molecules are parallel to the $x$, $y$, and $z$ axes. This arrangement can fundamentally create the formation of CIs in the system.
+
+
+The line integral of the NACTs (nonadiabatic coupling terms) are computed along a specific closed contour to evaluate the geometric/topological phase. The integration path is constructed as a perfect circle with a strictly fixed, constant radius in this model.
+
+\section{Summary}
+
+Conical intersections (CIs) play a fundamental role in nonadiabatic molecular dynamics, and recent advances have shown they can be artificially induced by classical laser fields and quantum optical cavities. While previous topological studies of these light-induced conical intersections (LICIs) have focused on single-molecule systems, this work investigates the unexplored regime of collective CIs formed by an ensemble of three identical diatomic molecules strongly coupled to a single confined cavity mode. We map the multidimensional configuration space and evaluate the geometric (Berry) phase through line integrals of the angular nonadiabatic coupling terms by constructing a $4 \times 4$ arrowhead Hamiltonian for our system. Our topological analysis distinguishes between two distinct types of collective degeneracies: a symmetry-preserving geometric CI-seam ($r_1 = r_2 = r_3$) that yields a $2\pi$ Berry phase, acting as a topologically trivial avoided crossing, and non-trivial CI branches that accumulate a $\pi$ phase shift. The latter are confirmed as topological singularities characterized by diverging nonadiabatic couplings. These findings also establish that collective light-matter strong coupling fundamentally reshapes the topological landscape of molecular ensembles, thus it introduces non-trivial collective CIs that provide new pathways for ultrafast radiationless interstate crossing.
 
 \section{Model Potentials}
 
@@ -185,7 +193,27 @@ With our current potential parameters ($a_{V_x} = 1.0$, $a_{V_a} = 1.3$, $x_{\te
 x_{\text{prime}} = \frac{a_{V_a}/a_{V_x}}{a_{V_a}/a_{V_x} - 1} \cdot x_{\text{shift}} = \frac{1.3}{1.3 - 1} \cdot 0.1 = 0.433
 \end{equation}
 
-Thus, the trivial CI is at $R_{\text{trivial}} = (0.433, 0.433, 0.433)$.
+Thus, the trivial CI is at $R_{\text{trivial}} = (0.433, 0.433, 0.433)$. I had a bug related to this. WE NEED to pay attention to the precision here!
+
+\textbf{Numerical Verification:} At this point, the potential difference is:
+\begin{align}
+V_a(0.433) - V_x(0.433) &= 1.3 \cdot (0.433 - 0.1)^2 + 0.01 - 1.0 \cdot 0.433^2 \\
+&= 1.3 \cdot 0.333^2 + 0.01 - 0.433^2 \\
+&= 1.3 \cdot 0.111 + 0.01 - 0.188 \\
+&= 0.144 + 0.01 - 0.188 = -0.034
+\end{align}
+
+The small but non-zero potential difference ($\approx -0.033$) indicates that this point is not exactly at the true conical intersection where $V_a = V_x$. Berry phase calculations at this point yield $\gamma_{23} \approx -2\pi$ and $\gamma_{32} \approx 2\pi$, suggesting the closed loop encircles a non-trivial CI rather than being centered exactly at the trivial CI.
+
+\textbf{Precise Calculation:} Using the more precise value $x_{\text{prime}} = 0.4333333333$ gives the same potential difference of $-0.0333333333$, confirming that this is a systematic offset rather than a numerical precision issue. The gamma matrix from this calculation shows:
+\begin{itemize}
+    \item $\gamma_{23} = -6.283 \approx -2\pi$
+    \item $\gamma_{32} = 6.283 \approx 2\pi$
+    \item Other off-diagonal elements are of order $10^{-3}$
+\end{itemize}
+
+This indicates that even at the mathematically precise $x_{\text{prime}}$ location, the system exhibits Berry phase accumulation of $2\pi$, which is characteristic of a trivial CI (as $2\pi$ is equivalent to $0$ modulo $2\pi$). The loop appears to encircle the CI seam in a way that yields this expected result for a trivial intersection.
+
 
 \subsection{Non-trivial CI Locations}
 
@@ -248,9 +276,22 @@ where:
 \begin{itemize}
     \item $\hbar\omega$ is the energy quantum of the system
     \item $V_x(\bm{R}_i) = a_{Vx} |\bm{R}_i|^2$ is the potential energy function
-    \item $V_e(\bm{R}_i) = \sum_j V_x(\bm{R}_j) + V_a(\bm{R}_i) - V_x(\bm{R}_i)$ is the effective potential
-    \item $V_a(\bm{R}_i) = a_{Va} (|\bm{R}_i - x_{\text{shift}}|^2 + c)$ is the additional potential
-    \item $t_{0i}$ are the transition dipole moments between states
+    \item the effective potential is
+    
+    \begin{equation}
+        V_e(\bm{R}_i) = \sum_j V_x(\bm{R}_j) + V_a(\bm{R}_i) - V_x(\bm{R}_i)
+    \end{equation}
+    
+    \item the additional potential is
+    
+    \begin{equation}
+        V_a(\bm{R}_i) = a_{Va} (|\bm{R}_i - x_{\text{shift}}|^2 + c)
+    \end{equation}
+    \item $t_{0i}$ are the transition dipole moments between states, approximated as
+
+    \begin{equation}
+        t_{0i}(\bm{R}_i, \bm{R}_0) = 0.2 + \frac{R_i - R_{0,i}}{10}
+    \end{equation}
 \end{itemize}
 
 The parameter vector $\bm{R}_\theta$ traces a perfect circle orthogonal to the $x=y=z$ line in 3D space, centered at the origin $(0, 0, 0)$, parameterized by angle $\theta$.
@@ -274,7 +315,7 @@ The Berry phase $\gamma_n$ is the integral of the Berry connection around a clos
 The off-diagonal elements $\tau_{nm}(\theta)$ for $n \neq m$ provide information about the coupling between different eigenstates. These elements can be used to analyze transitions between states and to identify regions in parameter space where eigenstates are strongly coupled.
 
 
-\section{The Tau Matrix Method}
+\section{The Tau Matrix (NACTs)}
 
 We call this the "tau matrix method" because the key matrix is the tau matrix in the codebase. However, this matrix is actually the matrix of the Non-adiabatic coupling terms.
 
@@ -292,16 +333,98 @@ where $|\psi_n(\theta)\rangle$ is the $n$-th eigenstate of the Hamiltonian $H(\b
 
 \section{Numerical Results and Analysis}
 
-\subsection{Berry Phase Matrix Structure}
+\subsection{Note on the Berry Phase and NACTs}
+
+The off-diagonal coupling elements become extremely large near the CIs, especially at a non-trivial intersections. As expected, their values can be very large and diverge at the CI as is the case for natural CIs of di- or multi-atomic systems. (For example: $\approx 10 |\tau|$ values were represented in the 2011 JCPA article)
+
+
+This leads us to conclude that these collective CIs in cavity introduce similar nonadiabatic effects as in the forementioned systems such that the usual Born–Oppenheimer approximation will not be valid anymore.
+
+
+\subsection{Berry Phase Matrices}
 
 The numerical results show that the Berry phase matrix $\gamma_{nm}$ has a specific structure with the following features:
 
 \begin{itemize}
     \item The diagonal elements $\gamma_{nn}$ are typically small (order $10^{-3}$ to $10^{-4}$), indicating minimal geometric phase accumulation for individual states.
     
-    \item Large off-diagonal elements (order $10^0$) appear in specific positions, particularly between states 1-2, 2-1, 1-3, and 3-1.
+    \item Large off-diagonal elements (order $10^0$) appear in specific positions, particularly between the excited states 1-2, 2-1.
     
-    \item The values close to $\pm 2\pi$ in the [1,2] and [2,1] positions indicate complete phase winding, which is a signature of non-trivial topology.
+    \item The values close to $\pm 2\pi$ in the [1,2] and [2,1] positions indicate complete phase winding, which is a signature of trivial topology.
+
+    \item The nonadiabatic coupling terms ($\tau$) become singular (infinite) at the exact geometric coordinates of the non-trivial conical intersections. These non-trivial collective CIs will cause a nuclear wave packet to experience strong nonadiabatic mixing, also providing a highly efficient channel for interstate crossing.
+    
+    \item Because of this singularity, the Born-Oppenheimer real electronic wave-function undergoes a sign change when the nuclear coordinates are transported in a closed path around a CI of the electronic potential energy surfaces.
+\end{itemize}
+
+\subsection{Berry Phase Matrix at Trivial CI}
+
+The actual Berry phase matrix (divided by $\pi$) calculated at the trivial CI point $(0.433, 0.433, 0.433)$ is:
+
+\begin{equation}
+\frac{\gamma}{\pi} = 
+\begin{pmatrix}
+-0.0000 & 0.0004 & 0.0000 & -0.0000 \\
+-0.0004 & 0.0000 & -2.0000 & 0.0004 \\
+-0.0000 & 2.0000 & 0.0000 & -0.0000 \\
+-0.0000 & -0.0004 & 0.0000 & -0.0000
+\end{pmatrix}
+\end{equation}
+
+The key features of this matrix are:
+\begin{itemize}
+    \item $\gamma_{23}/\pi \approx -2.0$ and $\gamma_{32}/\pi \approx 2.0$, corresponding to $\gamma_{23} \approx -2\pi$ and $\gamma_{32} \approx 2\pi$
+    \item This $2\pi$ Berry phase is characteristic of a trivial CI (since $2\pi \equiv 0 \mod 2\pi$)
+    \item The antisymmetric structure $\gamma_{nm} = -\gamma_{mn}$ is maintained
+    \item Small numerical artifacts appear in the (1,2), (2,1), (2,4), and (4,2) positions ($\sim 10^{-4}$)
+\end{itemize}
+
+\subsection{Berry Phase Matrices at Non-Trivial CIs}
+
+The Berry phase matrices (divided by $\pi$) at the three non-trivial CI points show distinct topological signatures:
+
+\textbf{CI$_1$: $(1.733, -0.867, -0.867)$}
+\begin{equation}
+\frac{\gamma}{\pi} = 
+\begin{pmatrix}
+ 0.0000 & -0.0000 & -0.0001 & -0.0000 \\
+ 0.0000 &  0.0000 &  1.0000 &  0.0000 \\
+ 0.0001 & -1.0000 &  0.0000 & -0.0004 \\
+ 0.0000 & -0.0000 &  0.0004 &  0.0000
+\end{pmatrix}
+\end{equation}
+Here $\gamma_{23} \approx \pi$ and $\gamma_{32} \approx -\pi$, indicating non-trivial topology.
+
+\textbf{CI$_2$: $(-0.867, -0.867, 1.733)$}
+\begin{equation}
+\frac{\gamma}{\pi} = 
+\begin{pmatrix}
+-0.0000 &  0.0002 & -0.0002 &  0.0000 \\
+-0.0002 & -0.0000 & -1.0000 &  0.0004 \\
+ 0.0002 &  1.0000 & -0.0000 & -0.0008 \\
+-0.0000 & -0.0004 &  0.0008 & -0.0000
+\end{pmatrix}
+\end{equation}
+Here $\gamma_{23} \approx -\pi$ and $\gamma_{32} \approx \pi$, also indicating non-trivial topology.
+
+\textbf{CI$_3$: $(-0.867, 1.733, -0.867)$}
+\begin{equation}
+\frac{\gamma}{\pi} = 
+\begin{pmatrix}
+ 0.0000 & -0.0002 & -0.0002 & -0.0000 \\
+ 0.0002 &  0.0000 & -1.0000 & -0.0004 \\
+ 0.0002 &  1.0000 &  0.0000 & -0.0008 \\
+ 0.0000 &  0.0004 &  0.0008 &  0.0000
+\end{pmatrix}
+\end{equation}
+Here $\gamma_{23} \approx -\pi$ and $\gamma_{32} \approx \pi$, thus confirming non-trivial topology.
+
+\textbf{Comparison:}
+\begin{itemize}
+    \item All three non-trivial CIs exhibit $\pi$ Berry phase (not $2\pi$ like the trivial CI);
+    \item The sign pattern varies between the CIs and indicates different topological winding directions;
+    \item The antisymmetric structure is maintained in all cases;
+    \item Small numerical artifacts appear consistently in similar matrix positions.
 \end{itemize}
 
 \subsection{Physical Interpretation}
@@ -309,12 +432,22 @@ The numerical results show that the Berry phase matrix $\gamma_{nm}$ has a speci
 The observed Berry phase structure has important physical implications:
 
 \begin{itemize}
-    \item The system exhibits non-trivial geometric phase accumulation primarily in the subspace spanned by states 1 and 2.
+    \item The system exhibits geometric phase accumulation primarily in the subspace spanned by states 2 and 3 across all CI points.
     
-    \item The antisymmetric nature of the off-diagonal elements ($\gamma_{12} \approx -\gamma_{21}$) is consistent with the expected behavior of a quantum system with time-reversal symmetry.
+    \item The antisymmetric nature of the off-diagonal elements ($\gamma_{nm} = -\gamma_{mn}$) is consistent with the expected behavior of a quantum system like this.
     
-    \item The $2\pi$ phase difference indicates that the system's parameter space trajectory encloses a topological singularity.
+    \item \textbf{trivial CI:} The $2\pi$ phase difference ($\gamma_{23} \approx -2\pi$, $\gamma_{32} \approx 2\pi$) indicates that the system's parameter space trajectory encloses a topological singularity, but since $2\pi \equiv 0 \mod 2\pi$, this is characteristic of a trivial CI.
+    
+    \item \textbf{non-trivial CIs:} The $\pi$ phase difference at all three non-trivial CI points indicates true non-trivial topology, as $\pi \not\equiv 0 \mod 2\pi$. This confirms that these are genuine conical intersections with non-trivial geometric phase accumulation.
+    
+    \item The consistent appearance of $\pi$ Berry phase at the non-trivial CIs versus $2\pi$ at the trivial CI provides a clear topological distinction between these different types of conical intersections in the system.
+
 \end{itemize}
 
+\subsubsection{Additional Notes / Conclusion}
+
+The calculated topological phase of $2\pi$ is mathematically equivalent to $0 \mod{2\pi}$, so here, the electronic wave function does not undergo a net sign change upon completing the closed loop. Consequently, the contour does not enclose a true CI, thus the geometric point can be considered as topologically trivial and it acts as an avoided crossing (Nem tudom, hogy ez az értelmezésem itt korrekt-e, de a cikkekből ítélve a $2n\pi$ esetet látva gondolom ezt, mivel a $\mod{2\pi}$ miatt ez a kapott érték $0$-val ekvivalens). We can also say that the $r_1 = r_2 = r_3$ CI-seam is also trivial.
+
+The non-trivial CIs all have an accumulated $\pi$ topological phase, which indicates a sign-change in the electronic wave function upon completing the closed loop.  This $\pi$ phase shift is the definitive fingerprint of a true, non-trivial CI. This also shows that the structural branches diverging from the central seam represent genuine topological singularities.
 
 \end{document}
